@@ -91,7 +91,8 @@ export function OrderTracking() {
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="h-full flex flex-col">
+      <div className="p-6 flex-shrink-0 space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Order Tracking</h2>
         <div className="flex gap-2">
@@ -133,7 +134,10 @@ export function OrderTracking() {
         </Select>
       </div>
 
-      <div className="grid gap-4">
+      </div>
+      
+      <div className="flex-1 overflow-y-auto px-6 pb-6">
+        <div className="space-y-4">
         {filteredOrders.map((order) => {
           const StatusIcon = statusIcons[order.status as keyof typeof statusIcons];
           const items = Array.isArray(order.items) ? order.items : [];
@@ -273,20 +277,21 @@ export function OrderTracking() {
             </Card>
           );
         })}
-      </div>
-
-      {filteredOrders.length === 0 && (
-        <div className="text-center py-8">
-          <Package className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">No orders found</h3>
-          <p className="text-gray-500">
-            {searchTerm || statusFilter !== "all" 
-              ? "Try adjusting your search or filter criteria"
-              : "Orders will appear here once customers place them"
-            }
-          </p>
+        
+        {filteredOrders.length === 0 && (
+          <div className="text-center py-8">
+            <Package className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-gray-900 mb-2">No orders found</h3>
+            <p className="text-gray-500">
+              {searchTerm || statusFilter !== "all" 
+                ? "Try adjusting your search or filter criteria"
+                : "Orders will appear here once customers place them"
+              }
+            </p>
+          </div>
+        )}
         </div>
-      )}
+      </div>
     </div>
   );
 }
