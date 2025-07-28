@@ -3,14 +3,20 @@ import { pgTable, text, varchar, decimal, integer, timestamp, jsonb } from "driz
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
-export const products = pgTable("products", {
+export const clothingItems = pgTable("clothing_items", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull(),
+  description: text("description"),
+  category: text("category").notNull(),
+  imageUrl: text("image_url"),
+});
+
+export const laundryServices = pgTable("laundry_services", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   name: text("name").notNull(),
   description: text("description"),
   price: decimal("price", { precision: 10, scale: 2 }).notNull(),
   category: text("category").notNull(),
-  stock: integer("stock").notNull().default(0),
-  imageUrl: text("image_url"),
 });
 
 export const transactions = pgTable("transactions", {
@@ -24,7 +30,11 @@ export const transactions = pgTable("transactions", {
   cashierName: text("cashier_name").notNull(),
 });
 
-export const insertProductSchema = createInsertSchema(products).omit({
+export const insertClothingItemSchema = createInsertSchema(clothingItems).omit({
+  id: true,
+});
+
+export const insertLaundryServiceSchema = createInsertSchema(laundryServices).omit({
   id: true,
 });
 
@@ -33,10 +43,20 @@ export const insertTransactionSchema = createInsertSchema(transactions).omit({
   createdAt: true,
 });
 
-export type Product = typeof products.$inferSelect;
-export type InsertProduct = z.infer<typeof insertProductSchema>;
+export type ClothingItem = typeof clothingItems.$inferSelect;
+export type InsertClothingItem = z.infer<typeof insertClothingItemSchema>;
+export type LaundryService = typeof laundryServices.$inferSelect;
+export type InsertLaundryService = z.infer<typeof insertLaundryServiceSchema>;
 export type Transaction = typeof transactions.$inferSelect;
 export type InsertTransaction = z.infer<typeof insertTransactionSchema>;
+
+export interface LaundryCartItem {
+  id: string;
+  clothingItem: ClothingItem;
+  service: LaundryService;
+  quantity: number;
+  total: number;
+}
 
 export interface CartItem {
   id: string;
@@ -45,6 +65,14 @@ export interface CartItem {
   quantity: number;
   total: number;
   imageUrl?: string;
+}
+
+export interface LaundryCartSummary {
+  items: LaundryCartItem[];
+  subtotal: number;
+  tax: number;
+  total: number;
+  itemCount: number;
 }
 
 export interface CartSummary {

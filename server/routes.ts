@@ -4,38 +4,73 @@ import { storage } from "./storage";
 import { insertTransactionSchema } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Products routes
-  app.get("/api/products", async (req, res) => {
+  // Clothing Items routes
+  app.get("/api/clothing-items", async (req, res) => {
     try {
       const category = req.query.category as string;
       const search = req.query.search as string;
       
-      let products = category 
-        ? await storage.getProductsByCategory(category)
-        : await storage.getProducts();
+      let items = category 
+        ? await storage.getClothingItemsByCategory(category)
+        : await storage.getClothingItems();
       
       if (search) {
-        products = products.filter(product => 
-          product.name.toLowerCase().includes(search.toLowerCase()) ||
-          product.description?.toLowerCase().includes(search.toLowerCase())
+        items = items.filter(item => 
+          item.name.toLowerCase().includes(search.toLowerCase()) ||
+          item.description?.toLowerCase().includes(search.toLowerCase())
         );
       }
       
-      res.json(products);
+      res.json(items);
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch products" });
+      res.status(500).json({ message: "Failed to fetch clothing items" });
     }
   });
 
-  app.get("/api/products/:id", async (req, res) => {
+  app.get("/api/clothing-items/:id", async (req, res) => {
     try {
-      const product = await storage.getProduct(req.params.id);
-      if (!product) {
-        return res.status(404).json({ message: "Product not found" });
+      const item = await storage.getClothingItem(req.params.id);
+      if (!item) {
+        return res.status(404).json({ message: "Clothing item not found" });
       }
-      res.json(product);
+      res.json(item);
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch product" });
+      res.status(500).json({ message: "Failed to fetch clothing item" });
+    }
+  });
+
+  // Laundry Services routes
+  app.get("/api/laundry-services", async (req, res) => {
+    try {
+      const category = req.query.category as string;
+      const search = req.query.search as string;
+      
+      let services = category 
+        ? await storage.getLaundryServicesByCategory(category)
+        : await storage.getLaundryServices();
+      
+      if (search) {
+        services = services.filter(service => 
+          service.name.toLowerCase().includes(search.toLowerCase()) ||
+          service.description?.toLowerCase().includes(search.toLowerCase())
+        );
+      }
+      
+      res.json(services);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch laundry services" });
+    }
+  });
+
+  app.get("/api/laundry-services/:id", async (req, res) => {
+    try {
+      const service = await storage.getLaundryService(req.params.id);
+      if (!service) {
+        return res.status(404).json({ message: "Laundry service not found" });
+      }
+      res.json(service);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch laundry service" });
     }
   });
 
@@ -44,11 +79,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const validatedData = insertTransactionSchema.parse(req.body);
       
-      // Update product stock for each item
-      const items = validatedData.items as any[];
-      for (const item of items) {
-        await storage.updateProductStock(item.id, item.quantity);
-      }
+      // For laundry system, we don't need to update stock like traditional POS
+      // Laundry services are unlimited capacity services
       
       const transaction = await storage.createTransaction(validatedData);
       res.json(transaction);

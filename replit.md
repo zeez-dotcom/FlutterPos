@@ -1,8 +1,8 @@
-# Point of Sale (POS) System
+# Laundry Management System
 
 ## Overview
 
-This is a modern Point of Sale (POS) system built with React/TypeScript frontend and Express.js backend, using Drizzle ORM with PostgreSQL for data persistence. The application features a responsive design optimized for retail environments, with support for product management, cart functionality, and transaction processing.
+This is a modern laundry management system built with React/TypeScript frontend and Express.js backend, using Drizzle ORM with PostgreSQL for data persistence. The application features a responsive design optimized for laundry service environments, with support for clothing item selection, service management, cart functionality, and transaction processing. Customers can select clothing items (pants, dishdashas, shirts, etc.) and choose from various laundry services (wash & fold, dry cleaning, express service, etc.).
 
 ## User Preferences
 
@@ -37,34 +37,38 @@ Preferred communication style: Simple, everyday language.
 ## Key Components
 
 ### Database Schema
-- **Products Table**: Stores product information (name, description, price, category, stock, image URL)
-- **Transactions Table**: Records completed sales with items (JSONB), totals, payment method, and timestamps
+- **Clothing Items Table**: Stores clothing item information (name, description, category, image URL) - no pricing as services determine cost
+- **Laundry Services Table**: Stores available services (name, description, price, category) - wash & fold, dry cleaning, ironing, etc.
+- **Transactions Table**: Records completed orders with items (JSONB), totals, payment method, and timestamps
 - **Schema Validation**: Zod schemas generated from Drizzle tables for runtime validation
 
 ### Frontend Components
-- **POS Interface**: Main sales interface with product grid and cart sidebar
-- **Product Grid**: Displays products with category filtering and search functionality
-- **Cart Sidebar**: Manages cart items with quantity controls and checkout flow
+- **Laundry Interface**: Main service interface with clothing selection and cart sidebar
+- **Clothing Grid**: Displays clothing items with category filtering and search functionality
+- **Service Selection Modal**: Modal for selecting laundry services after choosing clothing items
+- **Laundry Cart Sidebar**: Manages cart items showing clothing + service combinations with quantity controls
 - **Receipt Modal**: Displays transaction receipts with print/email options
-- **Responsive Design**: Mobile-first approach with collapsible sidebars
+- **Responsive Design**: Mobile-first approach with bottom navigation for mobile devices
 
 ### Backend API Routes
-- **Products API**: GET /api/products (with category/search filtering), GET /api/products/:id
-- **Transactions API**: POST /api/transactions for checkout processing
-- **Stock Management**: Automatic inventory updates during transactions
+- **Clothing Items API**: GET /api/clothing-items (with category/search filtering), GET /api/clothing-items/:id
+- **Laundry Services API**: GET /api/laundry-services (with category/search filtering), GET /api/laundry-services/:id
+- **Transactions API**: POST /api/transactions for order processing
+- **Service Management**: No stock tracking needed as laundry services are unlimited capacity
 
 ### Cart Management
-- **Local State**: Custom React hook managing cart items and calculations
+- **Local State**: Custom React hook managing laundry cart items (clothing + service combinations)
+- **Unique Item Identification**: Each cart item combines clothing item ID and service ID for uniqueness
 - **Tax Calculation**: Configurable tax rate (8.5% default)
 - **Payment Methods**: Support for cash and card payments
 - **Real-time Updates**: Immediate UI updates with server synchronization
 
 ## Data Flow
 
-1. **Product Display**: Frontend fetches products from `/api/products` with optional filtering
-2. **Cart Operations**: Local state management with immediate UI updates
-3. **Checkout Process**: Cart data sent to `/api/transactions` endpoint
-4. **Stock Updates**: Server updates product inventory during transaction processing
+1. **Clothing Selection**: Frontend fetches clothing items from `/api/clothing-items` with optional filtering
+2. **Service Selection**: User clicks clothing item → modal opens → fetches services from `/api/laundry-services`
+3. **Cart Operations**: User selects service + quantity → adds clothing+service combination to cart
+4. **Order Processing**: Cart data sent to `/api/transactions` endpoint for completion
 5. **Receipt Generation**: Transaction data returned for receipt display
 6. **Cache Invalidation**: React Query cache updated after successful transactions
 
@@ -105,4 +109,12 @@ Preferred communication style: Simple, everyday language.
 - **Build Scripts**: Separate development and production build processes
 - **Database Setup**: Drizzle migrations handle schema deployment
 
-The application is designed as a full-stack monorepo with clear separation between client and server code, while maintaining shared type safety and efficient development workflows.
+## Recent Changes (Jan 2025)
+
+- **System Transformation**: Converted from traditional POS system to laundry management system
+- **New Data Models**: Separated clothing items (no pricing) from laundry services (with pricing)
+- **Enhanced User Flow**: Two-step selection process - first clothing item, then service type
+- **Service Categories**: Basic, Premium, Specialty, and Express service categories
+- **Cart Logic**: Combined clothing + service items with unique identifiers for proper cart management
+
+The application is designed as a full-stack monorepo with clear separation between client and server code, while maintaining shared type safety and efficient development workflows. The laundry-specific workflow allows customers to specify quantities of different clothing items and select appropriate services for each item type.

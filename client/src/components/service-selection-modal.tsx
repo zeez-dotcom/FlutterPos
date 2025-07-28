@@ -1,0 +1,174 @@
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { Plus, Minus } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { ClothingItem, LaundryService } from "@shared/schema";
+
+interface ServiceSelectionModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  clothingItem: ClothingItem | null;
+  onAddToCart: (clothingItem: ClothingItem, service: LaundryService, quantity: number) => void;
+}
+
+const serviceCategories = [
+  { id: "all", label: "All Services" },
+  { id: "basic", label: "Basic" },
+  { id: "premium", label: "Premium" },
+  { id: "specialty", label: "Specialty" },
+  { id: "express", label: "Express" }
+];
+
+export function ServiceSelectionModal({ 
+  isOpen, 
+  onClose, 
+  clothingItem, 
+  onAddToCart 
+}: ServiceSelectionModalProps) {
+  const [selectedCategory, setSelectedCategory] = useState("all");
+  const [quantities, setQuantities] = useState<Record<string, number>>({});
+
+  const { data: services = [] } = useQuery({
+    queryKey: ["/api/laundry-services", selectedCategory],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (selectedCategory !== "all") params.append("category", selectedCategory);
+      
+      const response = await fetch(`/api/laundry-services?${params}`);
+      if (!response.ok) throw new Error("Failed to fetch laundry services");
+      return response.json();
+    },
+    enabled: isOpen
+  }) as { data: LaundryService[] };
+
+  const getQuantity = (serviceId: string) => quantities[serviceId] || 1;
+
+  const updateQuantity = (serviceId: string, quantity: number) => {
+    setQuantities(prev => ({
+      ...prev,
+      [serviceId]: Math.max(1, quantity)
+    }));
+  };
+
+  const handleAddToCart = (service: LaundryService) => {
+    if (!clothingItem) return;
+    
+    const quantity = getQuantity(service.id);
+    onAddToCart(clothingItem, service, quantity);
+    
+    // Reset quantity for this service
+    setQuantities(prev => ({
+      ...prev,
+      [service.id]: 1
+    }));
+  };
+
+  const handleClose = () => {
+    setQuantities({});
+    onClose();
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={handleClose}>
+      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center space-x-2">
+            <span>Select Service for</span>
+            <span className="text-pos-primary">{clothingItem?.name}</span>
+          </DialogTitle>
+        </DialogHeader>
+
+        {/* Service Categories */}
+        <div className="flex space-x-1 mb-4 overflow-x-auto">
+          {serviceCategories.map((category) => (
+            <Button
+              key={category.id}
+              variant={selectedCategory === category.id ? "default" : "secondary"}
+              size="sm"
+              className={`whitespace-nowrap ${
+                selectedCategory === category.id
+                  ? "bg-pos-primary hover:bg-blue-700 text-white"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              }`}
+              onClick={() => setSelectedCategory(category.id)}
+            >
+              {category.label}
+            </Button>
+          ))}
+        </div>
+
+        {/* Services Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {services.map((service) => (
+            <Card key={service.id} className="hover:shadow-md transition-shadow">
+              <CardContent className="p-4">
+                <div className="flex justify-between items-start mb-3">
+                  <div className="flex-1">
+                    <h3 className="font-medium text-gray-900 mb-1">{service.name}</h3>
+                    {service.description && (
+                      <p className="text-sm text-gray-600 mb-2">{service.description}</p>
+                    )}
+                    <div className="flex items-center justify-between">
+                      <span className="text-lg font-bold text-pos-primary">
+                        ${parseFloat(service.price).toFixed(2)}
+                      </span>
+                      <span className="text-xs text-gray-500 capitalize bg-gray-100 px-2 py-1 rounded">
+                        {service.category}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Quantity Controls */}
+                <div className="flex items-center justify-between mt-4">
+                  <div className="flex items-center space-x-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-8 h-8 p-0"
+                      onClick={() => updateQuantity(service.id, getQuantity(service.id) - 1)}
+                    >
+                      <Minus className="h-3 w-3" />
+                    </Button>
+                    <Input
+                      type="number"
+                      min="1"
+                      value={getQuantity(service.id)}
+                      onChange={(e) => updateQuantity(service.id, parseInt(e.target.value) || 1)}
+                      className="w-16 text-center"
+                    />
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-8 h-8 p-0"
+                      onClick={() => updateQuantity(service.id, getQuantity(service.id) + 1)}
+                    >
+                      <Plus className="h-3 w-3" />
+                    </Button>
+                  </div>
+                  
+                  <Button
+                    className="bg-pos-secondary hover:bg-green-600 text-white"
+                    onClick={() => handleAddToCart(service)}
+                  >
+                    Add to Cart
+                  </Button>
+                </div>
+
+                {/* Total for this service */}
+                <div className="mt-2 text-right">
+                  <span className="text-sm text-gray-600">
+                    Total: ${(parseFloat(service.price) * getQuantity(service.id)).toFixed(2)}
+                  </span>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}

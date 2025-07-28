@@ -2,14 +2,15 @@ import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { POSHeader } from "@/components/pos-header";
 import { POSSidebar } from "@/components/pos-sidebar";
-import { ProductGrid } from "@/components/product-grid";
-import { CartSidebar } from "@/components/cart-sidebar";
+import { ClothingGrid } from "@/components/clothing-grid";
+import { LaundryCartSidebar } from "@/components/laundry-cart-sidebar";
+import { ServiceSelectionModal } from "@/components/service-selection-modal";
 import { ReceiptModal } from "@/components/receipt-modal";
-import { useCart } from "@/hooks/use-cart";
+import { useLaundryCart } from "@/hooks/use-laundry-cart";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { Product, Transaction, InsertTransaction } from "@shared/schema";
+import { ClothingItem, LaundryService, Transaction, InsertTransaction } from "@shared/schema";
 import { ShoppingCart, Package, BarChart3, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -18,6 +19,8 @@ export default function POS() {
   const [isCartVisible, setIsCartVisible] = useState(false);
   const [currentTransaction, setCurrentTransaction] = useState<Transaction | null>(null);
   const [isReceiptModalOpen, setIsReceiptModalOpen] = useState(false);
+  const [selectedClothingItem, setSelectedClothingItem] = useState<ClothingItem | null>(null);
+  const [isServiceModalOpen, setIsServiceModalOpen] = useState(false);
   
   const isMobile = useIsMobile();
   const { toast } = useToast();
@@ -32,7 +35,7 @@ export default function POS() {
     removeFromCart,
     clearCart,
     getCartSummary
-  } = useCart();
+  } = useLaundryCart();
 
   const cartSummary = getCartSummary();
 
@@ -45,9 +48,10 @@ export default function POS() {
       setCurrentTransaction(transaction);
       setIsReceiptModalOpen(true);
       clearCart();
-      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/clothing-items"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/laundry-services"] });
       toast({
-        title: "Sale completed successfully",
+        title: "Order completed successfully",
         description: `Total: $${parseFloat(transaction.total).toFixed(2)}`,
       });
     },
@@ -60,19 +64,16 @@ export default function POS() {
     }
   });
 
-  const handleAddToCart = (product: Product) => {
-    if (product.stock <= 0) {
-      toast({
-        title: "Out of stock",
-        description: `${product.name} is currently out of stock`,
-        variant: "destructive",
-      });
-      return;
-    }
-    addToCart(product);
+  const handleSelectClothing = (clothingItem: ClothingItem) => {
+    setSelectedClothingItem(clothingItem);
+    setIsServiceModalOpen(true);
+  };
+
+  const handleAddToCart = (clothingItem: ClothingItem, service: LaundryService, quantity: number) => {
+    addToCart(clothingItem, service, quantity);
     toast({
       title: "Added to cart",
-      description: `${product.name} has been added to your cart`,
+      description: `${quantity}x ${clothingItem.name} with ${service.name} service`,
     });
   };
 
@@ -86,8 +87,18 @@ export default function POS() {
       return;
     }
 
+    // Convert laundry cart items to transaction format
+    const transactionItems = cartSummary.items.map(item => ({
+      id: item.id,
+      clothingItem: item.clothingItem.name,
+      service: item.service.name,
+      quantity: item.quantity,
+      price: parseFloat(item.service.price),
+      total: item.total
+    }));
+
     const transaction: InsertTransaction = {
-      items: cartSummary.items,
+      items: transactionItems,
       subtotal: cartSummary.subtotal.toString(),
       tax: cartSummary.tax.toString(),
       total: cartSummary.total.toString(),
@@ -159,13 +170,13 @@ export default function POS() {
         <main className="flex-1 flex flex-col lg:flex-row overflow-hidden">
           {activeView === "sales" ? (
             <>
-              <ProductGrid
-                onAddToCart={handleAddToCart}
+              <ClothingGrid
+                onSelectClothing={handleSelectClothing}
                 cartItemCount={cartSummary.itemCount}
                 onToggleCart={toggleCart}
               />
               
-              <CartSidebar
+              <LaundryCartSidebar
                 cartSummary={cartSummary}
                 paymentMethod={paymentMethod}
                 onUpdateQuantity={updateQuantity}
@@ -184,6 +195,16 @@ export default function POS() {
       </div>
 
       <MobileBottomNav />
+
+      <ServiceSelectionModal
+        isOpen={isServiceModalOpen}
+        onClose={() => {
+          setIsServiceModalOpen(false);
+          setSelectedClothingItem(null);
+        }}
+        clothingItem={selectedClothingItem}
+        onAddToCart={handleAddToCart}
+      />
 
       <ReceiptModal
         transaction={currentTransaction}

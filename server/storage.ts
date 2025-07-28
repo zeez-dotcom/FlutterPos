@@ -1,14 +1,24 @@
-import { type Product, type InsertProduct, type Transaction, type InsertTransaction } from "@shared/schema";
+import { 
+  type ClothingItem, type InsertClothingItem, 
+  type LaundryService, type InsertLaundryService,
+  type Transaction, type InsertTransaction 
+} from "@shared/schema";
 import { randomUUID } from "crypto";
 
 export interface IStorage {
-  // Products
-  getProducts(): Promise<Product[]>;
-  getProductsByCategory(category: string): Promise<Product[]>;
-  getProduct(id: string): Promise<Product | undefined>;
-  createProduct(product: InsertProduct): Promise<Product>;
-  updateProduct(id: string, product: Partial<InsertProduct>): Promise<Product | undefined>;
-  updateProductStock(id: string, quantity: number): Promise<Product | undefined>;
+  // Clothing Items
+  getClothingItems(): Promise<ClothingItem[]>;
+  getClothingItemsByCategory(category: string): Promise<ClothingItem[]>;
+  getClothingItem(id: string): Promise<ClothingItem | undefined>;
+  createClothingItem(item: InsertClothingItem): Promise<ClothingItem>;
+  updateClothingItem(id: string, item: Partial<InsertClothingItem>): Promise<ClothingItem | undefined>;
+  
+  // Laundry Services  
+  getLaundryServices(): Promise<LaundryService[]>;
+  getLaundryServicesByCategory(category: string): Promise<LaundryService[]>;
+  getLaundryService(id: string): Promise<LaundryService | undefined>;
+  createLaundryService(service: InsertLaundryService): Promise<LaundryService>;
+  updateLaundryService(id: string, service: Partial<InsertLaundryService>): Promise<LaundryService | undefined>;
   
   // Transactions
   createTransaction(transaction: InsertTransaction): Promise<Transaction>;
@@ -17,125 +27,168 @@ export interface IStorage {
 }
 
 export class MemStorage implements IStorage {
-  private products: Map<string, Product>;
+  private clothingItems: Map<string, ClothingItem>;
+  private laundryServices: Map<string, LaundryService>;
   private transactions: Map<string, Transaction>;
 
   constructor() {
-    this.products = new Map();
+    this.clothingItems = new Map();
+    this.laundryServices = new Map();
     this.transactions = new Map();
-    this.initializeProducts();
+    this.initializeData();
   }
 
-  private initializeProducts() {
-    const initialProducts: InsertProduct[] = [
+  private initializeData() {
+    // Initialize clothing items
+    const initialClothingItems: InsertClothingItem[] = [
       {
-        name: "Premium Coffee",
-        description: "Rich and aromatic blend",
-        price: "4.99",
-        category: "beverages",
-        stock: 24,
-        imageUrl: "https://images.unsplash.com/photo-1509042239860-f550ce710b93?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&h=200"
+        name: "Pants",
+        description: "Regular trousers",
+        category: "pants",
+        imageUrl: "https://images.unsplash.com/photo-1473966968600-fa801b869a1a?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&h=200"
       },
       {
-        name: "Club Sandwich",
-        description: "Fresh turkey and bacon",
-        price: "8.50",
-        category: "food",
-        stock: 12,
-        imageUrl: "https://images.unsplash.com/photo-1528735602780-2552fd46c7af?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&h=200"
+        name: "Dishdasha",
+        description: "Traditional long robe",
+        category: "traditional",
+        imageUrl: "https://images.unsplash.com/photo-1594069037019-f3ab4b0e6a21?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&h=200"
       },
       {
-        name: "Potato Chips",
-        description: "Crispy and salted",
-        price: "2.99",
-        category: "snacks",
-        stock: 48,
-        imageUrl: "https://images.unsplash.com/photo-1566478989037-eec170784d0b?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&h=200"
+        name: "Shirt",
+        description: "Dress shirt or casual shirt",
+        category: "shirts",
+        imageUrl: "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&h=200"
       },
       {
-        name: "Cola Drink",
-        description: "Refreshing cola beverage",
-        price: "1.99",
-        category: "beverages",
-        stock: 36,
-        imageUrl: "https://images.unsplash.com/photo-1629203851122-3726ecdf080e?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&h=200"
+        name: "Dress",
+        description: "Ladies dress",
+        category: "dresses",
+        imageUrl: "https://images.unsplash.com/photo-1515372039744-b8f02a3ae446?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&h=200"
       },
       {
-        name: "Energy Bar",
-        description: "Nuts and dried fruits",
-        price: "3.49",
-        category: "snacks",
-        stock: 18,
-        imageUrl: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&h=200"
+        name: "Suit Jacket",
+        description: "Formal jacket",
+        category: "formal",
+        imageUrl: "https://images.unsplash.com/photo-1594938298603-c8148c4dae35?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&h=200"
       },
       {
-        name: "Spring Water",
-        description: "Pure mountain spring water",
-        price: "1.49",
-        category: "beverages",
-        stock: 60,
-        imageUrl: "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&h=200"
-      },
-      {
-        name: "Wireless Headphones",
-        description: "Bluetooth audio device",
-        price: "89.99",
-        category: "electronics",
-        stock: 8,
-        imageUrl: "https://images.unsplash.com/photo-1484704849700-f032a568e944?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&h=200"
-      },
-      {
-        name: "Dark Chocolate",
-        description: "70% cocoa premium bar",
-        price: "5.99",
-        category: "snacks",
-        stock: 32,
-        imageUrl: "https://images.unsplash.com/photo-1511381939415-e44015466834?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&h=200"
+        name: "Bed Sheets",
+        description: "Full set of bed linens",
+        category: "linens",
+        imageUrl: "https://images.unsplash.com/photo-1631049307264-da0ec9d70304?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&h=200"
       }
     ];
 
-    initialProducts.forEach(product => {
-      this.createProduct(product);
+    // Initialize laundry services
+    const initialLaundryServices: InsertLaundryService[] = [
+      {
+        name: "Wash & Fold",
+        description: "Basic washing and folding service",
+        price: "3.00",
+        category: "basic"
+      },
+      {
+        name: "Dry Cleaning",
+        description: "Professional dry cleaning",
+        price: "8.00",
+        category: "premium"
+      },
+      {
+        name: "Iron & Press",
+        description: "Professional ironing and pressing",
+        price: "4.50",
+        category: "basic"
+      },
+      {
+        name: "Stain Removal",
+        description: "Specialized stain treatment",
+        price: "6.00",
+        category: "specialty"
+      },
+      {
+        name: "Express Service",
+        description: "Same day service",
+        price: "12.00",
+        category: "express"
+      },
+      {
+        name: "Delicate Care",
+        description: "Special care for delicate items",
+        price: "10.00",
+        category: "specialty"
+      }
+    ];
+
+    initialClothingItems.forEach(item => {
+      this.createClothingItem(item);
+    });
+
+    initialLaundryServices.forEach(service => {
+      this.createLaundryService(service);
     });
   }
 
-  async getProducts(): Promise<Product[]> {
-    return Array.from(this.products.values());
+  // Clothing Items methods
+  async getClothingItems(): Promise<ClothingItem[]> {
+    return Array.from(this.clothingItems.values());
   }
 
-  async getProductsByCategory(category: string): Promise<Product[]> {
+  async getClothingItemsByCategory(category: string): Promise<ClothingItem[]> {
     if (category === "all") {
-      return this.getProducts();
+      return this.getClothingItems();
     }
-    return Array.from(this.products.values()).filter(product => product.category === category);
+    return Array.from(this.clothingItems.values()).filter(item => item.category === category);
   }
 
-  async getProduct(id: string): Promise<Product | undefined> {
-    return this.products.get(id);
+  async getClothingItem(id: string): Promise<ClothingItem | undefined> {
+    return this.clothingItems.get(id);
   }
 
-  async createProduct(insertProduct: InsertProduct): Promise<Product> {
+  async createClothingItem(insertItem: InsertClothingItem): Promise<ClothingItem> {
     const id = randomUUID();
-    const product: Product = { ...insertProduct, id };
-    this.products.set(id, product);
-    return product;
+    const item: ClothingItem = { ...insertItem, id };
+    this.clothingItems.set(id, item);
+    return item;
   }
 
-  async updateProduct(id: string, insertProduct: Partial<InsertProduct>): Promise<Product | undefined> {
-    const existing = this.products.get(id);
+  async updateClothingItem(id: string, insertItem: Partial<InsertClothingItem>): Promise<ClothingItem | undefined> {
+    const existing = this.clothingItems.get(id);
     if (!existing) return undefined;
     
-    const updated: Product = { ...existing, ...insertProduct };
-    this.products.set(id, updated);
+    const updated: ClothingItem = { ...existing, ...insertItem };
+    this.clothingItems.set(id, updated);
     return updated;
   }
 
-  async updateProductStock(id: string, quantity: number): Promise<Product | undefined> {
-    const product = this.products.get(id);
-    if (!product) return undefined;
+  // Laundry Services methods
+  async getLaundryServices(): Promise<LaundryService[]> {
+    return Array.from(this.laundryServices.values());
+  }
+
+  async getLaundryServicesByCategory(category: string): Promise<LaundryService[]> {
+    if (category === "all") {
+      return this.getLaundryServices();
+    }
+    return Array.from(this.laundryServices.values()).filter(service => service.category === category);
+  }
+
+  async getLaundryService(id: string): Promise<LaundryService | undefined> {
+    return this.laundryServices.get(id);
+  }
+
+  async createLaundryService(insertService: InsertLaundryService): Promise<LaundryService> {
+    const id = randomUUID();
+    const service: LaundryService = { ...insertService, id };
+    this.laundryServices.set(id, service);
+    return service;
+  }
+
+  async updateLaundryService(id: string, insertService: Partial<InsertLaundryService>): Promise<LaundryService | undefined> {
+    const existing = this.laundryServices.get(id);
+    if (!existing) return undefined;
     
-    const updated: Product = { ...product, stock: product.stock - quantity };
-    this.products.set(id, updated);
+    const updated: LaundryService = { ...existing, ...insertService };
+    this.laundryServices.set(id, updated);
     return updated;
   }
 
