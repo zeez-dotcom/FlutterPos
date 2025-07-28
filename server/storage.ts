@@ -2,13 +2,32 @@ import {
   type ClothingItem, type InsertClothingItem, 
   type LaundryService, type InsertLaundryService,
   type Transaction, type InsertTransaction,
-  clothingItems, laundryServices, transactions
+  type User, type InsertUser, type UpsertUser,
+  type Category, type InsertCategory,
+  clothingItems, laundryServices, transactions, users, categories
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { db } from "./db";
 import { eq } from "drizzle-orm";
+import bcrypt from "bcryptjs";
 
 export interface IStorage {
+  // User operations
+  getUser(id: string): Promise<User | undefined>;
+  getUserByUsername(username: string): Promise<User | undefined>;
+  createUser(user: InsertUser): Promise<User>;
+  upsertUser(user: UpsertUser): Promise<User>;
+  updateUser(id: string, user: Partial<InsertUser>): Promise<User | undefined>;
+  getUsers(): Promise<User[]>;
+  
+  // Category operations
+  getCategories(): Promise<Category[]>;
+  getCategoriesByType(type: string): Promise<Category[]>;
+  getCategory(id: string): Promise<Category | undefined>;
+  createCategory(category: InsertCategory): Promise<Category>;
+  updateCategory(id: string, category: Partial<InsertCategory>): Promise<Category | undefined>;
+  deleteCategory(id: string): Promise<boolean>;
+  
   // Clothing Items
   getClothingItems(): Promise<ClothingItem[]>;
   getClothingItemsByCategory(category: string): Promise<ClothingItem[]>;
@@ -33,11 +52,15 @@ export class MemStorage implements IStorage {
   private clothingItems: Map<string, ClothingItem>;
   private laundryServices: Map<string, LaundryService>;
   private transactions: Map<string, Transaction>;
+  private users: Map<string, User>;
+  private categories: Map<string, Category>;
 
   constructor() {
     this.clothingItems = new Map();
     this.laundryServices = new Map();
     this.transactions = new Map();
+    this.users = new Map();
+    this.categories = new Map();
     this.initializeData();
   }
 
@@ -237,9 +260,120 @@ export class MemStorage implements IStorage {
   async getTransaction(id: string): Promise<Transaction | undefined> {
     return this.transactions.get(id);
   }
+
+  // User methods (stub for MemStorage - not used in production)
+  async getUser(id: string): Promise<User | undefined> { return undefined; }
+  async getUserByUsername(username: string): Promise<User | undefined> { return undefined; }
+  async createUser(user: InsertUser): Promise<User> { throw new Error("Not implemented in MemStorage"); }
+  async upsertUser(user: UpsertUser): Promise<User> { throw new Error("Not implemented in MemStorage"); }
+  async updateUser(id: string, user: Partial<InsertUser>): Promise<User | undefined> { return undefined; }
+  async getUsers(): Promise<User[]> { return []; }
+
+  // Category methods (stub for MemStorage - not used in production)
+  async getCategories(): Promise<Category[]> { return []; }
+  async getCategoriesByType(type: string): Promise<Category[]> { return []; }
+  async getCategory(id: string): Promise<Category | undefined> { return undefined; }
+  async createCategory(category: InsertCategory): Promise<Category> { throw new Error("Not implemented in MemStorage"); }
+  async updateCategory(id: string, category: Partial<InsertCategory>): Promise<Category | undefined> { return undefined; }
+  async deleteCategory(id: string): Promise<boolean> { return false; }
 }
 
 export class DatabaseStorage implements IStorage {
+  // User methods
+  async getUser(id: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user || undefined;
+  }
+
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user || undefined;
+  }
+
+  async createUser(userData: InsertUser): Promise<User> {
+    const saltRounds = 10;
+    const hashedPassword = await bcrypt.hash(userData.passwordHash, saltRounds);
+    
+    const [user] = await db
+      .insert(users)
+      .values({
+        ...userData,
+        passwordHash: hashedPassword,
+      })
+      .returning();
+    return user;
+  }
+
+  async upsertUser(userData: UpsertUser): Promise<User> {
+    const [user] = await db
+      .insert(users)
+      .values(userData)
+      .onConflictDoUpdate({
+        target: users.id,
+        set: {
+          ...userData,
+          updatedAt: new Date(),
+        },
+      })
+      .returning();
+    return user;
+  }
+
+  async updateUser(id: string, userData: Partial<InsertUser>): Promise<User | undefined> {
+    const updateData = { ...userData };
+    if (updateData.passwordHash) {
+      const saltRounds = 10;
+      updateData.passwordHash = await bcrypt.hash(updateData.passwordHash, saltRounds);
+    }
+    
+    const [updated] = await db
+      .update(users)
+      .set({ ...updateData, updatedAt: new Date() })
+      .where(eq(users.id, id))
+      .returning();
+    return updated || undefined;
+  }
+
+  async getUsers(): Promise<User[]> {
+    return await db.select().from(users);
+  }
+
+  // Category methods
+  async getCategories(): Promise<Category[]> {
+    return await db.select().from(categories);
+  }
+
+  async getCategoriesByType(type: string): Promise<Category[]> {
+    return await db.select().from(categories).where(eq(categories.type, type));
+  }
+
+  async getCategory(id: string): Promise<Category | undefined> {
+    const [category] = await db.select().from(categories).where(eq(categories.id, id));
+    return category || undefined;
+  }
+
+  async createCategory(categoryData: InsertCategory): Promise<Category> {
+    const [category] = await db
+      .insert(categories)
+      .values(categoryData)
+      .returning();
+    return category;
+  }
+
+  async updateCategory(id: string, categoryData: Partial<InsertCategory>): Promise<Category | undefined> {
+    const [updated] = await db
+      .update(categories)
+      .set({ ...categoryData, updatedAt: new Date() })
+      .where(eq(categories.id, id))
+      .returning();
+    return updated || undefined;
+  }
+
+  async deleteCategory(id: string): Promise<boolean> {
+    const result = await db.delete(categories).where(eq(categories.id, id));
+    return result.rowCount ? result.rowCount > 0 : false;
+  }
+
   // Clothing Items methods
   async getClothingItems(): Promise<ClothingItem[]> {
     return await db.select().from(clothingItems);

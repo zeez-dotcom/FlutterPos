@@ -1,9 +1,127 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertTransactionSchema, insertClothingItemSchema, insertLaundryServiceSchema } from "@shared/schema";
+import { insertTransactionSchema, insertClothingItemSchema, insertLaundryServiceSchema, insertUserSchema, insertCategorySchema } from "@shared/schema";
+import { setupAuth, requireAuth, requireSuperAdmin, requireAdminOrSuperAdmin } from "./auth";
+import passport from "passport";
+import type { User } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Setup authentication
+  await setupAuth(app);
+
+  // Authentication routes
+  app.post("/api/login", passport.authenticate("local"), (req, res) => {
+    res.json({ user: req.user, message: "Login successful" });
+  });
+
+  app.post("/api/logout", (req, res) => {
+    req.logout((err) => {
+      if (err) {
+        return res.status(500).json({ message: "Logout failed" });
+      }
+      res.json({ message: "Logout successful" });
+    });
+  });
+
+  app.get("/api/auth/user", requireAuth, (req, res) => {
+    res.json(req.user);
+  });
+
+  // User management routes (Super Admin only)
+  app.get("/api/users", requireSuperAdmin, async (req, res) => {
+    try {
+      const users = await storage.getUsers();
+      // Don't send password hashes
+      const safeUsers = users.map(({ passwordHash, ...user }) => user);
+      res.json(safeUsers);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch users" });
+    }
+  });
+
+  app.post("/api/users", requireSuperAdmin, async (req, res) => {
+    try {
+      const validatedData = insertUserSchema.parse(req.body);
+      const newUser = await storage.createUser(validatedData);
+      // Don't send password hash
+      const { passwordHash, ...safeUser } = newUser;
+      res.json(safeUser);
+    } catch (error) {
+      console.error("Error creating user:", error);
+      res.status(500).json({ message: "Failed to create user" });
+    }
+  });
+
+  app.put("/api/users/:id", requireSuperAdmin, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const validatedData = insertUserSchema.parse(req.body);
+      const updatedUser = await storage.updateUser(id, validatedData);
+      if (!updatedUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      // Don't send password hash
+      const { passwordHash, ...safeUser } = updatedUser;
+      res.json(safeUser);
+    } catch (error) {
+      console.error("Error updating user:", error);
+      res.status(500).json({ message: "Failed to update user" });
+    }
+  });
+
+  // Category management routes (Admin or Super Admin)
+  app.get("/api/categories", requireAdminOrSuperAdmin, async (req, res) => {
+    try {
+      const type = req.query.type as string;
+      const categories = type 
+        ? await storage.getCategoriesByType(type)
+        : await storage.getCategories();
+      res.json(categories);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch categories" });
+    }
+  });
+
+  app.post("/api/categories", requireAdminOrSuperAdmin, async (req, res) => {
+    try {
+      const validatedData = insertCategorySchema.parse(req.body);
+      const newCategory = await storage.createCategory(validatedData);
+      res.json(newCategory);
+    } catch (error) {
+      console.error("Error creating category:", error);
+      res.status(500).json({ message: "Failed to create category" });
+    }
+  });
+
+  app.put("/api/categories/:id", requireAdminOrSuperAdmin, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const validatedData = insertCategorySchema.parse(req.body);
+      const updatedCategory = await storage.updateCategory(id, validatedData);
+      if (!updatedCategory) {
+        return res.status(404).json({ message: "Category not found" });
+      }
+      res.json(updatedCategory);
+    } catch (error) {
+      console.error("Error updating category:", error);
+      res.status(500).json({ message: "Failed to update category" });
+    }
+  });
+
+  app.delete("/api/categories/:id", requireAdminOrSuperAdmin, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const deleted = await storage.deleteCategory(id);
+      if (!deleted) {
+        return res.status(404).json({ message: "Category not found" });
+      }
+      res.json({ message: "Category deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting category:", error);
+      res.status(500).json({ message: "Failed to delete category" });
+    }
+  });
   // Clothing Items routes
   app.get("/api/clothing-items", async (req, res) => {
     try {
