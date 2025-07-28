@@ -1,9 +1,12 @@
 import { 
   type ClothingItem, type InsertClothingItem, 
   type LaundryService, type InsertLaundryService,
-  type Transaction, type InsertTransaction 
+  type Transaction, type InsertTransaction,
+  clothingItems, laundryServices, transactions
 } from "@shared/schema";
 import { randomUUID } from "crypto";
+import { db } from "./db";
+import { eq } from "drizzle-orm";
 
 export interface IStorage {
   // Clothing Items
@@ -236,4 +239,92 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+export class DatabaseStorage implements IStorage {
+  // Clothing Items methods
+  async getClothingItems(): Promise<ClothingItem[]> {
+    return await db.select().from(clothingItems);
+  }
+
+  async getClothingItemsByCategory(category: string): Promise<ClothingItem[]> {
+    if (category === "all") {
+      return this.getClothingItems();
+    }
+    return await db.select().from(clothingItems).where(eq(clothingItems.category, category));
+  }
+
+  async getClothingItem(id: string): Promise<ClothingItem | undefined> {
+    const [item] = await db.select().from(clothingItems).where(eq(clothingItems.id, id));
+    return item || undefined;
+  }
+
+  async createClothingItem(item: InsertClothingItem): Promise<ClothingItem> {
+    const [newItem] = await db
+      .insert(clothingItems)
+      .values(item)
+      .returning();
+    return newItem;
+  }
+
+  async updateClothingItem(id: string, item: Partial<InsertClothingItem>): Promise<ClothingItem | undefined> {
+    const [updated] = await db
+      .update(clothingItems)
+      .set(item)
+      .where(eq(clothingItems.id, id))
+      .returning();
+    return updated || undefined;
+  }
+
+  // Laundry Services methods
+  async getLaundryServices(): Promise<LaundryService[]> {
+    return await db.select().from(laundryServices);
+  }
+
+  async getLaundryServicesByCategory(category: string): Promise<LaundryService[]> {
+    if (category === "all") {
+      return this.getLaundryServices();
+    }
+    return await db.select().from(laundryServices).where(eq(laundryServices.category, category));
+  }
+
+  async getLaundryService(id: string): Promise<LaundryService | undefined> {
+    const [service] = await db.select().from(laundryServices).where(eq(laundryServices.id, id));
+    return service || undefined;
+  }
+
+  async createLaundryService(service: InsertLaundryService): Promise<LaundryService> {
+    const [newService] = await db
+      .insert(laundryServices)
+      .values(service)
+      .returning();
+    return newService;
+  }
+
+  async updateLaundryService(id: string, service: Partial<InsertLaundryService>): Promise<LaundryService | undefined> {
+    const [updated] = await db
+      .update(laundryServices)
+      .set(service)
+      .where(eq(laundryServices.id, id))
+      .returning();
+    return updated || undefined;
+  }
+
+  // Transactions methods
+  async createTransaction(transaction: InsertTransaction): Promise<Transaction> {
+    const [newTransaction] = await db
+      .insert(transactions)
+      .values(transaction)
+      .returning();
+    return newTransaction;
+  }
+
+  async getTransactions(): Promise<Transaction[]> {
+    return await db.select().from(transactions);
+  }
+
+  async getTransaction(id: string): Promise<Transaction | undefined> {
+    const [transaction] = await db.select().from(transactions).where(eq(transactions.id, id));
+    return transaction || undefined;
+  }
+}
+
+export const storage = new DatabaseStorage();

@@ -116,5 +116,10 @@ Preferred communication style: Simple, everyday language.
 - **Enhanced User Flow**: Two-step selection process - first clothing item, then service type
 - **Service Categories**: Basic, Premium, Specialty, and Express service categories
 - **Cart Logic**: Combined clothing + service items with unique identifiers for proper cart management
+- **Database Migration**: Successfully migrated from in-memory storage to PostgreSQL database using Neon
+  - Implemented DatabaseStorage class replacing MemStorage
+  - Pushed schema to production database using Drizzle Kit
+  - Populated database with initial clothing items and laundry services data
+  - All API endpoints now use persistent PostgreSQL storage
 
 The application is designed as a full-stack monorepo with clear separation between client and server code, while maintaining shared type safety and efficient development workflows. The laundry-specific workflow allows customers to specify quantities of different clothing items and select appropriate services for each item type.
