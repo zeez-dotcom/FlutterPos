@@ -109,7 +109,7 @@ Preferred communication style: Simple, everyday language.
 - **Build Scripts**: Separate development and production build processes
 - **Database Setup**: Drizzle migrations handle schema deployment
 
-## Recent Changes (Jan 2025)
+## Recent Changes (July 2025)
 
 - **System Transformation**: Converted from traditional POS system to laundry management system
 - **New Data Models**: Separated clothing items (no pricing) from laundry services (with pricing)
@@ -121,5 +121,12 @@ Preferred communication style: Simple, everyday language.
   - Pushed schema to production database using Drizzle Kit
   - Populated database with initial clothing items and laundry services data
   - All API endpoints now use persistent PostgreSQL storage
+- **Authentication System**: Implemented comprehensive user authentication and authorization
+  - Added bcryptjs password hashing and Passport.js local strategy
+  - Created role-based access control (user, admin, super_admin)
+  - Built admin dashboard with category and user management
+  - Auto-created super admin account: username "superadmin", password "laundry123"
+  - Fixed password hash issue and verified session management
+  - Integrated custom laundry logo in header and admin interface
 
 The application is designed as a full-stack monorepo with clear separation between client and server code, while maintaining shared type safety and efficient development workflows. The laundry-specific workflow allows customers to specify quantities of different clothing items and select appropriate services for each item type.

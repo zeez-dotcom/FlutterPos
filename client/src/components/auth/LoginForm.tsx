@@ -23,12 +23,14 @@ export function LoginForm({ onLoginSuccess }: LoginFormProps) {
       const response = await apiRequest("POST", "/api/login", credentials);
       return await response.json();
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       toast({
         title: "Login Successful",
         description: "Welcome to the Laundry Management System",
       });
+      // Force refresh the auth state
       queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+      queryClient.refetchQueries({ queryKey: ["/api/auth/user"] });
       onLoginSuccess?.();
     },
     onError: (error) => {

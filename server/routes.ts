@@ -11,8 +11,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
   await setupAuth(app);
 
   // Authentication routes
-  app.post("/api/login", passport.authenticate("local"), (req, res) => {
-    res.json({ user: req.user, message: "Login successful" });
+  app.post("/api/login", (req, res, next) => {
+    passport.authenticate("local", (err: any, user: any, info: any) => {
+      if (err) {
+        return next(err);
+      }
+      if (!user) {
+        return res.status(401).json({ message: info?.message || "Login failed" });
+      }
+      
+      req.logIn(user, (err) => {
+        if (err) {
+          return next(err);
+        }
+        // Don't send password hash to client
+        const { passwordHash, ...safeUser } = user;
+        return res.json({ user: safeUser, message: "Login successful" });
+      });
+    })(req, res, next);
   });
 
   app.post("/api/logout", (req, res) => {
