@@ -16,8 +16,10 @@ import { useLaundryCart } from "@/hooks/use-laundry-cart";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { useTranslation, formatCurrency } from "@/lib/i18n";
+import { useTranslation } from "@/lib/i18n";
 import { LanguageSelector } from "@/components/language-selector";
+import { useCurrency } from "@/lib/currency";
+import { SystemSettings } from "@/components/system-settings";
 import { ClothingItem, LaundryService, Transaction, InsertTransaction, Customer } from "@shared/schema";
 import { ShoppingCart, Package, BarChart3, Settings, Users, Truck, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -35,7 +37,8 @@ export default function POS() {
   const isMobile = useIsMobile();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { t, language } = useTranslation();
+  const { t } = useTranslation();
+  const { formatCurrency } = useCurrency();
   
   const {
     cartItems,
@@ -75,7 +78,7 @@ export default function POS() {
         setCurrentOrder(null);
         toast({
           title: "Order completed successfully",
-          description: `Total: ${formatCurrency(result.total, language)}`,
+          description: `Total: ${formatCurrency(result.total)}`,
         });
       }
       setIsReceiptModalOpen(true);
@@ -179,12 +182,13 @@ export default function POS() {
       { id: "sales", label: "Sales", icon: ShoppingCart },
       { id: "customers", label: "Customers", icon: Users },
       { id: "orders", label: "Orders", icon: Truck },
-      { id: "reports", label: "Reports", icon: TrendingUp }
+      { id: "reports", label: "Reports", icon: TrendingUp },
+      { id: "settings", label: "Settings", icon: Settings }
     ];
 
     return (
       <nav className="fixed bottom-0 left-0 right-0 bg-pos-surface border-t border-gray-200 shadow-material-lg z-40">
-        <div className="grid grid-cols-4 h-16">
+        <div className="grid grid-cols-5 h-16">
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeView === item.id;
@@ -249,7 +253,7 @@ export default function POS() {
       case "inventory":
         return <InventoryManagement />;
       case "settings":
-        return <SettingsPanel />;
+        return <SystemSettings />;
       default:
         return (
           <div className="flex-1 flex items-center justify-center bg-pos-background">

@@ -13,6 +13,7 @@ import { LaundryCartSummary, Customer, InsertCustomer } from "@shared/schema";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { useCurrency } from "@/lib/currency";
 
 interface LaundryCartSidebarProps {
   cartSummary: LaundryCartSummary;
@@ -44,6 +45,7 @@ export function LaundryCartSidebar({
   const isMobile = useIsMobile();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { formatCurrency } = useCurrency();
   
   const [isCustomerDialogOpen, setIsCustomerDialogOpen] = useState(false);
   const [customerSearch, setCustomerSearch] = useState("");
@@ -131,7 +133,7 @@ export function LaundryCartSidebar({
                   <p className="text-sm text-gray-500">{selectedCustomer.phoneNumber}</p>
                   {parseFloat(selectedCustomer.balanceDue) > 0 && (
                     <Badge variant="destructive" className="text-xs">
-                      Balance: ${parseFloat(selectedCustomer.balanceDue).toFixed(2)}
+                      Balance: {formatCurrency(selectedCustomer.balanceDue)}
                     </Badge>
                   )}
                 </div>
@@ -183,7 +185,7 @@ export function LaundryCartSidebar({
                         </div>
                         {parseFloat(customer.balanceDue) > 0 && (
                           <Badge variant="destructive">
-                            ${parseFloat(customer.balanceDue).toFixed(2)}
+                            {formatCurrency(customer.balanceDue)}
                           </Badge>
                         )}
                       </div>
@@ -262,7 +264,7 @@ export function LaundryCartSidebar({
                         {item.service.name}
                       </p>
                       <p className="text-xs text-gray-500">
-                        ${parseFloat(item.service.price).toFixed(2)} each
+                        {formatCurrency(item.service.price)} each
                       </p>
                       
                       {/* Quantity Controls */}
@@ -291,7 +293,7 @@ export function LaundryCartSidebar({
                     
                     <div className="text-right">
                       <div className="font-medium text-gray-900">
-                        ${item.total.toFixed(2)}
+                        {formatCurrency(item.total)}
                       </div>
                       <Button
                         variant="ghost"
@@ -317,15 +319,15 @@ export function LaundryCartSidebar({
           <div className="space-y-1 text-sm">
             <div className="flex justify-between">
               <span className="text-gray-600">Subtotal:</span>
-              <span className="font-medium">${cartSummary.subtotal.toFixed(2)}</span>
+              <span className="font-medium">{formatCurrency(cartSummary.subtotal)}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-600">Tax (8.5%):</span>
-              <span className="font-medium">${cartSummary.tax.toFixed(2)}</span>
+              <span className="font-medium">{formatCurrency(cartSummary.tax)}</span>
             </div>
             <div className="flex justify-between text-lg font-bold border-t border-gray-200 pt-3">
               <span>Total:</span>
-              <span>${cartSummary.total.toFixed(2)}</span>
+              <span>{formatCurrency(cartSummary.total)}</span>
             </div>
           </div>
 

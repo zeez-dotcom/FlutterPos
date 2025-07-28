@@ -2,7 +2,8 @@ import { X, Printer, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Transaction, Customer } from "@shared/schema";
-import { useTranslation, formatCurrency } from "@/lib/i18n";
+import { useTranslation } from "@/lib/i18n";
+import { useCurrency } from "@/lib/currency";
 
 interface ReceiptModalProps {
   transaction?: Transaction | null;
@@ -14,7 +15,8 @@ interface ReceiptModalProps {
 
 export function ReceiptModal({ transaction, order, customer, isOpen, onClose }: ReceiptModalProps) {
   const receiptData = transaction || order;
-  const { t, language } = useTranslation();
+  const { t } = useTranslation();
+  const { formatCurrency } = useCurrency();
   
   if (!receiptData) return null;
 
@@ -105,7 +107,7 @@ export function ReceiptModal({ transaction, order, customer, isOpen, onClose }: 
               <div key={index} className="space-y-1">
                 <div className="flex justify-between">
                   <span className="flex-1">{item.name}</span>
-                  <span>{formatCurrency(item.total, language)}</span>
+                  <span>{formatCurrency(item.total)}</span>
                 </div>
                 <div className="text-xs text-gray-600 pl-2">
                   {item.service} × {item.quantity}
@@ -117,15 +119,15 @@ export function ReceiptModal({ transaction, order, customer, isOpen, onClose }: 
           <div className="border-t border-gray-400 pt-3 space-y-1">
             <div className="flex justify-between">
               <span>{t.subtotal}:</span>
-              <span>{formatCurrency(receiptData.subtotal, language)}</span>
+              <span>{formatCurrency(receiptData.subtotal)}</span>
             </div>
             <div className="flex justify-between">
               <span>{t.tax}:</span>
-              <span>{formatCurrency(receiptData.tax, language)}</span>
+              <span>{formatCurrency(receiptData.tax)}</span>
             </div>
             <div className="flex justify-between font-bold border-t pt-1">
               <span>{t.total}:</span>
-              <span>{formatCurrency(receiptData.total, language)}</span>
+              <span>{formatCurrency(receiptData.total)}</span>
             </div>
           </div>
 
@@ -141,7 +143,7 @@ export function ReceiptModal({ transaction, order, customer, isOpen, onClose }: 
                 <div className="bg-yellow-50 border border-yellow-200 rounded p-3 mt-3">
                   <div className="text-center">
                     <p className="font-bold text-yellow-800">{t.paymentDue}</p>
-                    <p className="text-lg font-bold text-red-600">{formatCurrency(receiptData.total, language)}</p>
+                    <p className="text-lg font-bold text-red-600">{formatCurrency(receiptData.total)}</p>
                     <p className="text-xs text-yellow-700 mt-1">
                       {t.paymentDueUponPickup}
                     </p>

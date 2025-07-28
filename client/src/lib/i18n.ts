@@ -330,14 +330,15 @@ export const useTranslation = () => {
   return { t, language, setLanguage };
 };
 
-export const formatCurrency = (amount: string | number, language: Language = 'en') => {
-  const num = typeof amount === 'string' ? parseFloat(amount) : amount;
-  
-  if (language === 'ar') {
-    return `${num.toFixed(3)} د.ك`; // Arabic KWD
-  } else if (language === 'ur') {
-    return `${num.toFixed(3)} کویتی دینار`; // Urdu KWD
-  } else {
-    return `${num.toFixed(3)} KWD`; // English KWD
-  }
-};
+// Remove this function as we now use the currency system
+// export const formatCurrency = (amount: string | number, language: Language = 'en') => {
+//   const num = typeof amount === 'string' ? parseFloat(amount) : amount;
+//   
+//   if (language === 'ar') {
+//     return `${num.toFixed(3)} د.ك`; // Arabic KWD
+//   } else if (language === 'ur') {
+//     return `${num.toFixed(3)} کویتی دینار`; // Urdu KWD
+//   } else {
+//     return `${num.toFixed(3)} KWD`; // English KWD
+//   }
+// };
