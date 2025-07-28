@@ -134,19 +134,21 @@ export default function POS() {
       // Create order with customer
       const orderData = {
         customerId: selectedCustomer!.id,
+        customerName: selectedCustomer!.name,
+        customerPhone: selectedCustomer!.phoneNumber,
         items: orderItems,
         subtotal: cartSummary.subtotal.toString(),
         tax: cartSummary.tax.toString(),
         total: cartSummary.total.toString(),
         paymentMethod: "pay_later",
         status: "received",
-        estimatedPickupDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString() // 3 days from now
+        estimatedPickupDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(), // 3 days from now
+        createdBy: "Sarah Johnson"
       };
       checkoutMutation.mutate(orderData);
     } else {
       // Create immediate transaction
       const transaction: InsertTransaction = {
-        customerId: selectedCustomer?.id || null,
         items: orderItems,
         subtotal: cartSummary.subtotal.toString(),
         tax: cartSummary.tax.toString(),
