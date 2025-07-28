@@ -10,6 +10,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { Order } from "@shared/schema";
 import { Search, Package, Clock, CheckCircle, AlertCircle } from "lucide-react";
 import { format } from "date-fns";
+import { useCurrency } from "@/lib/currency";
 
 const statusColors = {
   received: "bg-blue-100 text-blue-800",
@@ -35,6 +36,7 @@ export function OrderTracking() {
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { formatCurrency } = useCurrency();
 
   const { data: orders = [], isLoading } = useQuery<Order[]>({
     queryKey: ["/api/orders"],
@@ -77,7 +79,11 @@ export function OrderTracking() {
   };
 
   const getItemsSummary = (items: any[]) => {
-    return items.map(item => `${item.quantity}x ${item.clothingItem.name} (${item.service.name})`).join(", ");
+    return items.map(item => {
+      const clothingName = item.clothingItem?.name || 'Item';
+      const serviceName = item.service?.name || 'Service';
+      return `${item.quantity}x ${clothingName} (${serviceName})`;
+    }).join(", ");
   };
 
   if (isLoading) {
@@ -159,32 +165,36 @@ export function OrderTracking() {
               </CardHeader>
               
               <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <h4 className="font-medium text-sm text-gray-700 mb-2">Items</h4>
-                    <p className="text-sm">{getItemsSummary(items)}</p>
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                  <div className="lg:col-span-2">
+                    <h4 className="font-medium text-sm text-gray-700 mb-2">Items ({items.length})</h4>
+                    <div className="space-y-1">
+                      {items.slice(0, 3).map((item, index) => (
+                        <div key={index} className="text-sm flex justify-between">
+                          <span>{item.quantity}x {item.clothingItem?.name || 'Item'}</span>
+                          <span className="text-gray-500">({item.service?.name || 'Service'})</span>
+                        </div>
+                      ))}
+                      {items.length > 3 && (
+                        <div className="text-xs text-gray-500">+{items.length - 3} more items</div>
+                      )}
+                    </div>
                   </div>
                   <div>
-                    <h4 className="font-medium text-sm text-gray-700 mb-2">Order Details</h4>
+                    <h4 className="font-medium text-sm text-gray-700 mb-2">Summary</h4>
                     <div className="space-y-1 text-sm">
                       <div className="flex justify-between">
                         <span>Total:</span>
-                        <span className="font-medium">${parseFloat(order.total).toFixed(2)}</span>
+                        <span className="font-bold text-lg">{formatCurrency(order.total)}</span>
                       </div>
                       <div className="flex justify-between">
                         <span>Payment:</span>
                         <span className="capitalize">{order.paymentMethod.replace('_', ' ')}</span>
                       </div>
-                      <div className="flex justify-between">
+                      <div className="flex justify-between text-xs text-gray-500">
                         <span>Created:</span>
-                        <span>{format(new Date(order.createdAt), "MMM dd, yyyy HH:mm")}</span>
+                        <span>{format(new Date(order.createdAt), "MMM dd, HH:mm")}</span>
                       </div>
-                      {order.estimatedPickup && (
-                        <div className="flex justify-between">
-                          <span>Est. Pickup:</span>
-                          <span>{format(new Date(order.estimatedPickup), "MMM dd, yyyy")}</span>
-                        </div>
-                      )}
                     </div>
                   </div>
                 </div>
@@ -196,53 +206,68 @@ export function OrderTracking() {
                   </div>
                 )}
 
-                <div className="flex gap-2 pt-2">
-                  {order.status === 'received' && (
-                    <Button 
-                      size="sm" 
-                      onClick={() => handleStatusUpdate(order.id, 'processing')}
-                      disabled={updateStatusMutation.isPending}
-                    >
-                      Start Processing
-                    </Button>
-                  )}
-                  {order.status === 'processing' && (
-                    <Button 
-                      size="sm" 
-                      onClick={() => handleStatusUpdate(order.id, 'washing')}
-                      disabled={updateStatusMutation.isPending}
-                    >
-                      Start Washing
-                    </Button>
-                  )}
-                  {order.status === 'washing' && (
-                    <Button 
-                      size="sm" 
-                      onClick={() => handleStatusUpdate(order.id, 'drying')}
-                      disabled={updateStatusMutation.isPending}
-                    >
-                      Start Drying
-                    </Button>
-                  )}
-                  {order.status === 'drying' && (
-                    <Button 
-                      size="sm" 
-                      onClick={() => handleStatusUpdate(order.id, 'ready')}
-                      disabled={updateStatusMutation.isPending}
-                    >
-                      Mark Ready
-                    </Button>
-                  )}
-                  {order.status === 'ready' && (
-                    <Button 
-                      size="sm" 
-                      variant="outline"
-                      onClick={() => handleStatusUpdate(order.id, 'completed')}
-                      disabled={updateStatusMutation.isPending}
-                    >
-                      Mark Completed
-                    </Button>
-                  )}
+                <div className="flex justify-between items-center pt-3 border-t">
+                  <div className="flex items-center gap-2">
+                    {order.estimatedPickup && (
+                      <Badge variant="outline" className="text-xs">
+                        Pickup: {format(new Date(order.estimatedPickup), "MMM dd")}
+                      </Badge>
+                    )}
+                    {order.notes && (
+                      <Badge variant="outline" className="text-xs">
+                        Has Notes
+                      </Badge>
+                    )}
+                  </div>
+                  
+                  <div className="flex gap-2">
+                    {order.status === 'received' && (
+                      <Button 
+                        size="sm" 
+                        onClick={() => handleStatusUpdate(order.id, 'processing')}
+                        disabled={updateStatusMutation.isPending}
+                      >
+                        Start Processing
+                      </Button>
+                    )}
+                    {order.status === 'processing' && (
+                      <Button 
+                        size="sm" 
+                        onClick={() => handleStatusUpdate(order.id, 'washing')}
+                        disabled={updateStatusMutation.isPending}
+                      >
+                        Start Washing
+                      </Button>
+                    )}
+                    {order.status === 'washing' && (
+                      <Button 
+                        size="sm" 
+                        onClick={() => handleStatusUpdate(order.id, 'drying')}
+                        disabled={updateStatusMutation.isPending}
+                      >
+                        Start Drying
+                      </Button>
+                    )}
+                    {order.status === 'drying' && (
+                      <Button 
+                        size="sm" 
+                        onClick={() => handleStatusUpdate(order.id, 'ready')}
+                        disabled={updateStatusMutation.isPending}
+                      >
+                        Mark Ready
+                      </Button>
+                    )}
+                    {order.status === 'ready' && (
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => handleStatusUpdate(order.id, 'completed')}
+                        disabled={updateStatusMutation.isPending}
+                      >
+                        Mark Completed
+                      </Button>
+                    )}
+                  </div>
                 </div>
               </CardContent>
             </Card>
