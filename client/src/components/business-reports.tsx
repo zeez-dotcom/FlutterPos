@@ -7,11 +7,13 @@ import { Separator } from "@/components/ui/separator";
 import { Transaction, Order, Customer, Payment } from "@shared/schema";
 import { DollarSign, TrendingUp, Users, Package, Calendar, CreditCard } from "lucide-react";
 import { format, subDays, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from "date-fns";
+import { useCurrency } from "@/lib/currency";
 
 type ReportPeriod = "today" | "week" | "month" | "all";
 
 export function BusinessReports() {
   const [reportPeriod, setReportPeriod] = useState<ReportPeriod>("today");
+  const { formatCurrency } = useCurrency();
 
   const { data: transactions = [] } = useQuery<Transaction[]>({
     queryKey: ["/api/transactions"],
@@ -93,8 +95,6 @@ export function BusinessReports() {
   // Average order value
   const avgOrderValue = totalOrders > 0 ? totalOrderRevenue / totalOrders : 0;
 
-  const formatCurrency = (amount: number) => `$${amount.toFixed(2)}`;
-
   return (
     <div className="p-6 space-y-6">
       <div className="flex justify-between items-center">
@@ -112,177 +112,101 @@ export function BusinessReports() {
         </Select>
       </div>
 
-      {/* Key Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{formatCurrency(totalOrderRevenue)}</div>
-            <p className="text-xs text-muted-foreground">
-              From {totalOrders} orders
-            </p>
-          </CardContent>
+      {/* Key Metrics - Streamlined */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card className="p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Revenue</p>
+              <p className="text-xl font-bold">{formatCurrency(totalOrderRevenue)}</p>
+              <p className="text-xs text-gray-500">{totalOrders} orders</p>
+            </div>
+            <DollarSign className="h-8 w-8 text-green-500" />
+          </div>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Outstanding Amount</CardTitle>
-            <CreditCard className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-red-600">{formatCurrency(totalOutstanding)}</div>
-            <p className="text-xs text-muted-foreground">
-              Pay later balances
-            </p>
-          </CardContent>
+        <Card className="p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Outstanding</p>
+              <p className="text-xl font-bold text-red-600">{formatCurrency(totalOutstanding)}</p>
+              <p className="text-xs text-gray-500">Pay later</p>
+            </div>
+            <CreditCard className="h-8 w-8 text-red-500" />
+          </div>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Orders</CardTitle>
-            <Package className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{pendingOrders + readyOrders}</div>
-            <p className="text-xs text-muted-foreground">
-              {pendingOrders} in progress, {readyOrders} ready
-            </p>
-          </CardContent>
+        <Card className="p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Active Orders</p>
+              <p className="text-xl font-bold">{pendingOrders + readyOrders}</p>
+              <p className="text-xs text-gray-500">{readyOrders} ready</p>
+            </div>
+            <Package className="h-8 w-8 text-blue-500" />
+          </div>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Customers</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{activeCustomers}</div>
-            <p className="text-xs text-muted-foreground">
-              Avg order: {formatCurrency(avgOrderValue)}
-            </p>
-          </CardContent>
+        <Card className="p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Customers</p>
+              <p className="text-xl font-bold">{activeCustomers}</p>
+              <p className="text-xs text-gray-500">Avg: {formatCurrency(avgOrderValue)}</p>
+            </div>
+            <Users className="h-8 w-8 text-purple-500" />
+          </div>
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Order Status Breakdown */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Order Status</CardTitle>
-            <CardDescription>Current order pipeline status</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex justify-between items-center">
+      {/* Streamlined Details Section */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* Order Status */}
+        <Card className="p-4">
+          <h3 className="font-semibold mb-3">Order Status</h3>
+          <div className="space-y-2 text-sm">
+            <div className="flex justify-between">
               <span>Completed</span>
-              <Badge variant="outline" className="bg-green-50">
-                {completedOrders}
-              </Badge>
+              <Badge className="bg-green-100 text-green-800">{completedOrders}</Badge>
             </div>
-            <div className="flex justify-between items-center">
-              <span>Ready for Pickup</span>
-              <Badge variant="outline" className="bg-blue-50">
-                {readyOrders}
-              </Badge>
+            <div className="flex justify-between">
+              <span>Ready</span>
+              <Badge className="bg-blue-100 text-blue-800">{readyOrders}</Badge>
             </div>
-            <div className="flex justify-between items-center">
+            <div className="flex justify-between">
               <span>In Progress</span>
-              <Badge variant="outline" className="bg-yellow-50">
-                {pendingOrders}
-              </Badge>
+              <Badge className="bg-yellow-100 text-yellow-800">{pendingOrders}</Badge>
             </div>
-            <Separator />
-            <div className="flex justify-between items-center font-medium">
-              <span>Total Orders</span>
-              <Badge>{totalOrders}</Badge>
-            </div>
-          </CardContent>
+          </div>
         </Card>
 
         {/* Payment Methods */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Payment Methods</CardTitle>
-            <CardDescription>Revenue breakdown by payment type</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {Object.entries(paymentMethodBreakdown).map(([method, amount]) => (
-              <div key={method} className="flex justify-between items-center">
+        <Card className="p-4">
+          <h3 className="font-semibold mb-3">Payment Methods</h3>
+          <div className="space-y-2 text-sm">
+            {Object.entries(paymentMethodBreakdown).slice(0, 3).map(([method, amount]) => (
+              <div key={method} className="flex justify-between">
                 <span className="capitalize">{method.replace('_', ' ')}</span>
-                <div className="flex items-center gap-2">
-                  <span className="font-medium">{formatCurrency(amount as number)}</span>
-                  {method === 'pay_later' && (
-                    <Badge variant="outline" className="text-red-600">
-                      Outstanding
-                    </Badge>
-                  )}
-                </div>
+                <span className="font-medium">{formatCurrency(amount as number)}</span>
               </div>
             ))}
-          </CardContent>
+          </div>
         </Card>
 
         {/* Top Services */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Popular Services</CardTitle>
-            <CardDescription>Most requested laundry services</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {topServices.map(([service, count], index) => (
-              <div key={service} className="flex justify-between items-center">
-                <div className="flex items-center gap-2">
-                  <Badge variant="outline" className="w-6 h-6 rounded-full text-xs">
-                    {index + 1}
-                  </Badge>
-                  <span>{service}</span>
-                </div>
-                <Badge variant="secondary">{count as number} items</Badge>
+        <Card className="p-4">
+          <h3 className="font-semibold mb-3">Popular Services</h3>
+          <div className="space-y-2 text-sm">
+            {topServices.slice(0, 3).map(([service, count], index) => (
+              <div key={service} className="flex justify-between">
+                <span className="truncate">{service}</span>
+                <Badge variant="secondary" className="text-xs">{count as number}</Badge>
               </div>
             ))}
             {topServices.length === 0 && (
-              <p className="text-sm text-gray-500 text-center py-4">
-                No service data available for this period
-              </p>
+              <p className="text-xs text-gray-500 text-center py-2">No data</p>
             )}
-          </CardContent>
-        </Card>
-
-        {/* Financial Summary */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Financial Summary</CardTitle>
-            <CardDescription>Period financial overview</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex justify-between items-center">
-              <span>Orders Revenue</span>
-              <span className="font-medium text-green-600">
-                +{formatCurrency(totalOrderRevenue)}
-              </span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span>Payments Received</span>
-              <span className="font-medium text-green-600">
-                +{formatCurrency(totalPaymentsReceived)}
-              </span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span>Outstanding Balance</span>
-              <span className="font-medium text-red-600">
-                -{formatCurrency(totalOutstanding)}
-              </span>
-            </div>
-            <Separator />
-            <div className="flex justify-between items-center font-medium">
-              <span>Net Cash Flow</span>
-              <span className={`font-bold ${totalPaymentsReceived >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                {formatCurrency(totalPaymentsReceived)}
-              </span>
-            </div>
-          </CardContent>
+          </div>
         </Card>
       </div>
     </div>
