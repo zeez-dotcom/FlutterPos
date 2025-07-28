@@ -16,6 +16,8 @@ import { useLaundryCart } from "@/hooks/use-laundry-cart";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { useTranslation, formatCurrency } from "@/lib/i18n";
+import { LanguageSelector } from "@/components/language-selector";
 import { ClothingItem, LaundryService, Transaction, InsertTransaction, Customer } from "@shared/schema";
 import { ShoppingCart, Package, BarChart3, Settings, Users, Truck, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -25,6 +27,7 @@ export default function POS() {
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [isCartVisible, setIsCartVisible] = useState(true); // Always visible on desktop, togglable on mobile
   const [currentTransaction, setCurrentTransaction] = useState<Transaction | null>(null);
+  const [currentOrder, setCurrentOrder] = useState<any | null>(null);
   const [isReceiptModalOpen, setIsReceiptModalOpen] = useState(false);
   const [selectedClothingItem, setSelectedClothingItem] = useState<ClothingItem | null>(null);
   const [isServiceModalOpen, setIsServiceModalOpen] = useState(false);
@@ -32,6 +35,7 @@ export default function POS() {
   const isMobile = useIsMobile();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { t, language } = useTranslation();
   
   const {
     cartItems,
@@ -60,18 +64,21 @@ export default function POS() {
     },
     onSuccess: (result) => {
       if (paymentMethod === "pay_later") {
+        setCurrentOrder(result);
+        setCurrentTransaction(null);
         toast({
           title: "Order created successfully",
-          description: `Order for ${selectedCustomer?.name} has been created`,
+          description: `Pay-later order for ${selectedCustomer?.name} has been created`,
         });
       } else {
         setCurrentTransaction(result);
-        setIsReceiptModalOpen(true);
+        setCurrentOrder(null);
         toast({
           title: "Order completed successfully",
-          description: `Total: $${parseFloat(result.total).toFixed(2)}`,
+          description: `Total: ${formatCurrency(result.total, language)}`,
         });
       }
+      setIsReceiptModalOpen(true);
       clearCart();
       setSelectedCustomer(null);
       queryClient.invalidateQueries({ queryKey: ["/api/clothing-items"] });
@@ -284,6 +291,7 @@ export default function POS() {
 
       <ReceiptModal
         transaction={currentTransaction}
+        order={currentOrder}
         customer={selectedCustomer}
         isOpen={isReceiptModalOpen}
         onClose={() => setIsReceiptModalOpen(false)}

@@ -4,6 +4,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { LanguageSelector } from "@/components/language-selector";
 import { Link } from "wouter";
 
 interface POSHeaderProps {
@@ -71,6 +72,9 @@ export function POSHeader({ cartItemCount = 0, onToggleCart }: POSHeaderProps) {
                 </span>
               )}
             </Button>
+            
+            {/* Language Selector */}
+            <LanguageSelector />
             
             {/* Admin Access */}
             {user && (user.role === 'admin' || user.role === 'super_admin') && (
