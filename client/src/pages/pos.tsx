@@ -6,6 +6,9 @@ import { ClothingGrid } from "@/components/clothing-grid";
 import { LaundryCartSidebar } from "@/components/laundry-cart-sidebar";
 import { ServiceSelectionModal } from "@/components/service-selection-modal";
 import { ReceiptModal } from "@/components/receipt-modal";
+import { InventoryManagement } from "@/components/inventory-management";
+import { ReportsDashboard } from "@/components/reports-dashboard";
+import { SettingsPanel } from "@/components/settings-panel";
 import { useLaundryCart } from "@/hooks/use-laundry-cart";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useToast } from "@/hooks/use-toast";
@@ -151,14 +154,45 @@ export default function POS() {
   };
 
   // Non-sales views placeholder
-  const renderNonSalesView = () => (
-    <div className="flex-1 flex items-center justify-center bg-pos-background">
-      <div className="text-center">
-        <h2 className="text-2xl font-bold text-gray-900 mb-2 capitalize">{activeView}</h2>
-        <p className="text-gray-600">This section is under development</p>
-      </div>
-    </div>
-  );
+  const renderActiveView = () => {
+    switch (activeView) {
+      case "sales":
+        return (
+          <>
+            <ClothingGrid
+              onSelectClothing={handleSelectClothing}
+            />
+            
+            <LaundryCartSidebar
+              cartSummary={cartSummary}
+              paymentMethod={paymentMethod}
+              onUpdateQuantity={updateQuantity}
+              onRemoveItem={removeFromCart}
+              onClearCart={clearCart}
+              onSelectPayment={setPaymentMethod}
+              onCheckout={handleCheckout}
+              isVisible={isCartVisible}
+              onClose={() => setIsCartVisible(false)}
+            />
+          </>
+        );
+      case "inventory":
+        return <InventoryManagement />;
+      case "reports":
+        return <ReportsDashboard />;
+      case "settings":
+        return <SettingsPanel />;
+      default:
+        return (
+          <div className="flex-1 flex items-center justify-center bg-pos-background">
+            <div className="text-center">
+              <h2 className="text-2xl font-bold text-gray-900 mb-2 capitalize">{activeView}</h2>
+              <p className="text-gray-600">This section is under development</p>
+            </div>
+          </div>
+        );
+    }
+  };
 
   return (
     <div className="min-h-screen bg-pos-background">
@@ -170,28 +204,8 @@ export default function POS() {
       <div className="flex h-screen bg-pos-background">
         <POSSidebar activeView={activeView} onViewChange={setActiveView} />
         
-        <main className="flex-1 flex flex-col lg:flex-row overflow-hidden">
-          {activeView === "sales" ? (
-            <>
-              <ClothingGrid
-                onSelectClothing={handleSelectClothing}
-              />
-              
-              <LaundryCartSidebar
-                cartSummary={cartSummary}
-                paymentMethod={paymentMethod}
-                onUpdateQuantity={updateQuantity}
-                onRemoveItem={removeFromCart}
-                onClearCart={clearCart}
-                onSelectPayment={setPaymentMethod}
-                onCheckout={handleCheckout}
-                isVisible={isCartVisible}
-                onClose={() => setIsCartVisible(false)}
-              />
-            </>
-          ) : (
-            renderNonSalesView()
-          )}
+        <main className={`flex-1 ${activeView === "sales" ? "flex flex-col lg:flex-row" : "flex"} overflow-hidden`}>
+          {renderActiveView()}
         </main>
       </div>
 

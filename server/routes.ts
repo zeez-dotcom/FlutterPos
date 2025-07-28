@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertTransactionSchema } from "@shared/schema";
+import { insertTransactionSchema, insertClothingItemSchema, insertLaundryServiceSchema } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Clothing Items routes
@@ -39,6 +39,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post("/api/clothing-items", async (req, res) => {
+    try {
+      const validatedData = insertClothingItemSchema.parse(req.body);
+      const newItem = await storage.createClothingItem(validatedData);
+      res.json(newItem);
+    } catch (error) {
+      console.error("Error creating clothing item:", error);
+      res.status(500).json({ message: "Failed to create clothing item" });
+    }
+  });
+
+  app.put("/api/clothing-items/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const validatedData = insertClothingItemSchema.parse(req.body);
+      const updatedItem = await storage.updateClothingItem(id, validatedData);
+      if (!updatedItem) {
+        return res.status(404).json({ message: "Clothing item not found" });
+      }
+      res.json(updatedItem);
+    } catch (error) {
+      console.error("Error updating clothing item:", error);
+      res.status(500).json({ message: "Failed to update clothing item" });
+    }
+  });
+
   // Laundry Services routes
   app.get("/api/laundry-services", async (req, res) => {
     try {
@@ -71,6 +97,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(service);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch laundry service" });
+    }
+  });
+
+  app.post("/api/laundry-services", async (req, res) => {
+    try {
+      const validatedData = insertLaundryServiceSchema.parse(req.body);
+      const newService = await storage.createLaundryService(validatedData);
+      res.json(newService);
+    } catch (error) {
+      console.error("Error creating laundry service:", error);
+      res.status(500).json({ message: "Failed to create laundry service" });
+    }
+  });
+
+  app.put("/api/laundry-services/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const validatedData = insertLaundryServiceSchema.parse(req.body);
+      const updatedService = await storage.updateLaundryService(id, validatedData);
+      if (!updatedService) {
+        return res.status(404).json({ message: "Laundry service not found" });
+      }
+      res.json(updatedService);
+    } catch (error) {
+      console.error("Error updating laundry service:", error);
+      res.status(500).json({ message: "Failed to update laundry service" });
     }
   });
 

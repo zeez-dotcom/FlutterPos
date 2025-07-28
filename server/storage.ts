@@ -144,18 +144,30 @@ export class MemStorage implements IStorage {
     return this.clothingItems.get(id);
   }
 
-  async createClothingItem(insertItem: InsertClothingItem): Promise<ClothingItem> {
+  async createClothingItem(item: InsertClothingItem): Promise<ClothingItem> {
     const id = randomUUID();
-    const item: ClothingItem = { ...insertItem, id };
-    this.clothingItems.set(id, item);
-    return item;
+    const newItem: ClothingItem = { 
+      id, 
+      name: item.name,
+      description: item.description || null,
+      category: item.category,
+      imageUrl: item.imageUrl || null
+    };
+    this.clothingItems.set(id, newItem);
+    return newItem;
   }
 
-  async updateClothingItem(id: string, insertItem: Partial<InsertClothingItem>): Promise<ClothingItem | undefined> {
+  async updateClothingItem(id: string, item: Partial<InsertClothingItem>): Promise<ClothingItem | undefined> {
     const existing = this.clothingItems.get(id);
     if (!existing) return undefined;
     
-    const updated: ClothingItem = { ...existing, ...insertItem };
+    const updated: ClothingItem = { 
+      ...existing, 
+      name: item.name ?? existing.name,
+      description: item.description ?? existing.description,
+      category: item.category ?? existing.category,
+      imageUrl: item.imageUrl ?? existing.imageUrl
+    };
     this.clothingItems.set(id, updated);
     return updated;
   }
@@ -176,18 +188,30 @@ export class MemStorage implements IStorage {
     return this.laundryServices.get(id);
   }
 
-  async createLaundryService(insertService: InsertLaundryService): Promise<LaundryService> {
+  async createLaundryService(service: InsertLaundryService): Promise<LaundryService> {
     const id = randomUUID();
-    const service: LaundryService = { ...insertService, id };
-    this.laundryServices.set(id, service);
-    return service;
+    const newService: LaundryService = { 
+      id, 
+      name: service.name,
+      description: service.description || null,
+      price: service.price,
+      category: service.category
+    };
+    this.laundryServices.set(id, newService);
+    return newService;
   }
 
-  async updateLaundryService(id: string, insertService: Partial<InsertLaundryService>): Promise<LaundryService | undefined> {
+  async updateLaundryService(id: string, service: Partial<InsertLaundryService>): Promise<LaundryService | undefined> {
     const existing = this.laundryServices.get(id);
     if (!existing) return undefined;
     
-    const updated: LaundryService = { ...existing, ...insertService };
+    const updated: LaundryService = { 
+      ...existing, 
+      name: service.name ?? existing.name,
+      description: service.description ?? existing.description,
+      price: service.price ?? existing.price,
+      category: service.category ?? existing.category
+    };
     this.laundryServices.set(id, updated);
     return updated;
   }
