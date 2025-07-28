@@ -2,6 +2,12 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 
+// Set SESSION_SECRET if not present
+if (!process.env.SESSION_SECRET) {
+  process.env.SESSION_SECRET = 'laundry-system-secret-key-' + Date.now();
+  console.log('SESSION_SECRET was not set, generated fallback:', process.env.SESSION_SECRET.substring(0, 20) + '...');
+}
+
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));

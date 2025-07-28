@@ -16,8 +16,10 @@ export function getSession() {
     ttl: sessionTtl,
     tableName: "sessions",
   });
+  const sessionSecret = process.env.SESSION_SECRET || 'fallback-secret-for-development';
+  
   return session({
-    secret: process.env.SESSION_SECRET!,
+    secret: sessionSecret,
     store: sessionStore,
     resave: false,
     saveUninitialized: false,
@@ -55,6 +57,7 @@ export async function setupAuth(app: Express) {
 
         return done(null, user);
       } catch (error) {
+        console.error(`Login error:`, error);
         return done(error);
       }
     })
