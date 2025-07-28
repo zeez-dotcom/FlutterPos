@@ -15,21 +15,27 @@ export function BusinessReports() {
   const [reportPeriod, setReportPeriod] = useState<ReportPeriod>("today");
   const { formatCurrency } = useCurrency();
 
-  const { data: transactions = [] } = useQuery<Transaction[]>({
+  const { data: transactions = [], isLoading: transactionsLoading } = useQuery<Transaction[]>({
     queryKey: ["/api/transactions"],
+    refetchInterval: 30000, // Refresh every 30 seconds
   });
 
-  const { data: orders = [] } = useQuery<Order[]>({
+  const { data: orders = [], isLoading: ordersLoading } = useQuery<Order[]>({
     queryKey: ["/api/orders"],
+    refetchInterval: 30000,
   });
 
-  const { data: customers = [] } = useQuery<Customer[]>({
+  const { data: customers = [], isLoading: customersLoading } = useQuery<Customer[]>({
     queryKey: ["/api/customers"],
+    refetchInterval: 60000, // Refresh every minute
   });
 
-  const { data: payments = [] } = useQuery<Payment[]>({
+  const { data: payments = [], isLoading: paymentsLoading } = useQuery<Payment[]>({
     queryKey: ["/api/payments"],
+    refetchInterval: 30000,
   });
+
+  const isLoading = transactionsLoading || ordersLoading || customersLoading || paymentsLoading;
 
   const getDateRange = (period: ReportPeriod) => {
     const now = new Date();
@@ -95,34 +101,53 @@ export function BusinessReports() {
   // Average order value
   const avgOrderValue = totalOrders > 0 ? totalOrderRevenue / totalOrders : 0;
 
-  return (
-    <div className="p-6 space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">Business Reports</h2>
-        <Select value={reportPeriod} onValueChange={(value: ReportPeriod) => setReportPeriod(value)}>
-          <SelectTrigger className="w-48">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="today">Today</SelectItem>
-            <SelectItem value="week">This Week</SelectItem>
-            <SelectItem value="month">This Month</SelectItem>
-            <SelectItem value="all">All Time</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* Key Metrics - Streamlined */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Revenue</p>
-              <p className="text-xl font-bold">{formatCurrency(totalOrderRevenue)}</p>
-              <p className="text-xs text-gray-500">{totalOrders} orders</p>
-            </div>
-            <DollarSign className="h-8 w-8 text-green-500" />
+  if (isLoading) {
+    return (
+      <div className="p-6">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading reports...</p>
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="h-full flex flex-col">
+      <div className="p-6 flex-shrink-0">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-2xl font-bold">Business Reports</h2>
+          <div className="flex items-center gap-4">
+            <Badge variant="outline" className="bg-green-50 text-green-700">
+              Live Data
+            </Badge>
+            <Select value={reportPeriod} onValueChange={(value: ReportPeriod) => setReportPeriod(value)}>
+              <SelectTrigger className="w-48">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="today">Today</SelectItem>
+                <SelectItem value="week">This Week</SelectItem>
+                <SelectItem value="month">This Month</SelectItem>
+                <SelectItem value="all">All Time</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        {/* Key Metrics - Streamlined */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <Card className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Revenue</p>
+                <p className="text-xl font-bold">{formatCurrency(totalOrderRevenue)}</p>
+                <p className="text-xs text-gray-500">{totalOrders} orders</p>
+              </div>
+              <DollarSign className="h-8 w-8 text-green-500" />
+            </div>
         </Card>
 
         <Card className="p-4">
@@ -208,6 +233,7 @@ export function BusinessReports() {
             )}
           </div>
         </Card>
+      </div>
       </div>
     </div>
   );
