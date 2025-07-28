@@ -5,6 +5,7 @@ import { Transaction, Customer } from "@shared/schema";
 import { useTranslation } from "@/lib/i18n";
 import { useCurrency } from "@/lib/currency";
 import { useState, useEffect } from "react";
+import logoImage from "@/assets/logo.png";
 
 interface ReceiptModalProps {
   transaction?: Transaction | null;
@@ -42,8 +43,8 @@ export function ReceiptModal({ transaction, order, customer, isOpen, onClose }: 
   const date = new Date(receiptData.createdAt);
   const isPayLater = receiptData.paymentMethod === 'pay_later';
   
-  // Company logo URL - better direct laundry logo
-  const logoUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a8/Laundry_pictogram.svg/512px-Laundry_pictogram.svg.png";
+  // Company logo - using imported asset
+  const logoUrl = logoImage;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
