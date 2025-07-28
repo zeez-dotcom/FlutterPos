@@ -32,8 +32,8 @@ export function LaundryCartSidebar({
   return (
     <div className={`
       ${isMobile ? 'fixed inset-0 z-50' : 'w-96'} 
-      ${isMobile && !isVisible ? 'hidden' : ''}
-      bg-pos-surface shadow-material-lg border-l border-gray-200 flex flex-col
+      ${isMobile && !isVisible ? 'hidden' : 'flex'}
+      bg-pos-surface shadow-material-lg border-l border-gray-200 flex-col
     `}>
       {/* Cart Header */}
       <div className="p-4 border-b border-gray-200">

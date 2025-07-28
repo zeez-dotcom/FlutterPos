@@ -16,7 +16,7 @@ import { Button } from "@/components/ui/button";
 
 export default function POS() {
   const [activeView, setActiveView] = useState("sales");
-  const [isCartVisible, setIsCartVisible] = useState(false);
+  const [isCartVisible, setIsCartVisible] = useState(true); // Always visible on desktop, togglable on mobile
   const [currentTransaction, setCurrentTransaction] = useState<Transaction | null>(null);
   const [isReceiptModalOpen, setIsReceiptModalOpen] = useState(false);
   const [selectedClothingItem, setSelectedClothingItem] = useState<ClothingItem | null>(null);
