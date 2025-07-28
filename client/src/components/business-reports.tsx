@@ -35,6 +35,11 @@ export function BusinessReports() {
     refetchInterval: 30000,
   });
 
+  const { data: laundryServices = [] } = useQuery<any[]>({
+    queryKey: ["/api/laundry-services"],
+    refetchInterval: 60000, // Refresh every minute
+  });
+
   const isLoading = transactionsLoading || ordersLoading || customersLoading || paymentsLoading;
 
   const getDateRange = (period: ReportPeriod) => {
@@ -84,12 +89,33 @@ export function BusinessReports() {
     return acc;
   }, {} as Record<string, number>);
 
-  // Service popularity (from orders)
+  // Service popularity (from orders) - improved data extraction
   const servicePopularity = filteredOrders.reduce((acc, order) => {
     const items = Array.isArray(order.items) ? order.items : [];
     items.forEach((item: any) => {
-      const serviceName = item.service?.name || 'Unknown Service';
-      acc[serviceName] = (acc[serviceName] || 0) + (item.quantity || 1);
+      // Try multiple ways to get service name
+      let serviceName = 'Unknown Service';
+      
+      if (item.service?.name) {
+        serviceName = item.service.name;
+      } else if (item.serviceName) {
+        serviceName = item.serviceName;
+      } else if (item.service) {
+        serviceName = typeof item.service === 'string' ? item.service : 'Unknown Service';
+      } else if (item.serviceId && laundryServices.length > 0) {
+        // Look up service by ID
+        const service = laundryServices.find(s => s.id === item.serviceId);
+        if (service) serviceName = service.name;
+      } else if (item.name && item.name.includes('(') && item.name.includes(')')) {
+        // Extract service from item name like "Shirt (Wash & Fold)"
+        const match = item.name.match(/\(([^)]+)\)/);
+        if (match) serviceName = match[1];
+      }
+      
+      // Filter out "Unknown Service" entries for cleaner display
+      if (serviceName !== 'Unknown Service') {
+        acc[serviceName] = (acc[serviceName] || 0) + (item.quantity || 1);
+      }
     });
     return acc;
   }, {} as Record<string, number>);
@@ -222,14 +248,19 @@ export function BusinessReports() {
         <Card className="p-4">
           <h3 className="font-semibold mb-3">Popular Services</h3>
           <div className="space-y-2 text-sm">
-            {topServices.slice(0, 3).map(([service, count], index) => (
-              <div key={service} className="flex justify-between">
-                <span className="truncate">{service}</span>
-                <Badge variant="secondary" className="text-xs">{count as number}</Badge>
+            {topServices.length > 0 ? (
+              topServices.slice(0, 3).map(([service, count]) => (
+                <div key={service} className="flex justify-between items-center">
+                  <span className="truncate flex-1 pr-2">{service}</span>
+                  <Badge variant="secondary" className="text-xs">{count as number} orders</Badge>
+                </div>
+              ))
+            ) : (
+              <div className="text-center py-4">
+                <Package className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+                <p className="text-xs text-gray-500">No service data available</p>
+                <p className="text-xs text-gray-400">Complete some orders to see popular services</p>
               </div>
-            ))}
-            {topServices.length === 0 && (
-              <p className="text-xs text-gray-500 text-center py-2">No data</p>
             )}
           </div>
         </Card>
