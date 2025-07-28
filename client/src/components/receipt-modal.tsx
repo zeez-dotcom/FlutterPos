@@ -32,7 +32,91 @@ export function ReceiptModal({ transaction, order, customer, isOpen, onClose }: 
   if (!receiptData) return null;
 
   const handlePrint = () => {
-    window.print();
+    const receiptContent = document.getElementById('receiptContent');
+    if (!receiptContent) return;
+
+    // Create a new window for printing
+    const printWindow = window.open('', '_blank', 'width=400,height=600');
+    if (!printWindow) return;
+
+    // Get the receipt HTML content
+    const receiptHTML = receiptContent.outerHTML;
+    
+    // Create a complete HTML document for printing
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Receipt</title>
+          <style>
+            body { 
+              font-family: monospace; 
+              font-size: 12px; 
+              margin: 0; 
+              padding: 20px;
+              line-height: 1.4;
+            }
+            .space-y-4 > * + * { margin-top: 1rem; }
+            .space-y-2 > * + * { margin-top: 0.5rem; }
+            .space-y-1 > * + * { margin-top: 0.25rem; }
+            .text-center { text-align: center; }
+            .text-xs { font-size: 10px; }
+            .font-bold { font-weight: bold; }
+            .text-lg { font-size: 16px; }
+            .text-gray-600 { color: #666; }
+            .text-gray-400 { color: #999; }
+            .text-yellow-800 { color: #92400e; }
+            .text-red-600 { color: #dc2626; }
+            .text-green-800 { color: #166534; }
+            .text-green-700 { color: #15803d; }
+            .text-yellow-700 { color: #a16207; }
+            .flex { display: flex; }
+            .justify-between { justify-content: space-between; }
+            .border-t { border-top: 1px solid #d1d5db; }
+            .border-b { border-bottom: 1px solid #d1d5db; }
+            .border-gray-400 { border-color: #9ca3af; }
+            .py-3 { padding-top: 0.75rem; padding-bottom: 0.75rem; }
+            .pt-3 { padding-top: 0.75rem; }
+            .pt-1 { padding-top: 0.25rem; }
+            .pl-2 { padding-left: 0.5rem; }
+            .p-3 { padding: 0.75rem; }
+            .p-2 { padding: 0.5rem; }
+            .mt-3 { margin-top: 0.75rem; }
+            .mt-2 { margin-top: 0.5rem; }
+            .mt-1 { margin-top: 0.25rem; }
+            .mx-auto { margin-left: auto; margin-right: auto; }
+            .w-16 { width: 4rem; }
+            .h-16 { height: 4rem; }
+            .object-contain { object-fit: contain; }
+            .rounded-lg { border-radius: 0.5rem; }
+            .rounded { border-radius: 0.25rem; }
+            .bg-yellow-50 { background-color: #fefce8; }
+            .bg-green-50 { background-color: #f0fdf4; }
+            .border { border-width: 1px; }
+            .border-yellow-200 { border-color: #fde047; }
+            .border-green-200 { border-color: #bbf7d0; }
+            .capitalize { text-transform: capitalize; }
+            .flex-1 { flex: 1; }
+            img { max-width: 100%; height: auto; }
+            @media print {
+              body { margin: 0; padding: 10px; }
+              .no-print { display: none; }
+            }
+          </style>
+        </head>
+        <body>
+          ${receiptHTML}
+        </body>
+      </html>
+    `);
+    
+    printWindow.document.close();
+    
+    // Wait for content to load, then print
+    setTimeout(() => {
+      printWindow.print();
+      printWindow.close();
+    }, 500);
   };
 
   const handleEmail = () => {
