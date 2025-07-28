@@ -12,6 +12,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { Customer, InsertCustomer, Payment, InsertPayment } from "@shared/schema";
 import { Search, Plus, Phone, DollarSign, CreditCard, User, Calendar } from "lucide-react";
 import { format } from "date-fns";
+import { useCurrency } from "@/lib/currency";
 
 interface CustomerManagementProps {
   onCustomerSelect?: (customer: Customer) => void;
@@ -34,6 +35,7 @@ export function CustomerManagement({ onCustomerSelect }: CustomerManagementProps
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { formatCurrency } = useCurrency();
 
   const { data: customers = [], isLoading } = useQuery<Customer[]>({
     queryKey: ["/api/customers"],
@@ -226,7 +228,7 @@ export function CustomerManagement({ onCustomerSelect }: CustomerManagementProps
                 </div>
                 {parseFloat(customer.balanceDue) > 0 && (
                   <Badge variant="destructive">
-                    Due: ${parseFloat(customer.balanceDue).toFixed(2)}
+                    Due: {formatCurrency(customer.balanceDue)}
                   </Badge>
                 )}
               </div>
@@ -237,7 +239,7 @@ export function CustomerManagement({ onCustomerSelect }: CustomerManagementProps
               )}
               <div className="flex justify-between text-sm">
                 <span>Total Spent:</span>
-                <span className="font-medium">${parseFloat(customer.totalSpent).toFixed(2)}</span>
+                <span className="font-medium">{formatCurrency(customer.totalSpent)}</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span>Loyalty Points:</span>
@@ -280,7 +282,7 @@ export function CustomerManagement({ onCustomerSelect }: CustomerManagementProps
           <DialogHeader>
             <DialogTitle>Record Payment - {selectedCustomer?.name}</DialogTitle>
             <DialogDescription>
-              Current balance due: ${parseFloat(selectedCustomer?.balanceDue || "0").toFixed(2)}
+              Current balance due: {formatCurrency(selectedCustomer?.balanceDue || "0")}
             </DialogDescription>
           </DialogHeader>
           
@@ -331,7 +333,7 @@ export function CustomerManagement({ onCustomerSelect }: CustomerManagementProps
                     <div key={payment.id} className="flex justify-between items-center text-sm">
                       <div className="flex items-center gap-2">
                         <CreditCard className="w-3 h-3" />
-                        <span>${parseFloat(payment.amount).toFixed(2)}</span>
+                        <span>{formatCurrency(payment.amount)}</span>
                         <Badge variant="outline" className="text-xs">
                           {payment.paymentMethod}
                         </Badge>
