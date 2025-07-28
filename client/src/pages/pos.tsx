@@ -47,25 +47,42 @@ export default function POS() {
   const cartSummary = getCartSummary();
 
   const checkoutMutation = useMutation({
-    mutationFn: async (transaction: InsertTransaction) => {
-      const response = await apiRequest("POST", "/api/transactions", transaction);
-      return response.json();
+    mutationFn: async (orderData: any) => {
+      if (paymentMethod === "pay_later") {
+        // Create order for pay later
+        const response = await apiRequest("POST", "/api/orders", orderData);
+        return response.json();
+      } else {
+        // Process immediate transaction
+        const response = await apiRequest("POST", "/api/transactions", orderData);
+        return response.json();
+      }
     },
-    onSuccess: (transaction: Transaction) => {
-      setCurrentTransaction(transaction);
-      setIsReceiptModalOpen(true);
+    onSuccess: (result) => {
+      if (paymentMethod === "pay_later") {
+        toast({
+          title: "Order created successfully",
+          description: `Order for ${selectedCustomer?.name} has been created`,
+        });
+      } else {
+        setCurrentTransaction(result);
+        setIsReceiptModalOpen(true);
+        toast({
+          title: "Order completed successfully",
+          description: `Total: $${parseFloat(result.total).toFixed(2)}`,
+        });
+      }
       clearCart();
+      setSelectedCustomer(null);
       queryClient.invalidateQueries({ queryKey: ["/api/clothing-items"] });
       queryClient.invalidateQueries({ queryKey: ["/api/laundry-services"] });
-      toast({
-        title: "Order completed successfully",
-        description: `Total: $${parseFloat(transaction.total).toFixed(2)}`,
-      });
+      queryClient.invalidateQueries({ queryKey: ["/api/customers"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
     },
     onError: () => {
       toast({
         title: "Error",
-        description: "Failed to process transaction",
+        description: "Failed to process order",
         variant: "destructive",
       });
     }
@@ -94,8 +111,17 @@ export default function POS() {
       return;
     }
 
-    // Convert laundry cart items to transaction format
-    const transactionItems = cartSummary.items.map(item => ({
+    if (paymentMethod === "pay_later" && !selectedCustomer) {
+      toast({
+        title: "Customer required",
+        description: "Please select a customer for pay later orders",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Convert laundry cart items to order format
+    const orderItems = cartSummary.items.map(item => ({
       id: item.id,
       clothingItem: item.clothingItem.name,
       service: item.service.name,
@@ -104,16 +130,32 @@ export default function POS() {
       total: item.total
     }));
 
-    const transaction: InsertTransaction = {
-      items: transactionItems,
-      subtotal: cartSummary.subtotal.toString(),
-      tax: cartSummary.tax.toString(),
-      total: cartSummary.total.toString(),
-      paymentMethod,
-      cashierName: "Sarah Johnson"
-    };
-
-    checkoutMutation.mutate(transaction);
+    if (paymentMethod === "pay_later") {
+      // Create order with customer
+      const orderData = {
+        customerId: selectedCustomer!.id,
+        items: orderItems,
+        subtotal: cartSummary.subtotal.toString(),
+        tax: cartSummary.tax.toString(),
+        total: cartSummary.total.toString(),
+        paymentMethod: "pay_later",
+        status: "received",
+        estimatedPickupDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString() // 3 days from now
+      };
+      checkoutMutation.mutate(orderData);
+    } else {
+      // Create immediate transaction
+      const transaction: InsertTransaction = {
+        customerId: selectedCustomer?.id || null,
+        items: orderItems,
+        subtotal: cartSummary.subtotal.toString(),
+        tax: cartSummary.tax.toString(),
+        total: cartSummary.total.toString(),
+        paymentMethod,
+        cashierName: "Sarah Johnson"
+      };
+      checkoutMutation.mutate(transaction);
+    }
   };
 
   const toggleCart = () => {
@@ -170,10 +212,12 @@ export default function POS() {
             <LaundryCartSidebar
               cartSummary={cartSummary}
               paymentMethod={paymentMethod}
+              selectedCustomer={selectedCustomer}
               onUpdateQuantity={updateQuantity}
               onRemoveItem={removeFromCart}
               onClearCart={clearCart}
               onSelectPayment={setPaymentMethod}
+              onSelectCustomer={setSelectedCustomer}
               onCheckout={handleCheckout}
               isVisible={isCartVisible}
               onClose={() => setIsCartVisible(false)}
@@ -238,6 +282,7 @@ export default function POS() {
 
       <ReceiptModal
         transaction={currentTransaction}
+        customer={selectedCustomer}
         isOpen={isReceiptModalOpen}
         onClose={() => setIsReceiptModalOpen(false)}
       />

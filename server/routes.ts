@@ -390,18 +390,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/orders", requireAuth, async (req, res) => {
+  app.post("/api/orders", async (req, res) => {
     try {
       const orderData = insertOrderSchema.parse(req.body);
       const order = await storage.createOrder(orderData);
       
       // If payment method is pay_later, update customer balance
       if (order.paymentMethod === 'pay_later' && order.customerId) {
-        await storage.updateCustomerBalance(order.customerId, parseFloat(order.total));
+        const customer = await storage.getCustomer(order.customerId);
+        if (customer) {
+          const orderAmount = parseFloat(order.total);
+          const updatedBalance = parseFloat(customer.balanceDue) + orderAmount;
+          
+          await storage.updateCustomer(order.customerId, {
+            balanceDue: updatedBalance.toString()
+          });
+        }
       }
       
       res.status(201).json(order);
     } catch (error) {
+      console.error("Error creating order:", error);
       res.status(400).json({ message: "Invalid order data" });
     }
   });

@@ -1,15 +1,16 @@
 import { X, Printer, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Transaction } from "@shared/schema";
+import { Transaction, Customer } from "@shared/schema";
 
 interface ReceiptModalProps {
   transaction: Transaction | null;
+  customer?: Customer | null;
   isOpen: boolean;
   onClose: () => void;
 }
 
-export function ReceiptModal({ transaction, isOpen, onClose }: ReceiptModalProps) {
+export function ReceiptModal({ transaction, customer, isOpen, onClose }: ReceiptModalProps) {
   const handlePrint = () => {
     window.print();
   };
@@ -62,6 +63,12 @@ export function ReceiptModal({ transaction, isOpen, onClose }: ReceiptModalProps
               <span>Cashier:</span>
               <span>{transaction.cashierName}</span>
             </div>
+            {customer && (
+              <div className="flex justify-between">
+                <span>Customer:</span>
+                <span>{customer.name}</span>
+              </div>
+            )}
           </div>
 
           {/* Receipt Items */}
