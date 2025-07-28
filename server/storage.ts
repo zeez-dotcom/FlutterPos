@@ -4,7 +4,10 @@ import {
   type Transaction, type InsertTransaction,
   type User, type InsertUser, type UpsertUser,
   type Category, type InsertCategory,
-  clothingItems, laundryServices, transactions, users, categories
+  type Customer, type InsertCustomer,
+  type Order, type InsertOrder,
+  type Payment, type InsertPayment,
+  clothingItems, laundryServices, transactions, users, categories, customers, orders, payments
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { db } from "./db";
@@ -46,9 +49,32 @@ export interface IStorage {
   createTransaction(transaction: InsertTransaction): Promise<Transaction>;
   getTransactions(): Promise<Transaction[]>;
   getTransaction(id: string): Promise<Transaction | undefined>;
+  
+  // Customers
+  getCustomers(): Promise<Customer[]>;
+  getCustomer(id: string): Promise<Customer | undefined>;
+  getCustomerByPhone(phoneNumber: string): Promise<Customer | undefined>;
+  createCustomer(customer: InsertCustomer): Promise<Customer>;
+  updateCustomer(id: string, customer: Partial<InsertCustomer>): Promise<Customer | undefined>;
+  updateCustomerBalance(id: string, balanceChange: number): Promise<Customer | undefined>;
+  
+  // Orders
+  getOrders(): Promise<Order[]>;
+  getOrder(id: string): Promise<Order | undefined>;
+  getOrdersByCustomer(customerId: string): Promise<Order[]>;
+  getOrdersByStatus(status: string): Promise<Order[]>;
+  createOrder(order: InsertOrder): Promise<Order>;
+  updateOrder(id: string, order: Partial<Omit<Order, 'id' | 'orderNumber' | 'createdAt'>>): Promise<Order | undefined>;
+  updateOrderStatus(id: string, status: string): Promise<Order | undefined>;
+  
+  // Payments
+  getPayments(): Promise<Payment[]>;
+  getPayment(id: string): Promise<Payment | undefined>;
+  getPaymentsByCustomer(customerId: string): Promise<Payment[]>;
+  createPayment(payment: InsertPayment): Promise<Payment>;
 }
 
-export class MemStorage implements IStorage {
+export class MemStorage {
   private clothingItems: Map<string, ClothingItem>;
   private laundryServices: Map<string, LaundryService>;
   private transactions: Map<string, Transaction>;
@@ -458,6 +484,113 @@ export class DatabaseStorage implements IStorage {
   async getTransaction(id: string): Promise<Transaction | undefined> {
     const [transaction] = await db.select().from(transactions).where(eq(transactions.id, id));
     return transaction || undefined;
+  }
+
+  // Customer methods
+  async getCustomers(): Promise<Customer[]> {
+    return await db.select().from(customers);
+  }
+
+  async getCustomer(id: string): Promise<Customer | undefined> {
+    const [customer] = await db.select().from(customers).where(eq(customers.id, id));
+    return customer || undefined;
+  }
+
+  async getCustomerByPhone(phoneNumber: string): Promise<Customer | undefined> {
+    const [customer] = await db.select().from(customers).where(eq(customers.phoneNumber, phoneNumber));
+    return customer || undefined;
+  }
+
+  async createCustomer(customerData: InsertCustomer): Promise<Customer> {
+    const [customer] = await db
+      .insert(customers)
+      .values(customerData)
+      .returning();
+    return customer;
+  }
+
+  async updateCustomer(id: string, customerData: Partial<InsertCustomer>): Promise<Customer | undefined> {
+    const [updated] = await db
+      .update(customers)
+      .set({ ...customerData, updatedAt: new Date() })
+      .where(eq(customers.id, id))
+      .returning();
+    return updated || undefined;
+  }
+
+  async updateCustomerBalance(id: string, balanceChange: number): Promise<Customer | undefined> {
+    const customer = await this.getCustomer(id);
+    if (!customer) return undefined;
+    
+    const newBalance = parseFloat(customer.balanceDue) + balanceChange;
+    return await this.updateCustomer(id, { balanceDue: newBalance.toFixed(2) });
+  }
+
+  // Order methods
+  async getOrders(): Promise<Order[]> {
+    return await db.select().from(orders);
+  }
+
+  async getOrder(id: string): Promise<Order | undefined> {
+    const [order] = await db.select().from(orders).where(eq(orders.id, id));
+    return order || undefined;
+  }
+
+  async getOrdersByCustomer(customerId: string): Promise<Order[]> {
+    return await db.select().from(orders).where(eq(orders.customerId, customerId));
+  }
+
+  async getOrdersByStatus(status: string): Promise<Order[]> {
+    return await db.select().from(orders).where(eq(orders.status, status));
+  }
+
+  async createOrder(orderData: InsertOrder): Promise<Order> {
+    // Generate unique order number
+    const orderNumber = `ORD-${Date.now().toString().slice(-6)}`;
+    
+    const [order] = await db
+      .insert(orders)
+      .values({
+        ...orderData,
+        orderNumber,
+      })
+      .returning();
+    return order;
+  }
+
+  async updateOrder(id: string, orderData: Partial<Omit<Order, 'id' | 'orderNumber' | 'createdAt'>>): Promise<Order | undefined> {
+    const [updated] = await db
+      .update(orders)
+      .set({ ...orderData, updatedAt: new Date() })
+      .where(eq(orders.id, id))
+      .returning();
+    return updated || undefined;
+  }
+
+  async updateOrderStatus(id: string, status: string): Promise<Order | undefined> {
+    return await this.updateOrder(id, { status });
+  }
+
+  // Payment methods
+  async getPayments(): Promise<Payment[]> {
+    return await db.select().from(payments);
+  }
+
+  async getPayment(id: string): Promise<Payment | undefined> {
+    const [payment] = await db.select().from(payments).where(eq(payments.id, id));
+    return payment || undefined;
+  }
+
+  async getPaymentsByCustomer(customerId: string): Promise<Payment[]> {
+    return await db.select().from(payments).where(eq(payments.customerId, customerId));
+  }
+
+  async createPayment(paymentData: InsertPayment): Promise<Payment> {
+    const [payment] = await db
+      .insert(payments)
+      .values(paymentData)
+      .returning();
+    return payment;
   }
 }
 

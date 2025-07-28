@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertTransactionSchema, insertClothingItemSchema, insertLaundryServiceSchema, insertUserSchema, insertCategorySchema } from "@shared/schema";
+import { insertTransactionSchema, insertClothingItemSchema, insertLaundryServiceSchema, insertUserSchema, insertCategorySchema, insertCustomerSchema, insertOrderSchema, insertPaymentSchema } from "@shared/schema";
 import { setupAuth, requireAuth, requireSuperAdmin, requireAdminOrSuperAdmin } from "./auth";
 import passport from "passport";
 import type { User } from "@shared/schema";
@@ -294,6 +294,173 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(transaction);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch transaction" });
+    }
+  });
+
+  // Customer Management Routes
+  app.get("/api/customers", requireAuth, async (req, res) => {
+    try {
+      const customers = await storage.getCustomers();
+      res.json(customers);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch customers" });
+    }
+  });
+
+  app.get("/api/customers/:id", requireAuth, async (req, res) => {
+    try {
+      const customer = await storage.getCustomer(req.params.id);
+      if (!customer) {
+        return res.status(404).json({ message: "Customer not found" });
+      }
+      res.json(customer);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch customer" });
+    }
+  });
+
+  app.get("/api/customers/phone/:phoneNumber", requireAuth, async (req, res) => {
+    try {
+      const customer = await storage.getCustomerByPhone(req.params.phoneNumber);
+      if (!customer) {
+        return res.status(404).json({ message: "Customer not found" });
+      }
+      res.json(customer);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch customer" });
+    }
+  });
+
+  app.post("/api/customers", requireAuth, async (req, res) => {
+    try {
+      const customerData = insertCustomerSchema.parse(req.body);
+      const customer = await storage.createCustomer(customerData);
+      res.status(201).json(customer);
+    } catch (error) {
+      res.status(400).json({ message: "Invalid customer data" });
+    }
+  });
+
+  app.patch("/api/customers/:id", requireAuth, async (req, res) => {
+    try {
+      const customer = await storage.updateCustomer(req.params.id, req.body);
+      if (!customer) {
+        return res.status(404).json({ message: "Customer not found" });
+      }
+      res.json(customer);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update customer" });
+    }
+  });
+
+  // Order Management Routes
+  app.get("/api/orders", requireAuth, async (req, res) => {
+    try {
+      const { status } = req.query;
+      let orders;
+      if (status && typeof status === 'string') {
+        orders = await storage.getOrdersByStatus(status);
+      } else {
+        orders = await storage.getOrders();
+      }
+      res.json(orders);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch orders" });
+    }
+  });
+
+  app.get("/api/orders/:id", requireAuth, async (req, res) => {
+    try {
+      const order = await storage.getOrder(req.params.id);
+      if (!order) {
+        return res.status(404).json({ message: "Order not found" });
+      }
+      res.json(order);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch order" });
+    }
+  });
+
+  app.get("/api/customers/:customerId/orders", requireAuth, async (req, res) => {
+    try {
+      const orders = await storage.getOrdersByCustomer(req.params.customerId);
+      res.json(orders);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch customer orders" });
+    }
+  });
+
+  app.post("/api/orders", requireAuth, async (req, res) => {
+    try {
+      const orderData = insertOrderSchema.parse(req.body);
+      const order = await storage.createOrder(orderData);
+      
+      // If payment method is pay_later, update customer balance
+      if (order.paymentMethod === 'pay_later' && order.customerId) {
+        await storage.updateCustomerBalance(order.customerId, parseFloat(order.total));
+      }
+      
+      res.status(201).json(order);
+    } catch (error) {
+      res.status(400).json({ message: "Invalid order data" });
+    }
+  });
+
+  app.patch("/api/orders/:id", requireAuth, async (req, res) => {
+    try {
+      const order = await storage.updateOrder(req.params.id, req.body);
+      if (!order) {
+        return res.status(404).json({ message: "Order not found" });
+      }
+      res.json(order);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update order" });
+    }
+  });
+
+  app.patch("/api/orders/:id/status", requireAuth, async (req, res) => {
+    try {
+      const { status } = req.body;
+      const order = await storage.updateOrderStatus(req.params.id, status);
+      if (!order) {
+        return res.status(404).json({ message: "Order not found" });
+      }
+      res.json(order);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update order status" });
+    }
+  });
+
+  // Payment Management Routes
+  app.get("/api/payments", requireAuth, async (req, res) => {
+    try {
+      const payments = await storage.getPayments();
+      res.json(payments);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch payments" });
+    }
+  });
+
+  app.get("/api/customers/:customerId/payments", requireAuth, async (req, res) => {
+    try {
+      const payments = await storage.getPaymentsByCustomer(req.params.customerId);
+      res.json(payments);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch customer payments" });
+    }
+  });
+
+  app.post("/api/payments", requireAuth, async (req, res) => {
+    try {
+      const paymentData = insertPaymentSchema.parse(req.body);
+      const payment = await storage.createPayment(paymentData);
+      
+      // Update customer balance when payment is received
+      await storage.updateCustomerBalance(payment.customerId, -parseFloat(payment.amount));
+      
+      res.status(201).json(payment);
+    } catch (error) {
+      res.status(400).json({ message: "Invalid payment data" });
     }
   });
 

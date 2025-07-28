@@ -9,16 +9,20 @@ import { ReceiptModal } from "@/components/receipt-modal";
 import { InventoryManagement } from "@/components/inventory-management";
 import { ReportsDashboard } from "@/components/reports-dashboard";
 import { SettingsPanel } from "@/components/settings-panel";
+import { CustomerManagement } from "@/components/customer-management";
+import { OrderTracking } from "@/components/order-tracking";
+import { BusinessReports } from "@/components/business-reports";
 import { useLaundryCart } from "@/hooks/use-laundry-cart";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { ClothingItem, LaundryService, Transaction, InsertTransaction } from "@shared/schema";
-import { ShoppingCart, Package, BarChart3, Settings } from "lucide-react";
+import { ClothingItem, LaundryService, Transaction, InsertTransaction, Customer } from "@shared/schema";
+import { ShoppingCart, Package, BarChart3, Settings, Users, Truck, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function POS() {
   const [activeView, setActiveView] = useState("sales");
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [isCartVisible, setIsCartVisible] = useState(true); // Always visible on desktop, togglable on mobile
   const [currentTransaction, setCurrentTransaction] = useState<Transaction | null>(null);
   const [isReceiptModalOpen, setIsReceiptModalOpen] = useState(false);
@@ -122,9 +126,9 @@ export default function POS() {
 
     const navItems = [
       { id: "sales", label: "Sales", icon: ShoppingCart },
-      { id: "inventory", label: "Inventory", icon: Package },
-      { id: "reports", label: "Reports", icon: BarChart3 },
-      { id: "settings", label: "Settings", icon: Settings }
+      { id: "customers", label: "Customers", icon: Users },
+      { id: "orders", label: "Orders", icon: Truck },
+      { id: "reports", label: "Reports", icon: TrendingUp }
     ];
 
     return (
@@ -176,10 +180,21 @@ export default function POS() {
             />
           </>
         );
+      case "customers":
+        return (
+          <CustomerManagement 
+            onCustomerSelect={(customer) => {
+              setSelectedCustomer(customer);
+              setActiveView("sales");
+            }}
+          />
+        );
+      case "orders":
+        return <OrderTracking />;
+      case "reports":
+        return <BusinessReports />;
       case "inventory":
         return <InventoryManagement />;
-      case "reports":
-        return <ReportsDashboard />;
       case "settings":
         return <SettingsPanel />;
       default:

@@ -67,12 +67,78 @@ export const categories = pgTable("categories", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+// Customers table for customer management and pay-later tracking
+export const customers = pgTable("customers", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  phoneNumber: varchar("phone_number", { length: 20 }).unique().notNull(),
+  name: text("name").notNull(),
+  email: varchar("email", { length: 255 }),
+  address: text("address"),
+  balanceDue: decimal("balance_due", { precision: 10, scale: 2 }).default("0.00").notNull(),
+  totalSpent: decimal("total_spent", { precision: 10, scale: 2 }).default("0.00").notNull(),
+  loyaltyPoints: integer("loyalty_points").default(0).notNull(),
+  isActive: boolean("is_active").default(true).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Orders table for order tracking
+export const orders = pgTable("orders", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  orderNumber: varchar("order_number", { length: 20 }).unique().notNull(),
+  customerId: varchar("customer_id").references(() => customers.id),
+  customerName: text("customer_name").notNull(),
+  customerPhone: varchar("customer_phone", { length: 20 }).notNull(),
+  items: jsonb("items").notNull(),
+  subtotal: decimal("subtotal", { precision: 10, scale: 2 }).notNull(),
+  tax: decimal("tax", { precision: 10, scale: 2 }).notNull(),
+  total: decimal("total", { precision: 10, scale: 2 }).notNull(),
+  paymentMethod: text("payment_method").notNull(), // 'cash', 'card', 'pay_later'
+  status: text("status").default("received").notNull(), // 'received', 'processing', 'washing', 'drying', 'ready', 'completed'
+  estimatedPickup: timestamp("estimated_pickup"),
+  actualPickup: timestamp("actual_pickup"),
+  notes: text("notes"),
+  createdBy: varchar("created_by").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Payment history for tracking customer payments
+export const payments = pgTable("payments", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  customerId: varchar("customer_id").references(() => customers.id).notNull(),
+  orderId: varchar("order_id").references(() => orders.id),
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+  paymentMethod: text("payment_method").notNull(),
+  notes: text("notes"),
+  receivedBy: varchar("received_by").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 export const insertClothingItemSchema = createInsertSchema(clothingItems).omit({
   id: true,
 });
 
 export const insertLaundryServiceSchema = createInsertSchema(laundryServices).omit({
   id: true,
+});
+
+export const insertCustomerSchema = createInsertSchema(customers).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertOrderSchema = createInsertSchema(orders).omit({
+  id: true,
+  orderNumber: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertPaymentSchema = createInsertSchema(payments).omit({
+  id: true,
+  createdAt: true,
 });
 
 export const insertTransactionSchema = createInsertSchema(transactions).omit({
@@ -103,6 +169,12 @@ export type Transaction = typeof transactions.$inferSelect;
 export type InsertTransaction = z.infer<typeof insertTransactionSchema>;
 export type Category = typeof categories.$inferSelect;
 export type InsertCategory = z.infer<typeof insertCategorySchema>;
+export type Customer = typeof customers.$inferSelect;
+export type InsertCustomer = z.infer<typeof insertCustomerSchema>;
+export type Order = typeof orders.$inferSelect;
+export type InsertOrder = z.infer<typeof insertOrderSchema>;
+export type Payment = typeof payments.$inferSelect;
+export type InsertPayment = z.infer<typeof insertPaymentSchema>;
 
 export interface LaundryCartItem {
   id: string;

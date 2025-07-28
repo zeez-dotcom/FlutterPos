@@ -1,4 +1,4 @@
-import { ShoppingCart, Package, BarChart3, Settings } from "lucide-react";
+import { ShoppingCart, Package, BarChart3, Settings, Users, Truck, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface POSSidebarProps {
@@ -9,8 +9,10 @@ interface POSSidebarProps {
 export function POSSidebar({ activeView, onViewChange }: POSSidebarProps) {
   const menuItems = [
     { id: "sales", label: "Sales", icon: ShoppingCart },
+    { id: "customers", label: "Customers", icon: Users },
+    { id: "orders", label: "Orders", icon: Truck },
+    { id: "reports", label: "Reports", icon: TrendingUp },
     { id: "inventory", label: "Inventory", icon: Package },
-    { id: "reports", label: "Reports", icon: BarChart3 },
     { id: "settings", label: "Settings", icon: Settings }
   ];
 
