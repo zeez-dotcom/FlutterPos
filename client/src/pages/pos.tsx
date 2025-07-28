@@ -162,7 +162,10 @@ export default function POS() {
 
   return (
     <div className="min-h-screen bg-pos-background">
-      <POSHeader />
+      <POSHeader 
+        cartItemCount={cartSummary.itemCount}
+        onToggleCart={toggleCart}
+      />
       
       <div className="flex h-screen bg-pos-background">
         <POSSidebar activeView={activeView} onViewChange={setActiveView} />
@@ -172,8 +175,6 @@ export default function POS() {
             <>
               <ClothingGrid
                 onSelectClothing={handleSelectClothing}
-                cartItemCount={cartSummary.itemCount}
-                onToggleCart={toggleCart}
               />
               
               <LaundryCartSidebar

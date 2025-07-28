@@ -9,8 +9,6 @@ import { useIsMobile } from "@/hooks/use-mobile";
 
 interface ClothingGridProps {
   onSelectClothing: (item: ClothingItem) => void;
-  cartItemCount: number;
-  onToggleCart: () => void;
 }
 
 const clothingCategories = [
@@ -23,7 +21,7 @@ const clothingCategories = [
   { id: "linens", label: "Linens" }
 ];
 
-export function ClothingGrid({ onSelectClothing, cartItemCount, onToggleCart }: ClothingGridProps) {
+export function ClothingGrid({ onSelectClothing }: ClothingGridProps) {
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const isMobile = useIsMobile();
@@ -49,26 +47,17 @@ export function ClothingGrid({ onSelectClothing, cartItemCount, onToggleCart }: 
     <div className="flex-1 flex flex-col bg-pos-background">
       {/* Search and Categories */}
       <div className="bg-pos-surface shadow-sm border-b border-gray-200 p-4">
-        <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
-          <div className="relative flex-1 max-w-md">
+        <div className="flex justify-center">
+          <div className="relative w-full max-w-md">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
             <Input
               type="text"
               placeholder="Search clothing items..."
-              className="pl-10 py-3 text-base"
+              className="pl-10 py-3 text-base w-full"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
-          {isMobile && (
-            <Button 
-              onClick={onToggleCart}
-              className="bg-pos-primary hover:bg-blue-700 text-white px-4 py-3 flex items-center space-x-2"
-            >
-              <ShoppingCart className="h-4 w-4" />
-              <span>Cart ({cartItemCount})</span>
-            </Button>
-          )}
         </div>
         
         {/* Category Tabs */}
