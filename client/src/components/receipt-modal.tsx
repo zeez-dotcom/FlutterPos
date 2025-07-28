@@ -4,6 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Transaction, Customer } from "@shared/schema";
 import { useTranslation } from "@/lib/i18n";
 import { useCurrency } from "@/lib/currency";
+import { useState, useEffect } from "react";
 
 interface ReceiptModalProps {
   transaction?: Transaction | null;
@@ -17,6 +18,15 @@ export function ReceiptModal({ transaction, order, customer, isOpen, onClose }: 
   const receiptData = transaction || order;
   const { t } = useTranslation();
   const { formatCurrency } = useCurrency();
+  
+  // Get dynamic company settings
+  const [companyName, setCompanyName] = useState('');
+  const [companyPhone, setCompanyPhone] = useState('');
+  
+  useEffect(() => {
+    setCompanyName(localStorage.getItem('companyName') || 'Laundry Services');
+    setCompanyPhone(localStorage.getItem('companyPhone') || '+965-2XXX-XXXX');
+  }, [isOpen]);
   
   if (!receiptData) return null;
 
@@ -32,8 +42,8 @@ export function ReceiptModal({ transaction, order, customer, isOpen, onClose }: 
   const date = new Date(receiptData.createdAt);
   const isPayLater = receiptData.paymentMethod === 'pay_later';
   
-  // Company logo URL
-  const logoUrl = "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Ftse1.mm.bing.net%2Fth%2Fid%2FOIP.J1FnT7YsQoJUjS4LBElT7wHa&f=1&ipt=5545e86aaec86b0fec9027bbad0987fd75958cd64b12cb0b558f87bdc7217f1a&ipo=images";
+  // Company logo URL - better direct laundry logo
+  const logoUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a8/Laundry_pictogram.svg/512px-Laundry_pictogram.svg.png";
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -56,10 +66,10 @@ export function ReceiptModal({ transaction, order, customer, isOpen, onClose }: 
               alt="Company Logo" 
               className="w-16 h-16 mx-auto object-contain rounded-lg"
             />
-            <h3 className="font-bold text-lg">{t.companyName}</h3>
+            <h3 className="font-bold text-lg">{companyName}</h3>
             <p className="text-gray-600">{t.companyTagline}</p>
             <p className="text-gray-600">{t.location}</p>
-            <p className="text-gray-600">{t.phone}</p>
+            <p className="text-gray-600">{companyPhone}</p>
           </div>
 
           <div className="border-t border-b border-gray-400 py-3 space-y-1">
@@ -169,7 +179,7 @@ export function ReceiptModal({ transaction, order, customer, isOpen, onClose }: 
           {/* Footer */}
           <div className="border-t border-gray-400 pt-3 text-center text-xs text-gray-600 space-y-1">
             <p>{t.thankYouService}</p>
-            <p>{t.inquiriesCall} {t.phone}</p>
+            <p>{t.inquiriesCall} {companyPhone}</p>
             {isPayLater && (
               <p className="font-bold text-red-600">{t.bringReceiptPickup}</p>
             )}

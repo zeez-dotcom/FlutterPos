@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { ClothingItem, LaundryService } from "@shared/schema";
+import { useCurrency } from "@/lib/currency";
 
 interface ServiceSelectionModalProps {
   isOpen: boolean;
@@ -30,6 +31,7 @@ export function ServiceSelectionModal({
 }: ServiceSelectionModalProps) {
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [quantities, setQuantities] = useState<Record<string, number>>({});
+  const { formatCurrency } = useCurrency();
 
   const { data: services = [] } = useQuery({
     queryKey: ["/api/laundry-services", selectedCategory],
@@ -113,7 +115,7 @@ export function ServiceSelectionModal({
                     )}
                     <div className="flex items-center justify-between">
                       <span className="text-lg font-bold text-pos-primary">
-                        ${parseFloat(service.price).toFixed(2)}
+                        {formatCurrency(service.price)}
                       </span>
                       <span className="text-xs text-gray-500 capitalize bg-gray-100 px-2 py-1 rounded">
                         {service.category}
@@ -161,7 +163,7 @@ export function ServiceSelectionModal({
                 {/* Total for this service */}
                 <div className="mt-2 text-right">
                   <span className="text-sm text-gray-600">
-                    Total: ${(parseFloat(service.price) * getQuantity(service.id)).toFixed(2)}
+                    Total: {formatCurrency(parseFloat(service.price) * getQuantity(service.id))}
                   </span>
                 </div>
               </CardContent>
