@@ -6,6 +6,8 @@ import { useTranslation } from "@/lib/i18n";
 import { useCurrency } from "@/lib/currency";
 import { useState, useEffect } from "react";
 import logoImage from "@/assets/logo.png";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 
 interface ReceiptModalProps {
   transaction?: Transaction | null;
@@ -19,6 +21,7 @@ export function ReceiptModal({ transaction, order, customer, isOpen, onClose }: 
   const receiptData = transaction || order;
   const { t } = useTranslation();
   const { formatCurrency } = useCurrency();
+  const { toast } = useToast();
   
   // Get dynamic company settings
   const [companyName, setCompanyName] = useState('');
@@ -119,8 +122,28 @@ export function ReceiptModal({ transaction, order, customer, isOpen, onClose }: 
     }, 500);
   };
 
-  const handleEmail = () => {
-    alert("Email functionality would be implemented here");
+  const handleEmail = async () => {
+    if (!customer?.email) return;
+    const receiptContent = document.getElementById('receiptContent');
+    if (!receiptContent) return;
+    const receiptHTML = receiptContent.outerHTML;
+
+    try {
+      await apiRequest("POST", "/api/receipts/email", {
+        email: customer.email,
+        html: receiptHTML,
+      });
+      toast({
+        title: "Email sent",
+        description: "Receipt emailed successfully",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to send receipt email",
+        variant: "destructive",
+      });
+    }
   };
 
   const items = receiptData.items as any[];
@@ -277,10 +300,12 @@ export function ReceiptModal({ transaction, order, customer, isOpen, onClose }: 
             <Printer className="w-4 h-4 mr-2" />
             {t.print}
           </Button>
-          <Button onClick={handleEmail} variant="outline" className="flex-1">
-            <Mail className="w-4 h-4 mr-2" />
-            {t.email}
-          </Button>
+          {customer?.email && (
+            <Button onClick={handleEmail} variant="outline" className="flex-1">
+              <Mail className="w-4 h-4 mr-2" />
+              {t.email}
+            </Button>
+          )}
         </div>
       </DialogContent>
     </Dialog>

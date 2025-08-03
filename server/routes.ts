@@ -5,6 +5,7 @@ import { insertTransactionSchema, insertClothingItemSchema, insertLaundryService
 import { setupAuth, requireAuth, requireSuperAdmin, requireAdminOrSuperAdmin } from "./auth";
 import passport from "passport";
 import type { User } from "@shared/schema";
+import nodemailer from "nodemailer";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Setup authentication
@@ -559,6 +560,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(201).json(payment);
     } catch (error) {
       res.status(400).json({ message: "Invalid payment data" });
+    }
+  });
+
+  app.post("/api/receipts/email", async (req, res) => {
+    try {
+      const { email, html } = req.body as { email?: string; html?: string };
+      if (!email || !html) {
+        return res.status(400).json({ message: "Email and receipt content required" });
+      }
+
+      if (!process.env.SMTP_HOST) {
+        return res.status(500).json({ message: "Email service not configured" });
+      }
+
+      const transporter = nodemailer.createTransport({
+        host: process.env.SMTP_HOST,
+        port: parseInt(process.env.SMTP_PORT || "587", 10),
+        secure: process.env.SMTP_SECURE === "true",
+        auth: process.env.SMTP_USER
+          ? {
+              user: process.env.SMTP_USER,
+              pass: process.env.SMTP_PASS,
+            }
+          : undefined,
+      });
+
+      await transporter.sendMail({
+        from: process.env.SMTP_FROM || process.env.SMTP_USER,
+        to: email,
+        subject: "Your Receipt",
+        html,
+      });
+
+      res.json({ message: "Receipt emailed successfully" });
+    } catch (error) {
+      console.error("Error sending receipt email:", error);
+      res.status(500).json({ message: "Failed to send receipt email" });
     }
   });
 
