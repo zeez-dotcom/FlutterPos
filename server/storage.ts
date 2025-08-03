@@ -9,7 +9,8 @@ import {
   type Payment, type InsertPayment,
   type Product, type InsertProduct,
   type LoyaltyHistory, type InsertLoyaltyHistory,
-  clothingItems, laundryServices, transactions, users, categories, customers, orders, payments, products, loyaltyHistory
+  type Notification, type InsertNotification,
+  clothingItems, laundryServices, transactions, users, categories, customers, orders, payments, products, loyaltyHistory, notifications
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { db } from "./db";
@@ -82,6 +83,9 @@ export interface IStorage {
   getPaymentsByCustomer(customerId: string): Promise<Payment[]>;
   createPayment(payment: InsertPayment): Promise<Payment>;
 
+  // Notifications
+  createNotification(notification: InsertNotification): Promise<Notification>;
+
   // Loyalty history
   getLoyaltyHistory(customerId: string): Promise<LoyaltyHistory[]>;
   createLoyaltyHistory(entry: InsertLoyaltyHistory): Promise<LoyaltyHistory>;
@@ -95,6 +99,7 @@ export class MemStorage {
   private users: Map<string, User>;
   private categories: Map<string, Category>;
   private loyaltyHistory: LoyaltyHistory[];
+  private notifications: Notification[];
 
   constructor() {
     this.products = new Map();
@@ -104,6 +109,7 @@ export class MemStorage {
     this.users = new Map();
     this.categories = new Map();
     this.loyaltyHistory = [];
+    this.notifications = [];
     this.initializeData();
   }
 
@@ -412,6 +418,16 @@ export class MemStorage {
       createdAt: new Date(),
     };
     this.loyaltyHistory.push(record);
+    return record;
+  }
+
+  async createNotification(entry: InsertNotification): Promise<Notification> {
+    const record: Notification = {
+      ...entry,
+      id: randomUUID(),
+      sentAt: new Date(),
+    };
+    this.notifications.push(record);
     return record;
   }
 
@@ -753,6 +769,14 @@ export class DatabaseStorage implements IStorage {
       .values(paymentData)
       .returning();
     return payment;
+  }
+
+  async createNotification(notificationData: InsertNotification): Promise<Notification> {
+    const [record] = await db
+      .insert(notifications)
+      .values(notificationData)
+      .returning();
+    return record;
   }
 
   async getLoyaltyHistory(customerId: string): Promise<LoyaltyHistory[]> {

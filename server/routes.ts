@@ -499,11 +499,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.patch("/api/orders/:id/status", requireAuth, async (req, res) => {
     try {
-      const { status } = req.body;
+      const { status, notify } = req.body as { status: string; notify?: boolean };
       const order = await storage.updateOrderStatus(req.params.id, status);
       if (!order) {
         return res.status(404).json({ message: "Order not found" });
       }
+
+      if (notify) {
+        const channels: ("sms" | "email")[] = [];
+        if (order.customerPhone) {
+          console.log(`SMS sent to ${order.customerPhone} for order ${order.orderNumber} status ${status}`);
+          channels.push("sms");
+        }
+        if (order.customerId) {
+          const customer = await storage.getCustomer(order.customerId);
+          if (customer?.email) {
+            console.log(`Email sent to ${customer.email} for order ${order.orderNumber} status ${status}`);
+            channels.push("email");
+          }
+        }
+        await Promise.all(
+          channels.map((type) => storage.createNotification({ orderId: order.id, type }))
+        );
+      }
+
       res.json(order);
     } catch (error) {
       res.status(500).json({ message: "Failed to update order status" });
