@@ -45,6 +45,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json(req.user);
   });
 
+  app.put("/api/users/:id", requireAuth, async (req, res, next) => {
+    const { id } = req.params;
+    const user = req.user as User;
+    if (user.id !== id) {
+      if (user.role === "super_admin") return next();
+      return res.status(403).json({ message: "Unauthorized" });
+    }
+    try {
+      const data = insertUserSchema
+        .pick({ firstName: true, lastName: true, email: true })
+        .partial()
+        .parse(req.body);
+      const updated = await storage.updateUserProfile(id, data);
+      if (!updated) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      const { passwordHash, ...safeUser } = updated;
+      res.json(safeUser);
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      res.status(500).json({ message: "Failed to update profile" });
+    }
+  });
+
+  app.put("/api/users/:id/password", requireAuth, async (req, res) => {
+    const { id } = req.params;
+    const user = req.user as User;
+    if (user.id !== id) {
+      return res.status(403).json({ message: "Unauthorized" });
+    }
+    try {
+      const { password } = req.body as { password: string };
+      const updated = await storage.updateUserPassword(id, password);
+      if (!updated) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      res.json({ message: "Password updated" });
+    } catch (error) {
+      console.error("Error updating password:", error);
+      res.status(500).json({ message: "Failed to update password" });
+    }
+  });
+
   // User management routes (Super Admin only)
   app.get("/api/users", requireSuperAdmin, async (req, res) => {
     try {

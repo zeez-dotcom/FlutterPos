@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
 import { SecuritySettings } from "./security-settings";
+import { ProfileSettings } from "./profile-settings";
 
 export function SettingsPanel() {
   const [settings, setSettings] = useState({
@@ -111,7 +112,8 @@ export function SettingsPanel() {
         </div>
 
         <Tabs defaultValue="business" className="space-y-6">
-          <TabsList className={cn("grid w-full", showSecurity ? "grid-cols-6" : "grid-cols-5")}>
+          <TabsList className={cn("grid w-full", showSecurity ? "grid-cols-7" : "grid-cols-6")}>
+            <TabsTrigger value="profile">Profile</TabsTrigger>
             <TabsTrigger value="business">Business</TabsTrigger>
             <TabsTrigger value="receipts">Receipts</TabsTrigger>
             <TabsTrigger value="system">System</TabsTrigger>
@@ -119,6 +121,10 @@ export function SettingsPanel() {
             <TabsTrigger value="appearance">Appearance</TabsTrigger>
             {showSecurity && <TabsTrigger value="security">Security</TabsTrigger>}
           </TabsList>
+
+          <TabsContent value="profile" className="space-y-6">
+            <ProfileSettings />
+          </TabsContent>
 
           <TabsContent value="business" className="space-y-6">
             <Card>
