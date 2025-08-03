@@ -4,8 +4,17 @@ import { Search, ShoppingCart } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Product } from "@shared/schema";
 import { useIsMobile } from "@/hooks/use-mobile";
+
+interface Product {
+  id: string;
+  name: string;
+  description?: string;
+  category?: string;
+  price: string;
+  stock: number;
+  imageUrl?: string;
+}
 
 interface ProductGridProps {
   onAddToCart: (product: Product) => void;
@@ -27,16 +36,17 @@ export function ProductGrid({ onAddToCart, cartItemCount, onToggleCart }: Produc
   const [searchQuery, setSearchQuery] = useState("");
   const isMobile = useIsMobile();
 
-  const { data: products = [], isLoading } = useQuery({
+  const { data: products = [], isLoading } = useQuery<Product[]>({
     queryKey: ["/api/products", selectedCategory, searchQuery],
     queryFn: async () => {
       const params = new URLSearchParams();
       if (selectedCategory !== "all") params.append("category", selectedCategory);
       if (searchQuery) params.append("search", searchQuery);
-      
+
       const response = await fetch(`/api/products?${params}`);
       if (!response.ok) throw new Error("Failed to fetch products");
-      return response.json() as Product[];
+      const data = await response.json();
+      return data as Product[];
     }
   });
 
