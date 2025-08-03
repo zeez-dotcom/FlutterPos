@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { Switch } from "@/components/ui/switch";
 import { apiRequest } from "@/lib/queryClient";
 import { Order } from "@shared/schema";
 import { Search, Package, Clock, CheckCircle, AlertCircle } from "lucide-react";
@@ -33,6 +34,7 @@ const statusIcons = {
 export function OrderTracking() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [notifyCustomer, setNotifyCustomer] = useState(false);
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -43,8 +45,8 @@ export function OrderTracking() {
   });
 
   const updateStatusMutation = useMutation({
-    mutationFn: async ({ orderId, status }: { orderId: string; status: string }) => {
-      const response = await apiRequest("PATCH", `/api/orders/${orderId}/status`, { status });
+    mutationFn: async ({ orderId, status, notify }: { orderId: string; status: string; notify: boolean }) => {
+      const response = await apiRequest("PATCH", `/api/orders/${orderId}/status`, { status, notify });
       return response.json();
     },
     onSuccess: () => {
@@ -75,7 +77,7 @@ export function OrderTracking() {
   });
 
   const handleStatusUpdate = (orderId: string, newStatus: string) => {
-    updateStatusMutation.mutate({ orderId, status: newStatus });
+    updateStatusMutation.mutate({ orderId, status: newStatus, notify: notifyCustomer });
   };
 
   const getItemsSummary = (items: any[]) => {
@@ -132,6 +134,10 @@ export function OrderTracking() {
             <SelectItem value="completed">Completed</SelectItem>
           </SelectContent>
         </Select>
+        <div className="flex items-center gap-2">
+          <Switch id="notify" checked={notifyCustomer} onCheckedChange={setNotifyCustomer} />
+          <label htmlFor="notify" className="text-sm">Notify customer</label>
+        </div>
       </div>
 
       </div>

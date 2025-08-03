@@ -125,6 +125,14 @@ export const payments = pgTable("payments", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+// Notification audit trail
+export const notifications = pgTable("notifications", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  orderId: varchar("order_id").references(() => orders.id).notNull(),
+  type: text("type").notNull(), // 'sms' or 'email'
+  sentAt: timestamp("sent_at").defaultNow().notNull(),
+});
+
 // Loyalty points history for tracking accrual and redemption
 export const loyaltyHistory = pgTable("loyalty_history", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -162,6 +170,11 @@ export const insertOrderSchema = createInsertSchema(orders).omit({
 export const insertPaymentSchema = createInsertSchema(payments).omit({
   id: true,
   createdAt: true,
+});
+
+export const insertNotificationSchema = createInsertSchema(notifications).omit({
+  id: true,
+  sentAt: true,
 });
 
 export const insertTransactionSchema = createInsertSchema(transactions).omit({
@@ -205,6 +218,8 @@ export type Order = typeof orders.$inferSelect;
 export type InsertOrder = z.infer<typeof insertOrderSchema>;
 export type Payment = typeof payments.$inferSelect;
 export type InsertPayment = z.infer<typeof insertPaymentSchema>;
+export type Notification = typeof notifications.$inferSelect;
+export type InsertNotification = z.infer<typeof insertNotificationSchema>;
 export type LoyaltyHistory = typeof loyaltyHistory.$inferSelect;
 export type InsertLoyaltyHistory = z.infer<typeof insertLoyaltyHistorySchema>;
 
