@@ -26,6 +26,11 @@ export interface IStorage {
   createUser(user: InsertUser): Promise<User>;
   upsertUser(user: UpsertUser): Promise<User>;
   updateUser(id: string, user: Partial<InsertUser>): Promise<User | undefined>;
+  updateUserProfile(
+    id: string,
+    user: Partial<Pick<InsertUser, "firstName" | "lastName" | "email">>,
+  ): Promise<User | undefined>;
+  updateUserPassword(id: string, password: string): Promise<User | undefined>;
   getUsers(): Promise<User[]>;
   
   // Category operations
@@ -473,6 +478,8 @@ export class MemStorage {
   async createUser(user: InsertUser): Promise<User> { throw new Error("Not implemented in MemStorage"); }
   async upsertUser(user: UpsertUser): Promise<User> { throw new Error("Not implemented in MemStorage"); }
   async updateUser(id: string, user: Partial<InsertUser>): Promise<User | undefined> { return undefined; }
+  async updateUserProfile(id: string, user: Partial<Pick<InsertUser, "firstName" | "lastName" | "email">>): Promise<User | undefined> { return undefined; }
+  async updateUserPassword(id: string, password: string): Promise<User | undefined> { return undefined; }
   async getUsers(): Promise<User[]> { return []; }
 
   // Category methods (stub for MemStorage - not used in production)
@@ -542,6 +549,28 @@ export class DatabaseStorage implements IStorage {
     const [updated] = await db
       .update(users)
       .set({ ...updateData, updatedAt: new Date() })
+      .where(eq(users.id, id))
+      .returning();
+    return updated || undefined;
+  }
+
+  async updateUserProfile(
+    id: string,
+    data: Partial<Pick<InsertUser, "firstName" | "lastName" | "email">>,
+  ): Promise<User | undefined> {
+    const [updated] = await db
+      .update(users)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(users.id, id))
+      .returning();
+    return updated || undefined;
+  }
+
+  async updateUserPassword(id: string, password: string): Promise<User | undefined> {
+    const hashed = await bcrypt.hash(password, 10);
+    const [updated] = await db
+      .update(users)
+      .set({ passwordHash: hashed, updatedAt: new Date() })
       .where(eq(users.id, id))
       .returning();
     return updated || undefined;
