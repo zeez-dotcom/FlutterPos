@@ -8,7 +8,8 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { CategoryManager } from "@/components/admin/CategoryManager";
 import { UserManager } from "@/components/admin/UserManager";
-import { LogOut, Users, Tags, ArrowLeft } from "lucide-react";
+import { BranchManager } from "@/components/admin/BranchManager";
+import { LogOut, Users, Tags, MapPin, ArrowLeft } from "lucide-react";
 import { Link } from "wouter";
 import logoUrl from "@/assets/logo.png";
 
@@ -81,27 +82,39 @@ export default function AdminDashboard() {
             Admin Dashboard
           </h2>
           <p className="text-gray-600 dark:text-gray-400">
-            Manage system settings, users, and categories
+            Manage system settings, categories, users, and branches
           </p>
         </div>
 
         <Tabs defaultValue="categories" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className={`grid w-full ${isSuperAdmin ? "grid-cols-3" : "grid-cols-1"}`}>
             <TabsTrigger value="categories" className="flex items-center gap-2">
               <Tags className="w-4 h-4" />
               Categories
             </TabsTrigger>
             {isSuperAdmin && (
-              <TabsTrigger value="users" className="flex items-center gap-2">
-                <Users className="w-4 h-4" />
-                Users
-              </TabsTrigger>
+              <>
+                <TabsTrigger value="branches" className="flex items-center gap-2">
+                  <MapPin className="w-4 h-4" />
+                  Branches
+                </TabsTrigger>
+                <TabsTrigger value="users" className="flex items-center gap-2">
+                  <Users className="w-4 h-4" />
+                  Users
+                </TabsTrigger>
+              </>
             )}
           </TabsList>
 
           <TabsContent value="categories" className="space-y-6">
             <CategoryManager />
           </TabsContent>
+
+          {isSuperAdmin && (
+            <TabsContent value="branches" className="space-y-6">
+              <BranchManager />
+            </TabsContent>
+          )}
 
           {isSuperAdmin && (
             <TabsContent value="users" className="space-y-6">

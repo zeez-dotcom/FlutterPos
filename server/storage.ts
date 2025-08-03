@@ -4,13 +4,14 @@ import {
   type Transaction, type InsertTransaction,
   type User, type InsertUser, type UpsertUser,
   type Category, type InsertCategory,
+  type Branch, type InsertBranch,
   type Customer, type InsertCustomer,
   type Order, type InsertOrder,
   type Payment, type InsertPayment,
   type Product, type InsertProduct,
   type LoyaltyHistory, type InsertLoyaltyHistory,
   type Notification, type InsertNotification,
-  clothingItems, laundryServices, transactions, users, categories, customers, orders, payments, products, loyaltyHistory, notifications
+  clothingItems, laundryServices, transactions, users, categories, branches, customers, orders, payments, products, loyaltyHistory, notifications
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { db } from "./db";
@@ -33,6 +34,13 @@ export interface IStorage {
   createCategory(category: InsertCategory): Promise<Category>;
   updateCategory(id: string, category: Partial<InsertCategory>): Promise<Category | undefined>;
   deleteCategory(id: string): Promise<boolean>;
+
+  // Branch operations
+  getBranches(): Promise<Branch[]>;
+  getBranch(id: string): Promise<Branch | undefined>;
+  createBranch(branch: InsertBranch): Promise<Branch>;
+  updateBranch(id: string, branch: Partial<InsertBranch>): Promise<Branch | undefined>;
+  deleteBranch(id: string): Promise<boolean>;
 
   // Products
   getProducts(): Promise<Product[]>;
@@ -98,6 +106,7 @@ export class MemStorage {
   private transactions: Map<string, Transaction>;
   private users: Map<string, User>;
   private categories: Map<string, Category>;
+   private branches: Map<string, Branch>;
   private loyaltyHistory: LoyaltyHistory[];
   private notifications: Notification[];
 
@@ -108,6 +117,7 @@ export class MemStorage {
     this.transactions = new Map();
     this.users = new Map();
     this.categories = new Map();
+    this.branches = new Map();
     this.loyaltyHistory = [];
     this.notifications = [];
     this.initializeData();
@@ -446,6 +456,13 @@ export class MemStorage {
   async createCategory(category: InsertCategory): Promise<Category> { throw new Error("Not implemented in MemStorage"); }
   async updateCategory(id: string, category: Partial<InsertCategory>): Promise<Category | undefined> { return undefined; }
   async deleteCategory(id: string): Promise<boolean> { return false; }
+
+  // Branch methods (stub for MemStorage - not used in production)
+  async getBranches(): Promise<Branch[]> { return []; }
+  async getBranch(id: string): Promise<Branch | undefined> { return undefined; }
+  async createBranch(branch: InsertBranch): Promise<Branch> { throw new Error("Not implemented in MemStorage"); }
+  async updateBranch(id: string, branch: Partial<InsertBranch>): Promise<Branch | undefined> { return undefined; }
+  async deleteBranch(id: string): Promise<boolean> { return false; }
 }
 
 export class DatabaseStorage implements IStorage {
@@ -541,6 +558,35 @@ export class DatabaseStorage implements IStorage {
 
   async deleteCategory(id: string): Promise<boolean> {
     const result = await db.delete(categories).where(eq(categories.id, id));
+    return result.rowCount ? result.rowCount > 0 : false;
+  }
+
+  // Branch methods
+  async getBranches(): Promise<Branch[]> {
+    return await db.select().from(branches);
+  }
+
+  async getBranch(id: string): Promise<Branch | undefined> {
+    const [branch] = await db.select().from(branches).where(eq(branches.id, id));
+    return branch || undefined;
+  }
+
+  async createBranch(branchData: InsertBranch): Promise<Branch> {
+    const [branch] = await db.insert(branches).values(branchData).returning();
+    return branch;
+  }
+
+  async updateBranch(id: string, branchData: Partial<InsertBranch>): Promise<Branch | undefined> {
+    const [updated] = await db
+      .update(branches)
+      .set(branchData)
+      .where(eq(branches.id, id))
+      .returning();
+    return updated || undefined;
+  }
+
+  async deleteBranch(id: string): Promise<boolean> {
+    const result = await db.delete(branches).where(eq(branches.id, id));
     return result.rowCount ? result.rowCount > 0 : false;
   }
 
