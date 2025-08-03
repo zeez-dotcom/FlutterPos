@@ -11,7 +11,8 @@ import {
   type Product, type InsertProduct,
   type LoyaltyHistory, type InsertLoyaltyHistory,
   type Notification, type InsertNotification,
-  clothingItems, laundryServices, transactions, users, categories, branches, customers, orders, payments, products, loyaltyHistory, notifications
+  type SecuritySettings, type InsertSecuritySettings,
+  clothingItems, laundryServices, transactions, users, categories, branches, customers, orders, payments, products, loyaltyHistory, notifications, securitySettings
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { db } from "./db";
@@ -94,6 +95,10 @@ export interface IStorage {
   // Notifications
   createNotification(notification: InsertNotification): Promise<Notification>;
 
+  // Security settings
+  getSecuritySettings(): Promise<SecuritySettings | undefined>;
+  updateSecuritySettings(settings: InsertSecuritySettings): Promise<SecuritySettings>;
+
   // Loyalty history
   getLoyaltyHistory(customerId: string): Promise<LoyaltyHistory[]>;
   createLoyaltyHistory(entry: InsertLoyaltyHistory): Promise<LoyaltyHistory>;
@@ -109,6 +114,7 @@ export class MemStorage {
    private branches: Map<string, Branch>;
   private loyaltyHistory: LoyaltyHistory[];
   private notifications: Notification[];
+  private securitySettings: SecuritySettings;
 
   constructor() {
     this.products = new Map();
@@ -120,6 +126,13 @@ export class MemStorage {
     this.branches = new Map();
     this.loyaltyHistory = [];
     this.notifications = [];
+    this.securitySettings = {
+      id: "default",
+      sessionTimeout: 15,
+      twoFactorRequired: false,
+      passwordPolicy: "",
+      updatedAt: new Date(),
+    };
     this.initializeData();
   }
 
@@ -439,6 +452,19 @@ export class MemStorage {
     };
     this.notifications.push(record);
     return record;
+  }
+
+  async getSecuritySettings(): Promise<SecuritySettings | undefined> {
+    return this.securitySettings;
+  }
+
+  async updateSecuritySettings(settings: InsertSecuritySettings): Promise<SecuritySettings> {
+    this.securitySettings = {
+      ...this.securitySettings,
+      ...settings,
+      updatedAt: new Date(),
+    };
+    return this.securitySettings;
   }
 
   // User methods (stub for MemStorage - not used in production)
@@ -823,6 +849,28 @@ export class DatabaseStorage implements IStorage {
       .values(notificationData)
       .returning();
     return record;
+  }
+
+  async getSecuritySettings(): Promise<SecuritySettings | undefined> {
+    const [settings] = await db.select().from(securitySettings).limit(1);
+    return settings || undefined;
+  }
+
+  async updateSecuritySettings(settingsData: InsertSecuritySettings): Promise<SecuritySettings> {
+    const existing = await this.getSecuritySettings();
+    if (existing) {
+      const [updated] = await db
+        .update(securitySettings)
+        .set({ ...settingsData, updatedAt: new Date() })
+        .where(eq(securitySettings.id, existing.id))
+        .returning();
+      return updated;
+    }
+    const [created] = await db
+      .insert(securitySettings)
+      .values(settingsData)
+      .returning();
+    return created;
   }
 
   async getLoyaltyHistory(customerId: string): Promise<LoyaltyHistory[]> {

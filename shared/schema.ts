@@ -141,6 +141,15 @@ export const notifications = pgTable("notifications", {
   sentAt: timestamp("sent_at").defaultNow().notNull(),
 });
 
+// Security settings
+export const securitySettings = pgTable("security_settings", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  sessionTimeout: integer("session_timeout").notNull().default(15),
+  twoFactorRequired: boolean("two_factor_required").notNull().default(false),
+  passwordPolicy: text("password_policy"),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 // Loyalty points history for tracking accrual and redemption
 export const loyaltyHistory = pgTable("loyalty_history", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -183,6 +192,11 @@ export const insertPaymentSchema = createInsertSchema(payments).omit({
 export const insertNotificationSchema = createInsertSchema(notifications).omit({
   id: true,
   sentAt: true,
+});
+
+export const insertSecuritySettingsSchema = createInsertSchema(securitySettings).omit({
+  id: true,
+  updatedAt: true,
 });
 
 export const insertTransactionSchema = createInsertSchema(transactions).omit({
@@ -236,6 +250,8 @@ export type Notification = typeof notifications.$inferSelect;
 export type InsertNotification = z.infer<typeof insertNotificationSchema>;
 export type LoyaltyHistory = typeof loyaltyHistory.$inferSelect;
 export type InsertLoyaltyHistory = z.infer<typeof insertLoyaltyHistorySchema>;
+export type SecuritySettings = typeof securitySettings.$inferSelect;
+export type InsertSecuritySettings = z.infer<typeof insertSecuritySettingsSchema>;
 
 export interface LaundryCartItem {
   id: string;

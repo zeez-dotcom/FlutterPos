@@ -9,6 +9,9 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
+import { cn } from "@/lib/utils";
+import { SecuritySettings } from "./security-settings";
 
 export function SettingsPanel() {
   const [settings, setSettings] = useState({
@@ -41,6 +44,8 @@ export function SettingsPanel() {
   });
 
   const { toast } = useToast();
+  const { isAdmin, isSuperAdmin } = useAuth();
+  const showSecurity = isAdmin || isSuperAdmin;
 
   const handleSettingChange = (key: string, value: string | boolean | number) => {
     setSettings(prev => ({
@@ -106,12 +111,13 @@ export function SettingsPanel() {
         </div>
 
         <Tabs defaultValue="business" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className={cn("grid w-full", showSecurity ? "grid-cols-6" : "grid-cols-5")}>
             <TabsTrigger value="business">Business</TabsTrigger>
             <TabsTrigger value="receipts">Receipts</TabsTrigger>
             <TabsTrigger value="system">System</TabsTrigger>
             <TabsTrigger value="pricing">Pricing</TabsTrigger>
             <TabsTrigger value="appearance">Appearance</TabsTrigger>
+            {showSecurity && <TabsTrigger value="security">Security</TabsTrigger>}
           </TabsList>
 
           <TabsContent value="business" className="space-y-6">
@@ -395,6 +401,11 @@ export function SettingsPanel() {
               </CardContent>
             </Card>
           </TabsContent>
+          {showSecurity && (
+            <TabsContent value="security" className="space-y-6">
+              <SecuritySettings />
+            </TabsContent>
+          )}
         </Tabs>
       </div>
     </div>

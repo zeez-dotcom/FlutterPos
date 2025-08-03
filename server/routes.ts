@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertTransactionSchema, insertClothingItemSchema, insertLaundryServiceSchema, insertUserSchema, insertCategorySchema, insertBranchSchema, insertCustomerSchema, insertOrderSchema, insertPaymentSchema } from "@shared/schema";
+import { insertTransactionSchema, insertClothingItemSchema, insertLaundryServiceSchema, insertUserSchema, insertCategorySchema, insertBranchSchema, insertCustomerSchema, insertOrderSchema, insertPaymentSchema, insertSecuritySettingsSchema } from "@shared/schema";
 import { setupAuth, requireAuth, requireSuperAdmin, requireAdminOrSuperAdmin } from "./auth";
 import passport from "passport";
 import type { User } from "@shared/schema";
@@ -186,6 +186,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error deleting branch:", error);
       res.status(500).json({ message: "Failed to delete branch" });
+    }
+  });
+
+  // Security settings (Admin or Super Admin)
+  app.get("/api/security-settings", requireAdminOrSuperAdmin, async (_req, res) => {
+    try {
+      const settings = await storage.getSecuritySettings();
+      res.json(settings);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch security settings" });
+    }
+  });
+
+  app.put("/api/security-settings", requireAdminOrSuperAdmin, async (req, res) => {
+    try {
+      const validated = insertSecuritySettingsSchema.parse(req.body);
+      const updated = await storage.updateSecuritySettings(validated);
+      res.json(updated);
+    } catch (error) {
+      console.error("Error updating security settings:", error);
+      res.status(400).json({ message: "Invalid security settings data" });
     }
   });
 
