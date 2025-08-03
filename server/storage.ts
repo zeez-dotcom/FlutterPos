@@ -7,7 +7,8 @@ import {
   type Customer, type InsertCustomer,
   type Order, type InsertOrder,
   type Payment, type InsertPayment,
-  clothingItems, laundryServices, transactions, users, categories, customers, orders, payments
+  type Product, type InsertProduct,
+  clothingItems, laundryServices, transactions, users, categories, customers, orders, payments, products
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { db } from "./db";
@@ -30,7 +31,14 @@ export interface IStorage {
   createCategory(category: InsertCategory): Promise<Category>;
   updateCategory(id: string, category: Partial<InsertCategory>): Promise<Category | undefined>;
   deleteCategory(id: string): Promise<boolean>;
-  
+
+  // Products
+  getProducts(): Promise<Product[]>;
+  getProductsByCategory(category: string): Promise<Product[]>;
+  getProduct(id: string): Promise<Product | undefined>;
+  createProduct(product: InsertProduct): Promise<Product>;
+  updateProduct(id: string, product: Partial<InsertProduct>): Promise<Product | undefined>;
+
   // Clothing Items
   getClothingItems(): Promise<ClothingItem[]>;
   getClothingItemsByCategory(category: string): Promise<ClothingItem[]>;
@@ -75,6 +83,7 @@ export interface IStorage {
 }
 
 export class MemStorage {
+  private products: Map<string, Product>;
   private clothingItems: Map<string, ClothingItem>;
   private laundryServices: Map<string, LaundryService>;
   private transactions: Map<string, Transaction>;
@@ -82,6 +91,7 @@ export class MemStorage {
   private categories: Map<string, Category>;
 
   constructor() {
+    this.products = new Map();
     this.clothingItems = new Map();
     this.laundryServices = new Map();
     this.transactions = new Map();
@@ -91,6 +101,54 @@ export class MemStorage {
   }
 
   private initializeData() {
+    // Initialize products
+    const initialProducts: InsertProduct[] = [
+      {
+        name: "Cola",
+        description: "Refreshing soda drink",
+        category: "beverages",
+        price: "1.99",
+        stock: 50,
+        imageUrl: "https://images.unsplash.com/photo-1580910051074-7bc38a51a79f?auto=format&fit=crop&w=300&h=200"
+      },
+      {
+        name: "Potato Chips",
+        description: "Crispy salted chips",
+        category: "snacks",
+        price: "2.49",
+        stock: 40,
+        imageUrl: "https://images.unsplash.com/photo-1585238342029-5a9b9e8e7044?auto=format&fit=crop&w=300&h=200"
+      },
+      {
+        name: "Wireless Earbuds",
+        description: "Bluetooth in-ear headphones",
+        category: "electronics",
+        price: "59.99",
+        stock: 25,
+        imageUrl: "https://images.unsplash.com/photo-1585386959984-a41552231685?auto=format&fit=crop&w=300&h=200"
+      },
+      {
+        name: "Instant Noodles",
+        description: "Quick and tasty meal",
+        category: "food",
+        price: "0.99",
+        stock: 80,
+        imageUrl: "https://images.unsplash.com/photo-1617196033361-c2d0cf79ab8f?auto=format&fit=crop&w=300&h=200"
+      },
+      {
+        name: "Dish Soap",
+        description: "Lemon scented detergent",
+        category: "household",
+        price: "3.49",
+        stock: 60,
+        imageUrl: "https://images.unsplash.com/photo-1602161414263-5a8d5449475a?auto=format&fit=crop&w=300&h=200"
+      }
+    ];
+
+    initialProducts.forEach(product => {
+      this.createProduct(product);
+    });
+
     // Initialize clothing items
     const initialClothingItems: InsertClothingItem[] = [
       {
@@ -178,6 +236,54 @@ export class MemStorage {
     initialLaundryServices.forEach(service => {
       this.createLaundryService(service);
     });
+  }
+
+  // Product methods
+  async getProducts(): Promise<Product[]> {
+    return Array.from(this.products.values());
+  }
+
+  async getProductsByCategory(category: string): Promise<Product[]> {
+    if (category === "all") {
+      return this.getProducts();
+    }
+    return Array.from(this.products.values()).filter(product => product.category === category);
+  }
+
+  async getProduct(id: string): Promise<Product | undefined> {
+    return this.products.get(id);
+  }
+
+  async createProduct(product: InsertProduct): Promise<Product> {
+    const id = randomUUID();
+    const newProduct: Product = {
+      id,
+      name: product.name,
+      description: product.description || null,
+      category: product.category || null,
+      price: product.price,
+      stock: product.stock ?? 0,
+      imageUrl: product.imageUrl || null,
+    };
+    this.products.set(id, newProduct);
+    return newProduct;
+  }
+
+  async updateProduct(id: string, product: Partial<InsertProduct>): Promise<Product | undefined> {
+    const existing = this.products.get(id);
+    if (!existing) return undefined;
+
+    const updated: Product = {
+      ...existing,
+      name: product.name ?? existing.name,
+      description: product.description ?? existing.description,
+      category: product.category ?? existing.category,
+      price: product.price ?? existing.price,
+      stock: product.stock ?? existing.stock,
+      imageUrl: product.imageUrl ?? existing.imageUrl,
+    };
+    this.products.set(id, updated);
+    return updated;
   }
 
   // Clothing Items methods
@@ -398,6 +504,40 @@ export class DatabaseStorage implements IStorage {
   async deleteCategory(id: string): Promise<boolean> {
     const result = await db.delete(categories).where(eq(categories.id, id));
     return result.rowCount ? result.rowCount > 0 : false;
+  }
+
+  // Product methods
+  async getProducts(): Promise<Product[]> {
+    return await db.select().from(products);
+  }
+
+  async getProductsByCategory(category: string): Promise<Product[]> {
+    if (category === "all") {
+      return this.getProducts();
+    }
+    return await db.select().from(products).where(eq(products.category, category));
+  }
+
+  async getProduct(id: string): Promise<Product | undefined> {
+    const [product] = await db.select().from(products).where(eq(products.id, id));
+    return product || undefined;
+  }
+
+  async createProduct(productData: InsertProduct): Promise<Product> {
+    const [product] = await db
+      .insert(products)
+      .values(productData)
+      .returning();
+    return product;
+  }
+
+  async updateProduct(id: string, productData: Partial<InsertProduct>): Promise<Product | undefined> {
+    const [updated] = await db
+      .update(products)
+      .set(productData)
+      .where(eq(products.id, id))
+      .returning();
+    return updated || undefined;
   }
 
   // Clothing Items methods

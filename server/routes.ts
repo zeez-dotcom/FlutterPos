@@ -138,6 +138,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to delete category" });
     }
   });
+
+  // Products route
+  app.get("/api/products", async (req, res) => {
+    try {
+      const category = req.query.category as string;
+      const search = req.query.search as string;
+
+      let items = category
+        ? await storage.getProductsByCategory(category)
+        : await storage.getProducts();
+
+      if (search) {
+        items = items.filter(product =>
+          product.name.toLowerCase().includes(search.toLowerCase()) ||
+          product.description?.toLowerCase().includes(search.toLowerCase())
+        );
+      }
+
+      res.json(items);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch products" });
+    }
+  });
   // Clothing Items routes
   app.get("/api/clothing-items", async (req, res) => {
     try {

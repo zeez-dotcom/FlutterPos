@@ -19,6 +19,16 @@ export const laundryServices = pgTable("laundry_services", {
   category: text("category").notNull(),
 });
 
+export const products = pgTable("products", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull(),
+  description: text("description"),
+  category: text("category"),
+  price: decimal("price", { precision: 10, scale: 2 }).notNull(),
+  stock: integer("stock").notNull().default(0),
+  imageUrl: text("image_url"),
+});
+
 export const transactions = pgTable("transactions", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   items: jsonb("items").notNull(),
@@ -123,6 +133,10 @@ export const insertLaundryServiceSchema = createInsertSchema(laundryServices).om
   id: true,
 });
 
+export const insertProductSchema = createInsertSchema(products).omit({
+  id: true,
+});
+
 export const insertCustomerSchema = createInsertSchema(customers).omit({
   id: true,
   createdAt: true,
@@ -165,6 +179,8 @@ export type ClothingItem = typeof clothingItems.$inferSelect;
 export type InsertClothingItem = z.infer<typeof insertClothingItemSchema>;
 export type LaundryService = typeof laundryServices.$inferSelect;
 export type InsertLaundryService = z.infer<typeof insertLaundryServiceSchema>;
+export type Product = typeof products.$inferSelect;
+export type InsertProduct = z.infer<typeof insertProductSchema>;
 export type Transaction = typeof transactions.$inferSelect;
 export type InsertTransaction = z.infer<typeof insertTransactionSchema>;
 export type Category = typeof categories.$inferSelect;
