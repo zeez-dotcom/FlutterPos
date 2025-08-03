@@ -20,7 +20,7 @@ import { useTranslation } from "@/lib/i18n";
 import { LanguageSelector } from "@/components/language-selector";
 import { useCurrency } from "@/lib/currency";
 import { SystemSettings } from "@/components/system-settings";
-import { ClothingItem, LaundryService, Transaction, InsertTransaction, Customer } from "@shared/schema";
+import { ClothingItem, LaundryService, Transaction, Customer } from "@shared/schema";
 import { ShoppingCart, Package, BarChart3, Settings, Users, Truck, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -111,7 +111,7 @@ export default function POS() {
     });
   };
 
-  const handleCheckout = async () => {
+  const handleCheckout = async (redeemedPoints: number = 0) => {
     if (cartSummary.items.length === 0) {
       toast({
         title: "Cart is empty",
@@ -129,6 +129,9 @@ export default function POS() {
       });
       return;
     }
+
+    const finalTotal = Math.max(cartSummary.total - redeemedPoints, 0);
+    const pointsEarned = selectedCustomer ? Math.floor(finalTotal) : 0;
 
     // Convert laundry cart items to order format
     const orderItems = cartSummary.items.map(item => ({
@@ -149,22 +152,27 @@ export default function POS() {
         items: orderItems,
         subtotal: cartSummary.subtotal.toString(),
         tax: cartSummary.tax.toString(),
-        total: cartSummary.total.toString(),
+        total: finalTotal.toString(),
         paymentMethod: "pay_later",
         status: "received",
         estimatedPickupDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(), // 3 days from now
-        createdBy: "Sarah Johnson"
+        createdBy: "Sarah Johnson",
+        loyaltyPointsEarned: pointsEarned,
+        loyaltyPointsRedeemed: redeemedPoints,
       };
       checkoutMutation.mutate(orderData);
     } else {
       // Create immediate transaction
-      const transaction: InsertTransaction = {
+      const transaction: any = {
         items: orderItems,
         subtotal: cartSummary.subtotal.toString(),
         tax: cartSummary.tax.toString(),
-        total: cartSummary.total.toString(),
+        total: finalTotal.toString(),
         paymentMethod,
-        cashierName: "Sarah Johnson"
+        cashierName: "Sarah Johnson",
+        customerId: selectedCustomer?.id,
+        loyaltyPointsEarned: pointsEarned,
+        loyaltyPointsRedeemed: redeemedPoints,
       };
       checkoutMutation.mutate(transaction);
     }

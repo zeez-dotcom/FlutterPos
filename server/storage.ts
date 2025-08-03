@@ -8,7 +8,8 @@ import {
   type Order, type InsertOrder,
   type Payment, type InsertPayment,
   type Product, type InsertProduct,
-  clothingItems, laundryServices, transactions, users, categories, customers, orders, payments, products
+  type LoyaltyHistory, type InsertLoyaltyHistory,
+  clothingItems, laundryServices, transactions, users, categories, customers, orders, payments, products, loyaltyHistory
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { db } from "./db";
@@ -80,6 +81,10 @@ export interface IStorage {
   getPayment(id: string): Promise<Payment | undefined>;
   getPaymentsByCustomer(customerId: string): Promise<Payment[]>;
   createPayment(payment: InsertPayment): Promise<Payment>;
+
+  // Loyalty history
+  getLoyaltyHistory(customerId: string): Promise<LoyaltyHistory[]>;
+  createLoyaltyHistory(entry: InsertLoyaltyHistory): Promise<LoyaltyHistory>;
 }
 
 export class MemStorage {
@@ -89,6 +94,7 @@ export class MemStorage {
   private transactions: Map<string, Transaction>;
   private users: Map<string, User>;
   private categories: Map<string, Category>;
+  private loyaltyHistory: LoyaltyHistory[];
 
   constructor() {
     this.products = new Map();
@@ -97,6 +103,7 @@ export class MemStorage {
     this.transactions = new Map();
     this.users = new Map();
     this.categories = new Map();
+    this.loyaltyHistory = [];
     this.initializeData();
   }
 
@@ -391,6 +398,21 @@ export class MemStorage {
 
   async getTransaction(id: string): Promise<Transaction | undefined> {
     return this.transactions.get(id);
+  }
+
+  async getLoyaltyHistory(customerId: string): Promise<LoyaltyHistory[]> {
+    return this.loyaltyHistory.filter(h => h.customerId === customerId);
+  }
+
+  async createLoyaltyHistory(entry: InsertLoyaltyHistory): Promise<LoyaltyHistory> {
+    const record: LoyaltyHistory = {
+      ...entry,
+      id: randomUUID(),
+      description: entry.description ?? null,
+      createdAt: new Date(),
+    };
+    this.loyaltyHistory.push(record);
+    return record;
   }
 
   // User methods (stub for MemStorage - not used in production)
@@ -731,6 +753,21 @@ export class DatabaseStorage implements IStorage {
       .values(paymentData)
       .returning();
     return payment;
+  }
+
+  async getLoyaltyHistory(customerId: string): Promise<LoyaltyHistory[]> {
+    return await db
+      .select()
+      .from(loyaltyHistory)
+      .where(eq(loyaltyHistory.customerId, customerId));
+  }
+
+  async createLoyaltyHistory(entry: InsertLoyaltyHistory): Promise<LoyaltyHistory> {
+    const [record] = await db
+      .insert(loyaltyHistory)
+      .values(entry)
+      .returning();
+    return record;
   }
 }
 
