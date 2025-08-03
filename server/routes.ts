@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertTransactionSchema, insertClothingItemSchema, insertLaundryServiceSchema, insertUserSchema, insertCategorySchema, insertCustomerSchema, insertOrderSchema, insertPaymentSchema } from "@shared/schema";
+import { insertTransactionSchema, insertClothingItemSchema, insertLaundryServiceSchema, insertUserSchema, insertCategorySchema, insertBranchSchema, insertCustomerSchema, insertOrderSchema, insertPaymentSchema } from "@shared/schema";
 import { setupAuth, requireAuth, requireSuperAdmin, requireAdminOrSuperAdmin } from "./auth";
 import passport from "passport";
 import type { User } from "@shared/schema";
@@ -137,6 +137,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error deleting category:", error);
       res.status(500).json({ message: "Failed to delete category" });
+    }
+  });
+
+  // Branch management routes (Super Admin only)
+  app.get("/api/branches", requireSuperAdmin, async (_req, res) => {
+    try {
+      const branches = await storage.getBranches();
+      res.json(branches);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch branches" });
+    }
+  });
+
+  app.post("/api/branches", requireSuperAdmin, async (req, res) => {
+    try {
+      const validatedData = insertBranchSchema.parse(req.body);
+      const branch = await storage.createBranch(validatedData);
+      res.json(branch);
+    } catch (error) {
+      console.error("Error creating branch:", error);
+      res.status(500).json({ message: "Failed to create branch" });
+    }
+  });
+
+  app.put("/api/branches/:id", requireSuperAdmin, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const validatedData = insertBranchSchema.parse(req.body);
+      const branch = await storage.updateBranch(id, validatedData);
+      if (!branch) {
+        return res.status(404).json({ message: "Branch not found" });
+      }
+      res.json(branch);
+    } catch (error) {
+      console.error("Error updating branch:", error);
+      res.status(500).json({ message: "Failed to update branch" });
+    }
+  });
+
+  app.delete("/api/branches/:id", requireSuperAdmin, async (req, res) => {
+    try {
+      const deleted = await storage.deleteBranch(req.params.id);
+      if (!deleted) {
+        return res.status(404).json({ message: "Branch not found" });
+      }
+      res.json({ message: "Branch deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting branch:", error);
+      res.status(500).json({ message: "Failed to delete branch" });
     }
   });
 
