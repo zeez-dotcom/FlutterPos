@@ -8,9 +8,10 @@ import { DatePickerWithRange } from "@/components/ui/date-range-picker";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Transaction } from "@shared/schema";
 import { format, subDays, startOfDay, endOfDay } from "date-fns";
+import type { DateRange } from "react-day-picker";
 
 export function ReportsDashboard() {
-  const [dateRange, setDateRange] = useState({
+  const [dateRange, setDateRange] = useState<DateRange | undefined>({
     from: subDays(new Date(), 30),
     to: new Date()
   });
@@ -27,8 +28,9 @@ export function ReportsDashboard() {
 
   // Filter transactions by date range
   const filteredTransactions = transactions.filter(transaction => {
+    if (!dateRange?.from || !dateRange?.to) return true;
     const transactionDate = new Date(transaction.createdAt);
-    return transactionDate >= startOfDay(dateRange.from) && 
+    return transactionDate >= startOfDay(dateRange.from) &&
            transactionDate <= endOfDay(dateRange.to);
   });
 

@@ -5,7 +5,7 @@ const TAX_RATE = 0.085; // 8.5%
 
 export function useLaundryCart() {
   const [cartItems, setCartItems] = useState<LaundryCartItem[]>([]);
-  const [paymentMethod, setPaymentMethod] = useState<"cash" | "card">("cash");
+  const [paymentMethod, setPaymentMethod] = useState<"cash" | "card" | "pay_later">("cash");
 
   const addToCart = useCallback((clothingItem: ClothingItem, service: LaundryService, quantity: number = 1) => {
     setCartItems(prev => {
