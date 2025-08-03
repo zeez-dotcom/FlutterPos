@@ -13,6 +13,7 @@ import { Customer, InsertCustomer, Payment, InsertPayment } from "@shared/schema
 import { Search, Plus, Phone, DollarSign, CreditCard, User, Calendar } from "lucide-react";
 import { format } from "date-fns";
 import { useCurrency } from "@/lib/currency";
+import { useAuth } from "@/hooks/useAuth";
 
 interface CustomerManagementProps {
   onCustomerSelect?: (customer: Customer) => void;
@@ -36,6 +37,7 @@ export function CustomerManagement({ onCustomerSelect }: CustomerManagementProps
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { formatCurrency } = useCurrency();
+  const { user } = useAuth();
 
   const { data: customers = [], isLoading } = useQuery<Customer[]>({
     queryKey: ["/api/customers"],
@@ -122,14 +124,14 @@ export function CustomerManagement({ onCustomerSelect }: CustomerManagementProps
       return;
     }
 
-    recordPaymentMutation.mutate({
-      customerId: selectedCustomer.id,
-      amount: paymentAmount,
-      paymentMethod,
-      notes: paymentNotes,
-      receivedBy: "Current User", // TODO: Use actual logged-in user
-    });
-  };
+      recordPaymentMutation.mutate({
+        customerId: selectedCustomer.id,
+        amount: paymentAmount,
+        paymentMethod,
+        notes: paymentNotes,
+        receivedBy: user?.username || "Unknown",
+      });
+    };
 
   if (isLoading) {
     return <div className="p-4">Loading customers...</div>;
