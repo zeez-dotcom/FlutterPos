@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Minus, Plus, Trash2, X, User, Phone, CreditCard, DollarSign } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -24,7 +24,7 @@ interface LaundryCartSidebarProps {
   onClearCart: () => void;
   onSelectPayment: (method: "cash" | "card" | "pay_later") => void;
   onSelectCustomer: (customer: Customer | null) => void;
-  onCheckout: () => void;
+  onCheckout: (redeemedPoints: number) => void;
   isVisible: boolean;
   onClose: () => void;
 }
@@ -46,7 +46,7 @@ export function LaundryCartSidebar({
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { formatCurrency } = useCurrency();
-  
+
   const [isCustomerDialogOpen, setIsCustomerDialogOpen] = useState(false);
   const [customerSearch, setCustomerSearch] = useState("");
   const [newCustomer, setNewCustomer] = useState<InsertCustomer>({
@@ -55,6 +55,16 @@ export function LaundryCartSidebar({
     email: "",
     address: "",
   });
+  const [redeemPoints, setRedeemPoints] = useState(0);
+
+  useEffect(() => {
+    setRedeemPoints(0);
+  }, [selectedCustomer, cartSummary.total]);
+
+  const maxRedeemable = selectedCustomer
+    ? Math.min(selectedCustomer.loyaltyPoints, Math.floor(cartSummary.total))
+    : 0;
+  const finalTotal = Math.max(cartSummary.total - redeemPoints, 0);
 
   const { data: customers = [], isLoading: customersLoading } = useQuery<Customer[]>({
     queryKey: ["/api/customers"],
@@ -325,9 +335,37 @@ export function LaundryCartSidebar({
               <span className="text-gray-600">Tax (8.5%):</span>
               <span className="font-medium">{formatCurrency(cartSummary.tax)}</span>
             </div>
+            {selectedCustomer && maxRedeemable > 0 && (
+              <div className="flex items-center justify-between">
+                <span className="text-gray-600">
+                  Redeem Points (Avail: {selectedCustomer.loyaltyPoints})
+                </span>
+                <Input
+                  type="number"
+                  min={0}
+                  max={maxRedeemable}
+                  value={redeemPoints}
+                  onChange={(e) =>
+                    setRedeemPoints(
+                      Math.min(
+                        Math.max(0, parseInt(e.target.value) || 0),
+                        maxRedeemable
+                      )
+                    )
+                  }
+                  className="w-20 h-7"
+                />
+              </div>
+            )}
+            {redeemPoints > 0 && (
+              <div className="flex justify-between text-green-600">
+                <span>Discount:</span>
+                <span>-{formatCurrency(redeemPoints)}</span>
+              </div>
+            )}
             <div className="flex justify-between text-lg font-bold border-t border-gray-200 pt-3">
               <span>Total:</span>
-              <span>{formatCurrency(cartSummary.total)}</span>
+              <span>{formatCurrency(finalTotal)}</span>
             </div>
           </div>
 
@@ -381,9 +419,9 @@ export function LaundryCartSidebar({
           </div>
 
           {/* Checkout Button */}
-          <Button 
+          <Button
             className="w-full bg-pos-secondary hover:bg-green-600 text-white font-medium py-4"
-            onClick={onCheckout}
+            onClick={() => onCheckout(redeemPoints)}
             disabled={cartSummary.items.length === 0 || (paymentMethod === "pay_later" && !selectedCustomer)}
           >
             <span className="mr-2">✓</span>

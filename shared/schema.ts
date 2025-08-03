@@ -125,6 +125,15 @@ export const payments = pgTable("payments", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+// Loyalty points history for tracking accrual and redemption
+export const loyaltyHistory = pgTable("loyalty_history", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  customerId: varchar("customer_id").references(() => customers.id).notNull(),
+  change: integer("change").notNull(), // positive for accrual, negative for redemption
+  description: text("description"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 export const insertClothingItemSchema = createInsertSchema(clothingItems).omit({
   id: true,
 });
@@ -160,6 +169,11 @@ export const insertTransactionSchema = createInsertSchema(transactions).omit({
   createdAt: true,
 });
 
+export const insertLoyaltyHistorySchema = createInsertSchema(loyaltyHistory).omit({
+  id: true,
+  createdAt: true,
+});
+
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
   createdAt: true,
@@ -191,6 +205,8 @@ export type Order = typeof orders.$inferSelect;
 export type InsertOrder = z.infer<typeof insertOrderSchema>;
 export type Payment = typeof payments.$inferSelect;
 export type InsertPayment = z.infer<typeof insertPaymentSchema>;
+export type LoyaltyHistory = typeof loyaltyHistory.$inferSelect;
+export type InsertLoyaltyHistory = z.infer<typeof insertLoyaltyHistorySchema>;
 
 export interface LaundryCartItem {
   id: string;

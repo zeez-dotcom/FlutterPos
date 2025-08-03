@@ -286,12 +286,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Transactions routes
   app.post("/api/transactions", async (req, res) => {
     try {
+      const { customerId, loyaltyPointsEarned = 0, loyaltyPointsRedeemed = 0 } = req.body;
       const validatedData = insertTransactionSchema.parse(req.body);
-      
+
       // For laundry system, we don't need to update stock like traditional POS
       // Laundry services are unlimited capacity services
-      
+
       const transaction = await storage.createTransaction(validatedData);
+
+      if (customerId) {
+        const customer = await storage.getCustomer(customerId);
+        if (customer) {
+          const newPoints = customer.loyaltyPoints + (loyaltyPointsEarned - loyaltyPointsRedeemed);
+          await storage.updateCustomer(customerId, { loyaltyPoints: newPoints });
+          if (loyaltyPointsEarned > 0) {
+            await storage.createLoyaltyHistory({
+              customerId,
+              change: loyaltyPointsEarned,
+              description: `Earned from transaction ${transaction.id}`,
+            });
+          }
+          if (loyaltyPointsRedeemed > 0) {
+            await storage.createLoyaltyHistory({
+              customerId,
+              change: -loyaltyPointsRedeemed,
+              description: `Redeemed in transaction ${transaction.id}`,
+            });
+          }
+        }
+      }
+
       res.json(transaction);
     } catch (error) {
       console.error("Transaction creation error:", error);
@@ -415,22 +439,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/orders", async (req, res) => {
     try {
+      const { loyaltyPointsEarned = 0, loyaltyPointsRedeemed = 0 } = req.body;
       const orderData = insertOrderSchema.parse(req.body);
       const order = await storage.createOrder(orderData);
-      
+
       // If payment method is pay_later, update customer balance
       if (order.paymentMethod === 'pay_later' && order.customerId) {
         const customer = await storage.getCustomer(order.customerId);
         if (customer) {
           const orderAmount = parseFloat(order.total);
           const updatedBalance = parseFloat(customer.balanceDue) + orderAmount;
-          
+
           await storage.updateCustomer(order.customerId, {
             balanceDue: updatedBalance.toString()
           });
         }
       }
-      
+
+      if (order.customerId) {
+        const customer = await storage.getCustomer(order.customerId);
+        if (customer) {
+          const newPoints = customer.loyaltyPoints + (loyaltyPointsEarned - loyaltyPointsRedeemed);
+          await storage.updateCustomer(order.customerId, { loyaltyPoints: newPoints });
+          if (loyaltyPointsEarned > 0) {
+            await storage.createLoyaltyHistory({
+              customerId: order.customerId,
+              change: loyaltyPointsEarned,
+              description: `Earned from order ${order.id}`,
+            });
+          }
+          if (loyaltyPointsRedeemed > 0) {
+            await storage.createLoyaltyHistory({
+              customerId: order.customerId,
+              change: -loyaltyPointsRedeemed,
+              description: `Redeemed in order ${order.id}`,
+            });
+          }
+        }
+      }
+
       res.status(201).json(order);
     } catch (error) {
       console.error("Error creating order:", error);
