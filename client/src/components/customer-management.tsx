@@ -14,6 +14,8 @@ import { Search, Plus, Phone, DollarSign, CreditCard, User, Calendar } from "luc
 import { format } from "date-fns";
 import { useCurrency } from "@/lib/currency";
 import { useAuth } from "@/hooks/useAuth";
+import jsPDF from "jspdf";
+import * as XLSX from "xlsx";
 
 interface CustomerManagementProps {
   onCustomerSelect?: (customer: Customer) => void;
@@ -33,6 +35,8 @@ export function CustomerManagement({ onCustomerSelect }: CustomerManagementProps
   const [paymentAmount, setPaymentAmount] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("cash");
   const [paymentNotes, setPaymentNotes] = useState("");
+  const [isReportDialogOpen, setIsReportDialogOpen] = useState(false);
+  const [reportCustomer, setReportCustomer] = useState<Customer | null>(null);
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -46,6 +50,20 @@ export function CustomerManagement({ onCustomerSelect }: CustomerManagementProps
   const { data: selectedCustomerPayments = [] } = useQuery<Payment[]>({
     queryKey: ["/api/customers", selectedCustomer?.id, "payments"],
     enabled: !!selectedCustomer?.id,
+  });
+
+  interface CustomerOrder {
+    id: string;
+    orderNumber: string;
+    createdAt: string;
+    subtotal: string;
+    paid: string;
+    remaining: string;
+  }
+
+  const { data: customerOrders = [] } = useQuery<CustomerOrder[]>({
+    queryKey: ["/api/customers", reportCustomer?.id, "orders"],
+    enabled: !!reportCustomer && isReportDialogOpen,
   });
 
   const addCustomerMutation = useMutation({
@@ -132,6 +150,38 @@ export function CustomerManagement({ onCustomerSelect }: CustomerManagementProps
         receivedBy: user?.username || "Unknown",
       });
     };
+
+  const handleExportPDF = () => {
+    const doc = new jsPDF();
+    doc.text("Customer Due Amount Report", 14, 16);
+    let y = 30;
+    customerOrders.forEach((order) => {
+      const row = [
+        order.orderNumber,
+        format(new Date(order.createdAt), "MMM dd, yyyy"),
+        formatCurrency(order.subtotal),
+        formatCurrency(order.paid),
+        formatCurrency(order.remaining),
+      ].join(" | ");
+      doc.text(row, 14, y);
+      y += 10;
+    });
+    doc.save("customer_due_report.pdf");
+  };
+
+  const handleExportExcel = () => {
+    const data = customerOrders.map((order) => ({
+      orderNumber: order.orderNumber,
+      date: format(new Date(order.createdAt), "yyyy-MM-dd"),
+      subtotal: Number(order.subtotal),
+      paid: Number(order.paid),
+      remaining: Number(order.remaining),
+    }));
+    const worksheet = XLSX.utils.json_to_sheet(data);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Report");
+    XLSX.writeFile(workbook, "customer_due_report.xlsx");
+  };
 
   if (isLoading) {
     return <div className="p-4">Loading customers...</div>;
@@ -229,7 +279,14 @@ export function CustomerManagement({ onCustomerSelect }: CustomerManagementProps
                   </CardDescription>
                 </div>
                 {parseFloat(customer.balanceDue) > 0 && (
-                  <Badge variant="destructive">
+                  <Badge
+                    variant="destructive"
+                    className="cursor-pointer"
+                    onClick={() => {
+                      setReportCustomer(customer);
+                      setIsReportDialogOpen(true);
+                    }}
+                  >
                     Due: {formatCurrency(customer.balanceDue)}
                   </Badge>
                 )}
@@ -277,6 +334,52 @@ export function CustomerManagement({ onCustomerSelect }: CustomerManagementProps
           </Card>
         ))}
       </div>
+
+      {/* Report Dialog */}
+      <Dialog open={isReportDialogOpen} onOpenChange={setIsReportDialogOpen}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>Customer Due Amount Report</DialogTitle>
+            <DialogDescription>
+              {reportCustomer ? `Outstanding orders for ${reportCustomer.name}` : ""}
+            </DialogDescription>
+          </DialogHeader>
+          {customerOrders.length === 0 ? (
+            <p className="text-sm text-gray-500">No outstanding orders.</p>
+          ) : (
+            <>
+              <div className="overflow-x-auto max-h-64 overflow-y-auto">
+                <table className="min-w-full text-sm">
+                  <thead>
+                    <tr className="text-left">
+                      <th className="p-2">Order #</th>
+                      <th className="p-2">Date</th>
+                      <th className="p-2">Subtotal</th>
+                      <th className="p-2">Paid</th>
+                      <th className="p-2">Remaining</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {customerOrders.map((order) => (
+                      <tr key={order.id} className="border-t">
+                        <td className="p-2">{order.orderNumber}</td>
+                        <td className="p-2">{format(new Date(order.createdAt), "MMM dd, yyyy")}</td>
+                        <td className="p-2">{formatCurrency(order.subtotal)}</td>
+                        <td className="p-2">{formatCurrency(order.paid)}</td>
+                        <td className="p-2">{formatCurrency(order.remaining)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <DialogFooter className="justify-end gap-2">
+                <Button variant="outline" onClick={handleExportPDF}>Export PDF</Button>
+                <Button variant="outline" onClick={handleExportExcel}>Export Excel</Button>
+              </DialogFooter>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Payment Dialog */}
       <Dialog open={isPaymentDialogOpen} onOpenChange={setIsPaymentDialogOpen}>
