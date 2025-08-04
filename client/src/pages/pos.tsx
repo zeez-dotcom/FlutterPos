@@ -151,6 +151,7 @@ export default function POS() {
     // Convert laundry cart items to order format
     const orderItems = cartSummary.items.map(item => ({
       id: item.id,
+      name: item.clothingItem.name,
       clothingItem: item.clothingItem.name,
       service: item.service.name,
       quantity: item.quantity,
