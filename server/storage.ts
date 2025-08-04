@@ -37,6 +37,7 @@ export interface IStorage {
     user: Partial<Pick<InsertUser, "firstName" | "lastName" | "email">>,
   ): Promise<UserWithBranch | undefined>;
   updateUserPassword(id: string, password: string): Promise<UserWithBranch | undefined>;
+  updateUserBranch(id: string, branchId: string | null): Promise<UserWithBranch | undefined>;
   getUsers(): Promise<UserWithBranch[]>;
   
   // Category operations
@@ -505,6 +506,7 @@ export class MemStorage {
   async updateUser(id: string, user: Partial<InsertUser>): Promise<UserWithBranch | undefined> { return undefined; }
   async updateUserProfile(id: string, user: Partial<Pick<InsertUser, "firstName" | "lastName" | "email">>): Promise<UserWithBranch | undefined> { return undefined; }
   async updateUserPassword(id: string, password: string): Promise<UserWithBranch | undefined> { return undefined; }
+  async updateUserBranch(id: string, branchId: string | null): Promise<UserWithBranch | undefined> { return undefined; }
   async getUsers(): Promise<UserWithBranch[]> { return []; }
 
   // Category methods (stub for MemStorage - not used in production)
@@ -616,6 +618,16 @@ export class DatabaseStorage implements IStorage {
     const [updated] = await db
       .update(users)
       .set({ passwordHash: hashed, updatedAt: new Date() })
+      .where(eq(users.id, id))
+      .returning();
+    if (!updated) return undefined;
+    return await this.getUser(updated.id);
+  }
+
+  async updateUserBranch(id: string, branchId: string | null): Promise<UserWithBranch | undefined> {
+    const [updated] = await db
+      .update(users)
+      .set({ branchId, updatedAt: new Date() })
       .where(eq(users.id, id))
       .returning();
     if (!updated) return undefined;

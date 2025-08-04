@@ -133,6 +133,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.put("/api/users/:id/branch", requireSuperAdmin, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const data = insertUserSchema.pick({ branchId: true }).parse(req.body);
+      const updatedUser = await storage.updateUserBranch(id, data.branchId ?? null);
+      if (!updatedUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      const { passwordHash, ...safeUser } = updatedUser;
+      res.json(safeUser);
+    } catch (error) {
+      console.error("Error updating user branch:", error);
+      res.status(500).json({ message: "Failed to update user branch" });
+    }
+  });
+
   // Category management routes (Admin or Super Admin)
   app.get("/api/categories", requireAdminOrSuperAdmin, async (req, res) => {
     try {

@@ -90,3 +90,39 @@ test('updateUser with empty password string leaves existing hash untouched', asy
   assert.strictEqual(setData.passwordHash, undefined);
   assert.strictEqual(updated?.passwordHash, baseUser.passwordHash);
 });
+
+test('updateUserBranch updates branch only', async () => {
+  const user = { ...baseUser };
+  const originalUpdate = db.update;
+  const originalSelect = db.select;
+  let setData: any = null;
+
+  (db as any).update = () => ({
+    set: (data: any) => {
+      setData = data;
+      Object.assign(user, data);
+      return {
+        where: () => ({
+          returning: () => [{ id: user.id }],
+        }),
+      };
+    },
+  });
+
+  (db as any).select = () => ({
+    from: () => ({
+      leftJoin: () => ({
+        where: () => [{ user, branch: null }],
+      }),
+    }),
+  });
+
+  const storage = new DatabaseStorage();
+  const updated = await storage.updateUserBranch(user.id, 'b1');
+
+  (db as any).update = originalUpdate;
+  (db as any).select = originalSelect;
+
+  assert.strictEqual(setData.branchId, 'b1');
+  assert.strictEqual(updated?.branchId, 'b1');
+});

@@ -77,6 +77,25 @@ export function UserManager() {
     },
   });
 
+  const updateBranchMutation = useMutation({
+    mutationFn: async ({ id, branchId }: { id: string; branchId: string | null }) => {
+      const response = await apiRequest("PUT", `/api/users/${id}/branch`, { branchId });
+      return await response.json();
+    },
+    onSuccess: () => {
+      toast({ title: "User updated successfully" });
+      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
+      resetForm();
+    },
+    onError: (error) => {
+      toast({
+        title: "Error updating user", 
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   const resetForm = () => {
     setFormData({
       username: "",
@@ -122,7 +141,11 @@ export function UserManager() {
             updates[key] = newValue as any;
           }
       });
-      updateMutation.mutate({ id: editingUser.id, data: updates });
+      if (Object.keys(updates).length === 1 && updates.branchId !== undefined) {
+        updateBranchMutation.mutate({ id: editingUser.id, branchId: updates.branchId ?? null });
+      } else {
+        updateMutation.mutate({ id: editingUser.id, data: updates });
+      }
     } else {
       createMutation.mutate(formData);
     }
@@ -271,7 +294,14 @@ export function UserManager() {
                 <Button type="button" variant="outline" onClick={resetForm}>
                   Cancel
                 </Button>
-                <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending}>
+                <Button
+                  type="submit"
+                  disabled={
+                    createMutation.isPending ||
+                    updateMutation.isPending ||
+                    updateBranchMutation.isPending
+                  }
+                >
                   {editingUser ? "Update" : "Create"}
                 </Button>
               </DialogFooter>
