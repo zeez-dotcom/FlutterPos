@@ -20,15 +20,16 @@ import { useTranslation } from "@/lib/i18n";
 import { LanguageSelector } from "@/components/language-selector";
 import { useCurrency } from "@/lib/currency";
 import { SystemSettings } from "@/components/system-settings";
-import { ClothingItem, LaundryService, Transaction, Customer } from "@shared/schema";
+import { ClothingItem, LaundryService, Customer } from "@shared/schema";
 import { ShoppingCart, Package, BarChart3, Settings, Users, Truck, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function POS() {
   const [activeView, setActiveView] = useState("sales");
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [isCartVisible, setIsCartVisible] = useState(true); // Always visible on desktop, togglable on mobile
-  const [currentTransaction, setCurrentTransaction] = useState<Transaction | null>(null);
+  const [currentTransaction, setCurrentTransaction] = useState<any | null>(null);
   const [currentOrder, setCurrentOrder] = useState<any | null>(null);
   const [isReceiptModalOpen, setIsReceiptModalOpen] = useState(false);
   const [selectedClothingItem, setSelectedClothingItem] = useState<ClothingItem | null>(null);
@@ -39,6 +40,9 @@ export default function POS() {
   const queryClient = useQueryClient();
   const { t, language } = useTranslation();
   const { formatCurrency } = useCurrency();
+  const { user } = useAuth();
+  const cashierName = [user?.firstName, user?.lastName].filter(Boolean).join(" ");
+  const branch = (user as any)?.branch;
   
   const {
     cartItems,
@@ -67,14 +71,26 @@ export default function POS() {
     },
     onSuccess: (result) => {
       if (paymentMethod === "pay_later") {
-        setCurrentOrder(result);
+        setCurrentOrder({
+          ...result,
+          branchName: branch?.name,
+          branchAddress: branch?.address,
+          branchPhone: branch?.phone,
+          createdBy: cashierName,
+        });
         setCurrentTransaction(null);
         toast({
           title: "Order created successfully",
           description: `Pay-later order for ${selectedCustomer?.name} has been created`,
         });
       } else {
-        setCurrentTransaction(result);
+        setCurrentTransaction({
+          ...result,
+          cashierName,
+          branchName: branch?.name,
+          branchAddress: branch?.address,
+          branchPhone: branch?.phone,
+        });
         setCurrentOrder(null);
         toast({
           title: "Order completed successfully",
@@ -156,7 +172,10 @@ export default function POS() {
         paymentMethod: "pay_later",
         status: "received",
         estimatedPickupDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(), // 3 days from now
-        createdBy: "Sarah Johnson",
+        createdBy: cashierName,
+        branchName: branch?.name,
+        branchAddress: branch?.address,
+        branchPhone: branch?.phone,
         loyaltyPointsEarned: pointsEarned,
         loyaltyPointsRedeemed: redeemedPoints,
       };
@@ -169,7 +188,10 @@ export default function POS() {
         tax: cartSummary.tax.toString(),
         total: finalTotal.toString(),
         paymentMethod,
-        cashierName: "Sarah Johnson",
+        cashierName,
+        branchName: branch?.name,
+        branchAddress: branch?.address,
+        branchPhone: branch?.phone,
         customerId: selectedCustomer?.id,
         loyaltyPointsEarned: pointsEarned,
         loyaltyPointsRedeemed: redeemedPoints,

@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Transaction, Customer } from "@shared/schema";
 import { useTranslation, translations } from "@/lib/i18n";
 import { useCurrency } from "@/lib/currency";
-import { useState, useEffect, ReactNode } from "react";
+import { ReactNode } from "react";
 import logoImage from "@/assets/logo.png";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
@@ -47,14 +47,9 @@ export function ReceiptModal({ transaction, order, customer, isOpen, onClose }: 
   const estimatedPickupEn = 'Est. Pickup';
   const estimatedPickupAr = 'الاستلام المتوقع';
   
-  // Get dynamic company settings
-  const [companyName, setCompanyName] = useState('');
-  const [companyPhone, setCompanyPhone] = useState('');
-  
-  useEffect(() => {
-    setCompanyName(localStorage.getItem('companyName') || 'Laundry Services');
-    setCompanyPhone(localStorage.getItem('companyPhone') || '+965-2XXX-XXXX');
-  }, [isOpen]);
+  const branchName = receiptData?.branchName || 'Laundry Services';
+  const branchAddress = receiptData?.branchAddress;
+  const branchPhone = receiptData?.branchPhone || '+965-2XXX-XXXX';
   if (!receiptData) return null;
 
   const paymentMethodKey =
@@ -205,18 +200,20 @@ export function ReceiptModal({ transaction, order, customer, isOpen, onClose }: 
               alt="Company Logo" 
               className="w-16 h-16 mx-auto object-contain rounded-lg"
             />
-            <h3 className="font-bold text-lg">{companyName}</h3>
+            <h3 className="font-bold text-lg">{branchName}</h3>
             <div className="flex">
               <p className="flex-1 text-gray-600">{tEn.companyTagline}</p>
               <p className="flex-1 text-gray-600 text-right" dir="rtl">{tAr.companyTagline}</p>
             </div>
+            {branchAddress && (
+              <div className="flex">
+                <p className="flex-1 text-gray-600">{branchAddress}</p>
+                <p className="flex-1 text-gray-600 text-right" dir="rtl">{branchAddress}</p>
+              </div>
+            )}
             <div className="flex">
-              <p className="flex-1 text-gray-600">{tEn.location}</p>
-              <p className="flex-1 text-gray-600 text-right" dir="rtl">{tAr.location}</p>
-            </div>
-            <div className="flex">
-              <p className="flex-1 text-gray-600">{companyPhone}</p>
-              <p className="flex-1 text-gray-600 text-right" dir="rtl">{companyPhone}</p>
+              <p className="flex-1 text-gray-600">{branchPhone}</p>
+              <p className="flex-1 text-gray-600 text-right" dir="rtl">{branchPhone}</p>
             </div>
           </div>
 
@@ -395,10 +392,10 @@ export function ReceiptModal({ transaction, order, customer, isOpen, onClose }: 
             </div>
             <div className="flex">
               <p className="flex-1">
-                {tEn.inquiriesCall} {companyPhone}
+                {tEn.inquiriesCall} {branchPhone}
               </p>
               <p className="flex-1 text-right" dir="rtl">
-                {tAr.inquiriesCall} {companyPhone}
+                {tAr.inquiriesCall} {branchPhone}
               </p>
             </div>
             {isPayLater && (
