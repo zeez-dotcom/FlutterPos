@@ -6,6 +6,7 @@ import { z } from "zod";
 export const clothingItems = pgTable("clothing_items", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   name: text("name").notNull(),
+  nameAr: text("name_ar"),
   description: text("description"),
   category: text("category").notNull(),
   imageUrl: text("image_url"),
@@ -14,6 +15,7 @@ export const clothingItems = pgTable("clothing_items", {
 export const laundryServices = pgTable("laundry_services", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   name: text("name").notNull(),
+  nameAr: text("name_ar"),
   description: text("description"),
   price: decimal("price", { precision: 10, scale: 2 }).notNull(),
   category: text("category").notNull(),
@@ -22,6 +24,7 @@ export const laundryServices = pgTable("laundry_services", {
 export const products = pgTable("products", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   name: text("name").notNull(),
+  nameAr: text("name_ar"),
   description: text("description"),
   category: text("category"),
   price: decimal("price", { precision: 10, scale: 2 }).notNull(),
@@ -264,6 +267,7 @@ export interface LaundryCartItem {
 export interface CartItem {
   id: string;
   name: string;
+  nameAr?: string;
   price: number;
   quantity: number;
   total: number;

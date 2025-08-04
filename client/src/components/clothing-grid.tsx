@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ClothingItem } from "@shared/schema";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useTranslation } from "@/lib/i18n";
 
 interface ClothingGridProps {
   onSelectClothing: (item: ClothingItem) => void;
@@ -25,6 +26,7 @@ export function ClothingGrid({ onSelectClothing }: ClothingGridProps) {
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const isMobile = useIsMobile();
+  const { language } = useTranslation();
 
   const { data: clothingItems = [], isLoading } = useQuery({
     queryKey: ["/api/clothing-items", selectedCategory, searchQuery],
@@ -97,12 +99,12 @@ export function ClothingGrid({ onSelectClothing }: ClothingGridProps) {
                 {item.imageUrl && (
                   <img
                     src={item.imageUrl}
-                    alt={item.name}
+                    alt={language === 'ar' && item.nameAr ? item.nameAr : item.name}
                     className="w-full h-32 object-cover rounded-t-lg"
                   />
                 )}
                 <CardContent className="p-3">
-                  <h3 className="font-medium text-gray-900 mb-1">{item.name}</h3>
+                  <h3 className="font-medium text-gray-900 mb-1">{language === 'ar' && item.nameAr ? item.nameAr : item.name}</h3>
                   {item.description && (
                     <p className="text-sm text-gray-600 mb-2">{item.description}</p>
                   )}

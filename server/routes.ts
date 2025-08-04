@@ -266,6 +266,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (search) {
         items = items.filter(product =>
           product.name.toLowerCase().includes(search.toLowerCase()) ||
+          product.nameAr?.toLowerCase().includes(search.toLowerCase()) ||
           product.description?.toLowerCase().includes(search.toLowerCase())
         );
       }
@@ -286,8 +287,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         : await storage.getClothingItems();
       
       if (search) {
-        items = items.filter(item => 
+        items = items.filter(item =>
           item.name.toLowerCase().includes(search.toLowerCase()) ||
+          item.nameAr?.toLowerCase().includes(search.toLowerCase()) ||
           item.description?.toLowerCase().includes(search.toLowerCase())
         );
       }
@@ -324,7 +326,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/clothing-items/:id", async (req, res) => {
     try {
       const { id } = req.params;
-      const validatedData = insertClothingItemSchema.parse(req.body);
+      const validatedData = insertClothingItemSchema.partial().parse(req.body);
       const updatedItem = await storage.updateClothingItem(id, validatedData);
       if (!updatedItem) {
         return res.status(404).json({ message: "Clothing item not found" });
@@ -347,8 +349,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         : await storage.getLaundryServices();
       
       if (search) {
-        services = services.filter(service => 
+        services = services.filter(service =>
           service.name.toLowerCase().includes(search.toLowerCase()) ||
+          service.nameAr?.toLowerCase().includes(search.toLowerCase()) ||
           service.description?.toLowerCase().includes(search.toLowerCase())
         );
       }
@@ -385,7 +388,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/laundry-services/:id", async (req, res) => {
     try {
       const { id } = req.params;
-      const validatedData = insertLaundryServiceSchema.parse(req.body);
+      const validatedData = insertLaundryServiceSchema.partial().parse(req.body);
       const updatedService = await storage.updateLaundryService(id, validatedData);
       if (!updatedService) {
         return res.status(404).json({ message: "Laundry service not found" });
