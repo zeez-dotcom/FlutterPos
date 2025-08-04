@@ -173,9 +173,6 @@ export default function POS() {
         status: "received",
         estimatedPickupDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(), // 3 days from now
         sellerName: username,
-        branchName: branch?.name,
-        branchAddress: branch?.address,
-        branchPhone: branch?.phone,
         loyaltyPointsEarned: pointsEarned,
         loyaltyPointsRedeemed: redeemedPoints,
       };
@@ -189,9 +186,6 @@ export default function POS() {
         total: finalTotal.toString(),
         paymentMethod,
         sellerName: username,
-        branchName: branch?.name,
-        branchAddress: branch?.address,
-        branchPhone: branch?.phone,
         customerId: selectedCustomer?.id,
         loyaltyPointsEarned: pointsEarned,
         loyaltyPointsRedeemed: redeemedPoints,
