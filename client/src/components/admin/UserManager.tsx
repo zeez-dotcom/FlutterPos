@@ -10,11 +10,13 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { Plus, Edit, UserCheck, UserX } from "lucide-react";
-import type { User, InsertUser } from "@shared/schema";
+import type { User, InsertUser, Branch } from "@shared/schema";
+
+type UserWithBranch = User & { branch?: Branch | null };
 
 export function UserManager() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [editingUser, setEditingUser] = useState<UserWithBranch | null>(null);
   const [formData, setFormData] = useState<InsertUser>({
     username: "",
     email: "",
@@ -23,13 +25,18 @@ export function UserManager() {
     lastName: "",
     role: "user",
     isActive: true,
+    branchId: undefined,
   });
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: users = [], isLoading } = useQuery<User[]>({
+  const { data: users = [], isLoading } = useQuery<UserWithBranch[]>({
     queryKey: ["/api/users"],
+  });
+
+  const { data: branches = [] } = useQuery<Branch[]>({
+    queryKey: ["/api/branches"],
   });
 
   const createMutation = useMutation({
@@ -79,12 +86,13 @@ export function UserManager() {
       lastName: "",
       role: "user",
       isActive: true,
+      branchId: undefined,
     });
     setEditingUser(null);
     setIsDialogOpen(false);
   };
 
-  const handleEdit = (user: User) => {
+  const handleEdit = (user: UserWithBranch) => {
     setEditingUser(user);
     setFormData({
       username: user.username,
@@ -94,6 +102,7 @@ export function UserManager() {
       lastName: user.lastName || "",
       role: user.role,
       isActive: user.isActive,
+      branchId: user.branchId || undefined,
     });
     setIsDialogOpen(true);
   };
@@ -222,6 +231,29 @@ export function UserManager() {
                     </SelectContent>
                   </Select>
                 </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="branch" className="text-right">
+                    Branch
+                  </Label>
+                  <Select
+                    value={formData.branchId || ""}
+                    onValueChange={(value) =>
+                      setFormData({ ...formData, branchId: value === "" ? null : value })
+                    }
+                  >
+                    <SelectTrigger className="col-span-3">
+                      <SelectValue placeholder="Select branch" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">Unassigned</SelectItem>
+                      {branches.map((branch) => (
+                        <SelectItem key={branch.id} value={branch.id}>
+                          {branch.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
               <DialogFooter>
                 <Button type="button" variant="outline" onClick={resetForm}>
@@ -270,6 +302,9 @@ export function UserManager() {
                     <div className="text-sm text-gray-500">
                       {user.firstName} {user.lastName} {user.email && `• ${user.email}`}
                     </div>
+                    {user.branch && (
+                      <div className="text-sm text-gray-500">Branch: {user.branch.name}</div>
+                    )}
                     <div className="text-xs text-gray-400">
                       Created: {new Date(user.createdAt).toLocaleDateString()}
                     </div>

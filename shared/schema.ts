@@ -63,6 +63,7 @@ export const users = pgTable("users", {
   passwordHash: text("password_hash").notNull(),
   firstName: varchar("first_name", { length: 100 }),
   lastName: varchar("last_name", { length: 100 }),
+  branchId: varchar("branch_id").references(() => branches.id),
   role: text("role").notNull().default('user'), // 'super_admin', 'admin', 'user'
   isActive: boolean("is_active").default(true).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -255,6 +256,7 @@ export type LoyaltyHistory = typeof loyaltyHistory.$inferSelect;
 export type InsertLoyaltyHistory = z.infer<typeof insertLoyaltyHistorySchema>;
 export type SecuritySettings = typeof securitySettings.$inferSelect;
 export type InsertSecuritySettings = z.infer<typeof insertSecuritySettingsSchema>;
+export type UserWithBranch = User & { branch: Branch | null };
 
 export interface LaundryCartItem {
   id: string;

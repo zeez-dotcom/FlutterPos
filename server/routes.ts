@@ -4,7 +4,7 @@ import { storage } from "./storage";
 import { insertTransactionSchema, insertClothingItemSchema, insertLaundryServiceSchema, insertUserSchema, insertCategorySchema, insertBranchSchema, insertCustomerSchema, insertOrderSchema, insertPaymentSchema, insertSecuritySettingsSchema } from "@shared/schema";
 import { setupAuth, requireAuth, requireSuperAdmin, requireAdminOrSuperAdmin } from "./auth";
 import passport from "passport";
-import type { User } from "@shared/schema";
+import type { UserWithBranch } from "@shared/schema";
 import nodemailer from "nodemailer";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -47,7 +47,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.put("/api/users/:id", requireAuth, async (req, res, next) => {
     const { id } = req.params;
-    const user = req.user as User;
+    const user = req.user as UserWithBranch;
     if (user.id !== id) {
       if (user.role === "super_admin") return next();
       return res.status(403).json({ message: "Unauthorized" });
@@ -71,7 +71,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.put("/api/users/:id/password", requireAuth, async (req, res) => {
     const { id } = req.params;
-    const user = req.user as User;
+    const user = req.user as UserWithBranch;
     if (user.id !== id) {
       return res.status(403).json({ message: "Unauthorized" });
     }

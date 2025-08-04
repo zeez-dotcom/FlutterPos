@@ -40,9 +40,8 @@ export default function POS() {
   const queryClient = useQueryClient();
   const { t, language } = useTranslation();
   const { formatCurrency } = useCurrency();
-  const { user } = useAuth();
+  const { user, branch } = useAuth();
   const cashierName = [user?.firstName, user?.lastName].filter(Boolean).join(" ");
-  const branch = (user as any)?.branch;
   
   const {
     cartItems,

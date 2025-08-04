@@ -2,7 +2,7 @@ import {
   type ClothingItem, type InsertClothingItem, 
   type LaundryService, type InsertLaundryService,
   type Transaction, type InsertTransaction,
-  type User, type InsertUser, type UpsertUser,
+  type User, type InsertUser, type UpsertUser, type UserWithBranch,
   type Category, type InsertCategory,
   type Branch, type InsertBranch,
   type Customer, type InsertCustomer,
@@ -21,17 +21,17 @@ import bcrypt from "bcryptjs";
 
 export interface IStorage {
   // User operations
-  getUser(id: string): Promise<User | undefined>;
-  getUserByUsername(username: string): Promise<User | undefined>;
-  createUser(user: InsertUser): Promise<User>;
-  upsertUser(user: UpsertUser): Promise<User>;
-  updateUser(id: string, user: Partial<InsertUser>): Promise<User | undefined>;
+  getUser(id: string): Promise<UserWithBranch | undefined>;
+  getUserByUsername(username: string): Promise<UserWithBranch | undefined>;
+  createUser(user: InsertUser): Promise<UserWithBranch>;
+  upsertUser(user: UpsertUser): Promise<UserWithBranch>;
+  updateUser(id: string, user: Partial<InsertUser>): Promise<UserWithBranch | undefined>;
   updateUserProfile(
     id: string,
     user: Partial<Pick<InsertUser, "firstName" | "lastName" | "email">>,
-  ): Promise<User | undefined>;
-  updateUserPassword(id: string, password: string): Promise<User | undefined>;
-  getUsers(): Promise<User[]>;
+  ): Promise<UserWithBranch | undefined>;
+  updateUserPassword(id: string, password: string): Promise<UserWithBranch | undefined>;
+  getUsers(): Promise<UserWithBranch[]>;
   
   // Category operations
   getCategories(): Promise<Category[]>;
@@ -489,14 +489,14 @@ export class MemStorage {
   }
 
   // User methods (stub for MemStorage - not used in production)
-  async getUser(id: string): Promise<User | undefined> { return undefined; }
-  async getUserByUsername(username: string): Promise<User | undefined> { return undefined; }
-  async createUser(user: InsertUser): Promise<User> { throw new Error("Not implemented in MemStorage"); }
-  async upsertUser(user: UpsertUser): Promise<User> { throw new Error("Not implemented in MemStorage"); }
-  async updateUser(id: string, user: Partial<InsertUser>): Promise<User | undefined> { return undefined; }
-  async updateUserProfile(id: string, user: Partial<Pick<InsertUser, "firstName" | "lastName" | "email">>): Promise<User | undefined> { return undefined; }
-  async updateUserPassword(id: string, password: string): Promise<User | undefined> { return undefined; }
-  async getUsers(): Promise<User[]> { return []; }
+  async getUser(id: string): Promise<UserWithBranch | undefined> { return undefined; }
+  async getUserByUsername(username: string): Promise<UserWithBranch | undefined> { return undefined; }
+  async createUser(user: InsertUser): Promise<UserWithBranch> { throw new Error("Not implemented in MemStorage"); }
+  async upsertUser(user: UpsertUser): Promise<UserWithBranch> { throw new Error("Not implemented in MemStorage"); }
+  async updateUser(id: string, user: Partial<InsertUser>): Promise<UserWithBranch | undefined> { return undefined; }
+  async updateUserProfile(id: string, user: Partial<Pick<InsertUser, "firstName" | "lastName" | "email">>): Promise<UserWithBranch | undefined> { return undefined; }
+  async updateUserPassword(id: string, password: string): Promise<UserWithBranch | undefined> { return undefined; }
+  async getUsers(): Promise<UserWithBranch[]> { return []; }
 
   // Category methods (stub for MemStorage - not used in production)
   async getCategories(): Promise<Category[]> { return []; }
@@ -516,20 +516,30 @@ export class MemStorage {
 
 export class DatabaseStorage implements IStorage {
   // User methods
-  async getUser(id: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.id, id));
-    return user || undefined;
+  async getUser(id: string): Promise<UserWithBranch | undefined> {
+    const [result] = await db
+      .select({ user: users, branch: branches })
+      .from(users)
+      .leftJoin(branches, eq(users.branchId, branches.id))
+      .where(eq(users.id, id));
+    if (!result) return undefined;
+    return { ...result.user, branch: result.branch };
   }
 
-  async getUserByUsername(username: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.username, username));
-    return user || undefined;
+  async getUserByUsername(username: string): Promise<UserWithBranch | undefined> {
+    const [result] = await db
+      .select({ user: users, branch: branches })
+      .from(users)
+      .leftJoin(branches, eq(users.branchId, branches.id))
+      .where(eq(users.username, username));
+    if (!result) return undefined;
+    return { ...result.user, branch: result.branch };
   }
 
-  async createUser(userData: InsertUser): Promise<User> {
+  async createUser(userData: InsertUser): Promise<UserWithBranch> {
     const saltRounds = 10;
     const hashedPassword = await bcrypt.hash(userData.passwordHash, saltRounds);
-    
+
     const [user] = await db
       .insert(users)
       .values({
@@ -537,10 +547,10 @@ export class DatabaseStorage implements IStorage {
         passwordHash: hashedPassword,
       })
       .returning();
-    return user;
+    return (await this.getUser(user.id))!;
   }
 
-  async upsertUser(userData: UpsertUser): Promise<User> {
+  async upsertUser(userData: UpsertUser): Promise<UserWithBranch> {
     const [user] = await db
       .insert(users)
       .values(userData)
@@ -552,48 +562,55 @@ export class DatabaseStorage implements IStorage {
         },
       })
       .returning();
-    return user;
+    return (await this.getUser(user.id))!;
   }
 
-  async updateUser(id: string, userData: Partial<InsertUser>): Promise<User | undefined> {
+  async updateUser(id: string, userData: Partial<InsertUser>): Promise<UserWithBranch | undefined> {
     const updateData = { ...userData };
     if (updateData.passwordHash) {
       const saltRounds = 10;
       updateData.passwordHash = await bcrypt.hash(updateData.passwordHash, saltRounds);
     }
-    
+
     const [updated] = await db
       .update(users)
       .set({ ...updateData, updatedAt: new Date() })
       .where(eq(users.id, id))
       .returning();
-    return updated || undefined;
+    if (!updated) return undefined;
+    return await this.getUser(updated.id);
   }
 
   async updateUserProfile(
     id: string,
     data: Partial<Pick<InsertUser, "firstName" | "lastName" | "email">>,
-  ): Promise<User | undefined> {
+  ): Promise<UserWithBranch | undefined> {
     const [updated] = await db
       .update(users)
       .set({ ...data, updatedAt: new Date() })
       .where(eq(users.id, id))
       .returning();
-    return updated || undefined;
+    if (!updated) return undefined;
+    return await this.getUser(updated.id);
   }
 
-  async updateUserPassword(id: string, password: string): Promise<User | undefined> {
+  async updateUserPassword(id: string, password: string): Promise<UserWithBranch | undefined> {
     const hashed = await bcrypt.hash(password, 10);
     const [updated] = await db
       .update(users)
       .set({ passwordHash: hashed, updatedAt: new Date() })
       .where(eq(users.id, id))
       .returning();
-    return updated || undefined;
+    if (!updated) return undefined;
+    return await this.getUser(updated.id);
   }
 
-  async getUsers(): Promise<User[]> {
-    return await db.select().from(users);
+  async getUsers(): Promise<UserWithBranch[]> {
+    const results = await db
+      .select({ user: users, branch: branches })
+      .from(users)
+      .leftJoin(branches, eq(users.branchId, branches.id));
+    return results.map((r) => ({ ...r.user, branch: r.branch }));
   }
 
   // Category methods
