@@ -4,16 +4,21 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Button } from "@/components/ui/button";
 import { Transaction, Order, Customer, Payment } from "@shared/schema";
 import { DollarSign, TrendingUp, Users, Package, Calendar, CreditCard } from "lucide-react";
 import { format, subDays, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from "date-fns";
 import { useCurrency } from "@/lib/currency";
+import { useAuth } from "@/hooks/useAuth";
+import jsPDF from "jspdf";
+import * as XLSX from "xlsx";
 
 type ReportPeriod = "today" | "week" | "month" | "all";
 
 export function BusinessReports() {
   const [reportPeriod, setReportPeriod] = useState<ReportPeriod>("today");
   const { formatCurrency } = useCurrency();
+  const { branch } = useAuth();
 
   const { data: transactions = [], isLoading: transactionsLoading } = useQuery<Transaction[]>({
     queryKey: ["/api/transactions"],
@@ -58,17 +63,21 @@ export function BusinessReports() {
 
   const filterByPeriod = (items: any[], dateField: string = "createdAt") => {
     if (reportPeriod === "all") return items;
-    
+
     const { start, end } = getDateRange(reportPeriod);
     return items.filter(item => {
       const itemDate = new Date(item[dateField]);
       return itemDate >= start && itemDate <= end;
     });
   };
+  const filterByBranch = (items: any[]) => {
+    if (!branch?.id) return items;
+    return items.filter(item => item.branchId === branch.id);
+  };
 
-  const filteredTransactions = filterByPeriod(transactions);
-  const filteredOrders = filterByPeriod(orders);
-  const filteredPayments = filterByPeriod(payments);
+  const filteredTransactions = filterByBranch(filterByPeriod(transactions));
+  const filteredOrders = filterByBranch(filterByPeriod(orders));
+  const filteredPayments = filterByBranch(filterByPeriod(payments));
 
   // Calculate metrics
   const totalTransactionRevenue = filteredTransactions.reduce((sum, t) => sum + parseFloat(t.total), 0);
@@ -83,8 +92,50 @@ export function BusinessReports() {
   const pendingOrders = filteredOrders.filter(o => ['received', 'processing', 'washing', 'drying'].includes(o.status)).length;
   const readyOrders = filteredOrders.filter(o => o.status === 'ready').length;
 
-  const totalOutstanding = customers.reduce((sum, c) => sum + parseFloat(c.balanceDue), 0);
-  const activeCustomers = customers.filter(c => c.isActive).length;
+  const filteredCustomers = filterByBranch(customers);
+  const totalOutstanding = filteredCustomers.reduce((sum, c) => sum + parseFloat(c.balanceDue), 0);
+  const activeCustomers = filteredCustomers.filter(c => c.isActive).length;
+
+  const handleExportPDF = () => {
+    const { start, end } = getDateRange(reportPeriod);
+    const doc = new jsPDF();
+    doc.text("Business Report", 14, 16);
+    doc.text(`Branch: ${branch?.name || "All"}`, 14, 24);
+    doc.text(`Period: ${format(start, "MMM dd, yyyy")} - ${format(end, "MMM dd, yyyy")}`, 14, 32);
+    const metrics = [
+      ["Revenue", formatCurrency(totalRevenue)],
+      ["Outstanding", formatCurrency(totalOutstanding)],
+      ["Active Orders", String(pendingOrders + readyOrders)],
+      ["Completed Orders", String(completedOrders)],
+      ["Total Orders", String(totalOrders)],
+    ];
+    let y = 40;
+    metrics.forEach(([label, value]) => {
+      doc.text(`${label}: ${value}`, 14, y);
+      y += 8;
+    });
+    doc.save("business_report.pdf");
+  };
+
+  const handleExportExcel = () => {
+    const { start, end } = getDateRange(reportPeriod);
+    const data = [
+      { metric: "Branch", value: branch?.name || "All" },
+      {
+        metric: "Period",
+        value: `${format(start, "yyyy-MM-dd")} - ${format(end, "yyyy-MM-dd")}`,
+      },
+      { metric: "Revenue", value: totalRevenue },
+      { metric: "Outstanding", value: totalOutstanding },
+      { metric: "Active Orders", value: pendingOrders + readyOrders },
+      { metric: "Completed Orders", value: completedOrders },
+      { metric: "Total Orders", value: totalOrders },
+    ];
+    const worksheet = XLSX.utils.json_to_sheet(data);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Summary");
+    XLSX.writeFile(workbook, "business_report.xlsx");
+  };
 
   // Payment method breakdown
   const paymentMethodBreakdown = filteredOrders.reduce((acc, order) => {
@@ -163,6 +214,12 @@ export function BusinessReports() {
                 <SelectItem value="all">All Time</SelectItem>
               </SelectContent>
             </Select>
+            <Button variant="outline" size="sm" onClick={handleExportPDF}>
+              Export PDF
+            </Button>
+            <Button variant="outline" size="sm" onClick={handleExportExcel}>
+              Export Excel
+            </Button>
           </div>
         </div>
 
