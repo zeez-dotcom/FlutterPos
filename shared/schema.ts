@@ -40,7 +40,7 @@ export const transactions = pgTable("transactions", {
   total: decimal("total", { precision: 10, scale: 2 }).notNull(),
   paymentMethod: text("payment_method").notNull(),
   createdAt: timestamp("created_at").default(sql`now()`).notNull(),
-  cashierName: text("cashier_name").notNull(),
+  sellerName: text("seller_name").notNull(),
 });
 
 // Session storage table.
@@ -120,7 +120,7 @@ export const orders = pgTable("orders", {
   estimatedPickup: timestamp("estimated_pickup"),
   actualPickup: timestamp("actual_pickup"),
   notes: text("notes"),
-  createdBy: varchar("created_by").notNull(),
+  sellerName: varchar("seller_name").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

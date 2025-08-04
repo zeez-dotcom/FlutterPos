@@ -75,7 +75,7 @@ export default function POS() {
           branchName: branch?.name,
           branchAddress: branch?.address,
           branchPhone: branch?.phone,
-          createdBy: username,
+          sellerName: username,
         });
         setCurrentTransaction(null);
         toast({
@@ -85,7 +85,7 @@ export default function POS() {
       } else {
         setCurrentTransaction({
           ...result,
-          cashierName: username,
+          sellerName: username,
           branchName: branch?.name,
           branchAddress: branch?.address,
           branchPhone: branch?.phone,
@@ -171,7 +171,7 @@ export default function POS() {
         paymentMethod: "pay_later",
         status: "received",
         estimatedPickupDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(), // 3 days from now
-        createdBy: username,
+        sellerName: username,
         branchName: branch?.name,
         branchAddress: branch?.address,
         branchPhone: branch?.phone,
@@ -187,7 +187,7 @@ export default function POS() {
         tax: cartSummary.tax.toString(),
         total: finalTotal.toString(),
         paymentMethod,
-        cashierName: username,
+        sellerName: username,
         branchName: branch?.name,
         branchAddress: branch?.address,
         branchPhone: branch?.phone,

@@ -264,7 +264,7 @@ export function ReportsDashboard() {
                           {format(new Date(transaction.createdAt), 'MMM dd, yyyy HH:mm')}
                         </div>
                         <div className="text-sm text-gray-600 capitalize">
-                          {transaction.paymentMethod} • {transaction.cashierName}
+                          {transaction.paymentMethod} • {transaction.sellerName}
                         </div>
                       </div>
                       <div className="text-right">
