@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Transaction, Customer } from "@shared/schema";
 import { useTranslation, translations } from "@/lib/i18n";
 import { useCurrency } from "@/lib/currency";
-import { ReactNode } from "react";
+import { ReactNode, useEffect, useState } from "react";
 import logoImage from "@/assets/logo.png";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
@@ -26,6 +26,22 @@ export function ReceiptModal({ transaction, order, customer, isOpen, onClose }: 
   const taxRate = getTaxRate();
   const tEn = translations.en;
   const tAr = translations.ar;
+
+  const [receiptHeaderMessage, setReceiptHeaderMessage] = useState("");
+  const [receiptFooterMessage, setReceiptFooterMessage] = useState("");
+
+  useEffect(() => {
+    const settings = localStorage.getItem("laundrySettings");
+    if (settings) {
+      try {
+        const parsed = JSON.parse(settings);
+        setReceiptHeaderMessage(parsed.receiptHeader || "");
+        setReceiptFooterMessage(parsed.receiptFooter || "");
+      } catch {
+        // ignore JSON parse errors
+      }
+    }
+  }, []);
 
   const renderBilingualRow = (
     enLabel: string,
@@ -207,6 +223,14 @@ export function ReceiptModal({ transaction, order, customer, isOpen, onClose }: 
               <p className="flex-1 text-gray-600">{tEn.companyTagline}</p>
               <p className="flex-1 text-gray-600 text-right" dir="rtl">{tAr.companyTagline}</p>
             </div>
+            {receiptHeaderMessage && (
+              <div className="flex">
+                <p className="flex-1 text-gray-600">{receiptHeaderMessage}</p>
+                <p className="flex-1 text-gray-600 text-right" dir="rtl">
+                  {receiptHeaderMessage}
+                </p>
+              </div>
+            )}
             {branchAddress && (
               <div className="flex">
                 <p className="flex-1 text-gray-600">{branchAddress}</p>
@@ -402,6 +426,14 @@ export function ReceiptModal({ transaction, order, customer, isOpen, onClose }: 
                 </p>
                 <p className="font-bold text-red-600 flex-1 text-right" dir="rtl">
                   {tAr.bringReceiptPickup}
+                </p>
+              </div>
+            )}
+            {receiptFooterMessage && (
+              <div className="flex">
+                <p className="flex-1">{receiptFooterMessage}</p>
+                <p className="flex-1 text-right" dir="rtl">
+                  {receiptFooterMessage}
                 </p>
               </div>
             )}
