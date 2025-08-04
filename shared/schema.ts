@@ -41,6 +41,7 @@ export const transactions = pgTable("transactions", {
   paymentMethod: text("payment_method").notNull(),
   createdAt: timestamp("created_at").default(sql`now()`).notNull(),
   sellerName: text("seller_name").notNull(),
+  branchId: varchar("branch_id").references(() => branches.id).notNull(),
 });
 
 // Session storage table.
@@ -121,6 +122,7 @@ export const orders = pgTable("orders", {
   actualPickup: timestamp("actual_pickup"),
   notes: text("notes"),
   sellerName: varchar("seller_name").notNull(),
+  branchId: varchar("branch_id").references(() => branches.id).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -186,6 +188,7 @@ export const insertOrderSchema = createInsertSchema(orders).omit({
   orderNumber: true,
   createdAt: true,
   updatedAt: true,
+  branchId: true,
 });
 
 export const insertPaymentSchema = createInsertSchema(payments).omit({
@@ -206,6 +209,7 @@ export const insertSecuritySettingsSchema = createInsertSchema(securitySettings)
 export const insertTransactionSchema = createInsertSchema(transactions).omit({
   id: true,
   createdAt: true,
+  branchId: true,
 });
 
 export const insertLoyaltyHistorySchema = createInsertSchema(loyaltyHistory).omit({

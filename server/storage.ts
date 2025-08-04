@@ -16,7 +16,7 @@ import {
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { db } from "./db";
-import { eq, sql } from "drizzle-orm";
+import { eq, sql, and } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 
 export interface IStorage {
@@ -70,9 +70,9 @@ export interface IStorage {
   updateLaundryService(id: string, service: Partial<InsertLaundryService>): Promise<LaundryService | undefined>;
   
   // Transactions
-  createTransaction(transaction: InsertTransaction): Promise<Transaction>;
-  getTransactions(): Promise<Transaction[]>;
-  getTransaction(id: string): Promise<Transaction | undefined>;
+  createTransaction(transaction: InsertTransaction & { branchId: string }): Promise<Transaction>;
+  getTransactions(branchId?: string): Promise<Transaction[]>;
+  getTransaction(id: string, branchId?: string): Promise<Transaction | undefined>;
   
   // Customers
   getCustomers(): Promise<Customer[]>;
@@ -83,18 +83,18 @@ export interface IStorage {
   updateCustomerBalance(id: string, balanceChange: number): Promise<Customer | undefined>;
   
   // Orders
-  getOrders(): Promise<Order[]>;
-  getOrder(id: string): Promise<Order | undefined>;
-  getOrdersByCustomer(customerId: string): Promise<Order[]>;
-  getOrdersByStatus(status: string): Promise<Order[]>;
-  createOrder(order: InsertOrder): Promise<Order>;
+  getOrders(branchId?: string): Promise<Order[]>;
+  getOrder(id: string, branchId?: string): Promise<Order | undefined>;
+  getOrdersByCustomer(customerId: string, branchId?: string): Promise<Order[]>;
+  getOrdersByStatus(status: string, branchId?: string): Promise<Order[]>;
+  createOrder(order: InsertOrder & { branchId: string }): Promise<Order>;
   updateOrder(id: string, order: Partial<Omit<Order, 'id' | 'orderNumber' | 'createdAt'>>): Promise<Order | undefined>;
   updateOrderStatus(id: string, status: string): Promise<Order | undefined>;
   
   // Payments
-  getPayments(): Promise<Payment[]>;
+  getPayments(branchId?: string): Promise<Payment[]>;
   getPayment(id: string): Promise<Payment | undefined>;
-  getPaymentsByCustomer(customerId: string): Promise<Payment[]>;
+  getPaymentsByCustomer(customerId: string, branchId?: string): Promise<Payment[]>;
   createPayment(payment: InsertPayment): Promise<Payment>;
 
   // Notifications
@@ -109,10 +109,10 @@ export interface IStorage {
   createLoyaltyHistory(entry: InsertLoyaltyHistory): Promise<LoyaltyHistory>;
 
   // Reports
-  getOrderStats(range: string): Promise<{ period: string; count: number; revenue: number }[]>;
-  getTopServices(range: string): Promise<{ service: string; count: number; revenue: number }[]>;
-  getTopProducts(range: string): Promise<{ product: string; count: number; revenue: number }[]>;
-  getSalesSummary(range: string): Promise<{
+  getOrderStats(range: string, branchId?: string): Promise<{ period: string; count: number; revenue: number }[]>;
+  getTopServices(range: string, branchId?: string): Promise<{ service: string; count: number; revenue: number }[]>;
+  getTopProducts(range: string, branchId?: string): Promise<{ product: string; count: number; revenue: number }[]>;
+  getSalesSummary(range: string, branchId?: string): Promise<{
     totalOrders: number;
     totalRevenue: number;
     stats: { period: string; count: number; revenue: number }[];
@@ -431,23 +431,26 @@ export class MemStorage {
     return updated;
   }
 
-  async createTransaction(insertTransaction: InsertTransaction): Promise<Transaction> {
+  async createTransaction(insertTransaction: InsertTransaction & { branchId: string }): Promise<Transaction> {
     const id = randomUUID();
-    const transaction: Transaction = { 
-      ...insertTransaction, 
-      id, 
+    const transaction: Transaction = {
+      ...insertTransaction,
+      id,
       createdAt: new Date()
     };
     this.transactions.set(id, transaction);
     return transaction;
   }
 
-  async getTransactions(): Promise<Transaction[]> {
-    return Array.from(this.transactions.values());
+  async getTransactions(branchId?: string): Promise<Transaction[]> {
+    return Array.from(this.transactions.values()).filter(t => !branchId || t.branchId === branchId);
   }
 
-  async getTransaction(id: string): Promise<Transaction | undefined> {
-    return this.transactions.get(id);
+  async getTransaction(id: string, branchId?: string): Promise<Transaction | undefined> {
+    const tx = this.transactions.get(id);
+    if (!tx) return undefined;
+    if (branchId && tx.branchId !== branchId) return undefined;
+    return tx;
   }
 
   async getLoyaltyHistory(customerId: string): Promise<LoyaltyHistory[]> {
@@ -781,7 +784,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Transactions methods
-  async createTransaction(transaction: InsertTransaction): Promise<Transaction> {
+  async createTransaction(transaction: InsertTransaction & { branchId: string }): Promise<Transaction> {
     const [newTransaction] = await db
       .insert(transactions)
       .values(transaction)
@@ -789,12 +792,17 @@ export class DatabaseStorage implements IStorage {
     return newTransaction;
   }
 
-  async getTransactions(): Promise<Transaction[]> {
+  async getTransactions(branchId?: string): Promise<Transaction[]> {
+    if (branchId) {
+      return await db.select().from(transactions).where(eq(transactions.branchId, branchId));
+    }
     return await db.select().from(transactions);
   }
 
-  async getTransaction(id: string): Promise<Transaction | undefined> {
-    const [transaction] = await db.select().from(transactions).where(eq(transactions.id, id));
+  async getTransaction(id: string, branchId?: string): Promise<Transaction | undefined> {
+    const conditions = [eq(transactions.id, id)];
+    if (branchId) conditions.push(eq(transactions.branchId, branchId));
+    const [transaction] = await db.select().from(transactions).where(and(...conditions));
     return transaction || undefined;
   }
 
@@ -839,27 +847,36 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Order methods
-  async getOrders(): Promise<Order[]> {
+  async getOrders(branchId?: string): Promise<Order[]> {
+    if (branchId) {
+      return await db.select().from(orders).where(eq(orders.branchId, branchId));
+    }
     return await db.select().from(orders);
   }
 
-  async getOrder(id: string): Promise<Order | undefined> {
-    const [order] = await db.select().from(orders).where(eq(orders.id, id));
+  async getOrder(id: string, branchId?: string): Promise<Order | undefined> {
+    const conditions = [eq(orders.id, id)];
+    if (branchId) conditions.push(eq(orders.branchId, branchId));
+    const [order] = await db.select().from(orders).where(and(...conditions));
     return order || undefined;
   }
 
-  async getOrdersByCustomer(customerId: string): Promise<Order[]> {
-    return await db.select().from(orders).where(eq(orders.customerId, customerId));
+  async getOrdersByCustomer(customerId: string, branchId?: string): Promise<Order[]> {
+    const conditions = [eq(orders.customerId, customerId)];
+    if (branchId) conditions.push(eq(orders.branchId, branchId));
+    return await db.select().from(orders).where(and(...conditions));
   }
 
-  async getOrdersByStatus(status: string): Promise<Order[]> {
-    return await db.select().from(orders).where(eq(orders.status, status));
+  async getOrdersByStatus(status: string, branchId?: string): Promise<Order[]> {
+    const conditions = [eq(orders.status, status)];
+    if (branchId) conditions.push(eq(orders.branchId, branchId));
+    return await db.select().from(orders).where(and(...conditions));
   }
 
-  async createOrder(orderData: InsertOrder): Promise<Order> {
+  async createOrder(orderData: InsertOrder & { branchId: string }): Promise<Order> {
     // Generate unique order number
     const orderNumber = `ORD-${Date.now().toString().slice(-6)}`;
-    
+
     const [order] = await db
       .insert(orders)
       .values({
@@ -884,7 +901,15 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Payment methods
-  async getPayments(): Promise<Payment[]> {
+  async getPayments(branchId?: string): Promise<Payment[]> {
+    if (branchId) {
+      const rows = await db
+        .select({ payment: payments })
+        .from(payments)
+        .leftJoin(orders, eq(payments.orderId, orders.id))
+        .where(eq(orders.branchId, branchId));
+      return rows.map(r => r.payment);
+    }
     return await db.select().from(payments);
   }
 
@@ -893,7 +918,15 @@ export class DatabaseStorage implements IStorage {
     return payment || undefined;
   }
 
-  async getPaymentsByCustomer(customerId: string): Promise<Payment[]> {
+  async getPaymentsByCustomer(customerId: string, branchId?: string): Promise<Payment[]> {
+    if (branchId) {
+      const rows = await db
+        .select({ payment: payments })
+        .from(payments)
+        .leftJoin(orders, eq(payments.orderId, orders.id))
+        .where(and(eq(payments.customerId, customerId), eq(orders.branchId, branchId)));
+      return rows.map(r => r.payment);
+    }
     return await db.select().from(payments).where(eq(payments.customerId, customerId));
   }
 
@@ -951,7 +984,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Report methods
-  async getOrderStats(range: string): Promise<{ period: string; count: number; revenue: number }[]> {
+  async getOrderStats(range: string, branchId?: string): Promise<{ period: string; count: number; revenue: number }[]> {
     const truncMap: Record<string, string> = {
       daily: "day",
       weekly: "week",
@@ -967,13 +1000,14 @@ export class DatabaseStorage implements IStorage {
     const trunc = truncMap[range] ?? "day";
     const interval = intervalMap[range] ?? "1 day";
 
+    const branchFilter = branchId ? `AND branch_id = '${branchId}'` : "";
     const { rows } = await db.execute<any>(sql.raw(`
       SELECT
         date_trunc('${trunc}', created_at)::date AS period,
         COUNT(*)::int AS count,
         COALESCE(SUM(total::numeric),0)::float AS revenue
       FROM orders
-      WHERE created_at >= NOW() - INTERVAL '${interval}'
+      WHERE created_at >= NOW() - INTERVAL '${interval}' ${branchFilter}
       GROUP BY period
       ORDER BY period;
     `));
@@ -985,7 +1019,7 @@ export class DatabaseStorage implements IStorage {
     }));
   }
 
-  async getTopServices(range: string): Promise<{ service: string; count: number; revenue: number }[]> {
+  async getTopServices(range: string, branchId?: string): Promise<{ service: string; count: number; revenue: number }[]> {
     const intervalMap: Record<string, string> = {
       daily: "1 day",
       weekly: "7 days",
@@ -994,6 +1028,7 @@ export class DatabaseStorage implements IStorage {
     };
     const interval = intervalMap[range] ?? "1 day";
 
+    const branchFilter = branchId ? `AND branch_id = '${branchId}'` : "";
     const { rows } = await db.execute<any>(sql.raw(`
       SELECT
         item->>'service' AS service,
@@ -1001,7 +1036,7 @@ export class DatabaseStorage implements IStorage {
         SUM((item->>'total')::numeric)::float AS revenue
       FROM orders
       CROSS JOIN LATERAL jsonb_array_elements(items) AS item
-      WHERE created_at >= NOW() - INTERVAL '${interval}'
+      WHERE created_at >= NOW() - INTERVAL '${interval}' ${branchFilter}
       GROUP BY service
       ORDER BY revenue DESC
       LIMIT 10;
@@ -1014,7 +1049,7 @@ export class DatabaseStorage implements IStorage {
     }));
   }
 
-  async getTopProducts(range: string): Promise<{ product: string; count: number; revenue: number }[]> {
+  async getTopProducts(range: string, branchId?: string): Promise<{ product: string; count: number; revenue: number }[]> {
     const intervalMap: Record<string, string> = {
       daily: "1 day",
       weekly: "7 days",
@@ -1023,6 +1058,7 @@ export class DatabaseStorage implements IStorage {
     };
     const interval = intervalMap[range] ?? "1 day";
 
+    const branchFilter = branchId ? `AND branch_id = '${branchId}'` : "";
     const { rows } = await db.execute<any>(sql.raw(`
       SELECT
         item->>'clothingItem' AS product,
@@ -1030,7 +1066,7 @@ export class DatabaseStorage implements IStorage {
         SUM((item->>'total')::numeric)::float AS revenue
       FROM orders
       CROSS JOIN LATERAL jsonb_array_elements(items) AS item
-      WHERE created_at >= NOW() - INTERVAL '${interval}'
+      WHERE created_at >= NOW() - INTERVAL '${interval}' ${branchFilter}
       GROUP BY product
       ORDER BY count DESC
       LIMIT 10;
@@ -1043,12 +1079,12 @@ export class DatabaseStorage implements IStorage {
     }));
   }
 
-  async getSalesSummary(range: string): Promise<{
+  async getSalesSummary(range: string, branchId?: string): Promise<{
     totalOrders: number;
     totalRevenue: number;
     stats: { period: string; count: number; revenue: number }[];
   }> {
-    const stats = await this.getOrderStats(range);
+    const stats = await this.getOrderStats(range, branchId);
     const totalOrders = stats.reduce((acc, r) => acc + r.count, 0);
     const totalRevenue = stats.reduce((acc, r) => acc + r.revenue, 0);
     return { totalOrders, totalRevenue, stats };

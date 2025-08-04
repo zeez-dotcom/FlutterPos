@@ -401,15 +401,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Transactions routes
-  app.post("/api/transactions", async (req, res) => {
+  app.post("/api/transactions", requireAuth, async (req, res) => {
     try {
+      const user = req.user as UserWithBranch;
+      if (!user.branchId) {
+        return res.status(400).json({ message: "User branch not set" });
+      }
+
       const { customerId, loyaltyPointsEarned = 0, loyaltyPointsRedeemed = 0 } = req.body;
       const validatedData = insertTransactionSchema.parse(req.body);
 
-      // For laundry system, we don't need to update stock like traditional POS
-      // Laundry services are unlimited capacity services
-
-      const transaction = await storage.createTransaction(validatedData);
+      const transaction = await storage.createTransaction({
+        ...validatedData,
+        branchId: user.branchId,
+      });
 
       if (customerId) {
         const customer = await storage.getCustomer(customerId);
@@ -440,18 +445,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/transactions", async (req, res) => {
+  app.get("/api/transactions", requireAuth, async (req, res) => {
     try {
-      const transactions = await storage.getTransactions();
+      const user = req.user as UserWithBranch;
+      const transactions = await storage.getTransactions(user.branchId || undefined);
       res.json(transactions);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch transactions" });
     }
   });
 
-  app.get("/api/transactions/:id", async (req, res) => {
+  app.get("/api/transactions/:id", requireAuth, async (req, res) => {
     try {
-      const transaction = await storage.getTransaction(req.params.id);
+      const user = req.user as UserWithBranch;
+      const transaction = await storage.getTransaction(req.params.id, user.branchId || undefined);
       if (!transaction) {
         return res.status(404).json({ message: "Transaction not found" });
       }
@@ -521,11 +528,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/orders", requireAuth, async (req, res) => {
     try {
       const { status } = req.query;
+      const user = req.user as UserWithBranch;
       let orders;
       if (status && typeof status === 'string') {
-        orders = await storage.getOrdersByStatus(status);
+        orders = await storage.getOrdersByStatus(status, user.branchId || undefined);
       } else {
-        orders = await storage.getOrders();
+        orders = await storage.getOrders(user.branchId || undefined);
       }
       res.json(orders);
     } catch (error) {
@@ -535,7 +543,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/orders/:id", requireAuth, async (req, res) => {
     try {
-      const order = await storage.getOrder(req.params.id);
+      const user = req.user as UserWithBranch;
+      const order = await storage.getOrder(req.params.id, user.branchId || undefined);
       if (!order) {
         return res.status(404).json({ message: "Order not found" });
       }
@@ -547,18 +556,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/customers/:customerId/orders", requireAuth, async (req, res) => {
     try {
-      const orders = await storage.getOrdersByCustomer(req.params.customerId);
+      const user = req.user as UserWithBranch;
+      const orders = await storage.getOrdersByCustomer(req.params.customerId, user.branchId || undefined);
       res.json(orders);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch customer orders" });
     }
   });
 
-  app.post("/api/orders", async (req, res) => {
+  app.post("/api/orders", requireAuth, async (req, res) => {
     try {
+      const user = req.user as UserWithBranch;
+      if (!user.branchId) {
+        return res.status(400).json({ message: "User branch not set" });
+      }
       const { loyaltyPointsEarned = 0, loyaltyPointsRedeemed = 0 } = req.body;
       const orderData = insertOrderSchema.parse(req.body);
-      const order = await storage.createOrder(orderData);
+      const order = await storage.createOrder({ ...orderData, branchId: user.branchId });
 
       // If payment method is pay_later, update customer balance
       if (order.paymentMethod === 'pay_later' && order.customerId) {
@@ -649,7 +663,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Payment Management Routes
   app.get("/api/payments", requireAuth, async (req, res) => {
     try {
-      const payments = await storage.getPayments();
+      const user = req.user as UserWithBranch;
+      const payments = await storage.getPayments(user.branchId || undefined);
       res.json(payments);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch payments" });
@@ -658,7 +673,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/customers/:customerId/payments", requireAuth, async (req, res) => {
     try {
-      const payments = await storage.getPaymentsByCustomer(req.params.customerId);
+      const user = req.user as UserWithBranch;
+      const payments = await storage.getPaymentsByCustomer(req.params.customerId, user.branchId || undefined);
       res.json(payments);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch customer payments" });
@@ -667,7 +683,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/payments", requireAuth, async (req, res) => {
     try {
+      const user = req.user as UserWithBranch;
       const paymentData = insertPaymentSchema.parse(req.body);
+      if (paymentData.orderId) {
+        const order = await storage.getOrder(paymentData.orderId, user.branchId || undefined);
+        if (!order) {
+          return res.status(404).json({ message: "Order not found" });
+        }
+      }
       const payment = await storage.createPayment(paymentData);
       
       // Update customer balance when payment is received
@@ -720,7 +743,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/reports/orders", requireAdminOrSuperAdmin, async (req, res) => {
     try {
       const range = (req.query.range as string) || "daily";
-      const summary = await storage.getSalesSummary(range);
+      const user = req.user as UserWithBranch;
+      const summary = await storage.getSalesSummary(range, user.branchId || undefined);
       res.json(summary);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch order reports" });
@@ -730,7 +754,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/reports/top-services", requireAdminOrSuperAdmin, async (req, res) => {
     try {
       const range = (req.query.range as string) || "daily";
-      const services = await storage.getTopServices(range);
+      const user = req.user as UserWithBranch;
+      const services = await storage.getTopServices(range, user.branchId || undefined);
       res.json({ services });
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch top services" });
@@ -740,7 +765,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/reports/top-products", requireAdminOrSuperAdmin, async (req, res) => {
     try {
       const range = (req.query.range as string) || "daily";
-      const products = await storage.getTopProducts(range);
+      const user = req.user as UserWithBranch;
+      const products = await storage.getTopProducts(range, user.branchId || undefined);
       res.json({ products });
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch top products" });
