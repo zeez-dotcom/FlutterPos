@@ -7,12 +7,14 @@ import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { useTranslation } from "@/lib/i18n";
 import type { SecuritySettings as SecuritySettingsType, InsertSecuritySettings } from "@shared/schema";
 import { Shield } from "lucide-react";
 
 export function SecuritySettings() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { t } = useTranslation();
 
   const { data: settings } = useQuery<SecuritySettingsType>({
     queryKey: ["/api/security-settings"],
@@ -37,12 +39,12 @@ export function SecuritySettings() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/security-settings"] });
-      toast({ title: "Settings saved" });
+      toast({ title: t.settingsSaved });
     },
     onError: () => {
       toast({
-        title: "Error",
-        description: "Failed to save security settings",
+        title: t.error,
+        description: t.failedSaveSecuritySettings,
         variant: "destructive",
       });
     },
@@ -61,12 +63,12 @@ export function SecuritySettings() {
       <CardHeader>
         <CardTitle className="flex items-center space-x-2">
           <Shield className="h-5 w-5" />
-          <span>Security Settings</span>
+          <span>{t.securitySettings}</span>
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="sessionTimeout">Session Timeout (minutes)</Label>
+          <Label htmlFor="sessionTimeout">{t.sessionTimeoutMinutes}</Label>
           <Input
             id="sessionTimeout"
             type="number"
@@ -76,7 +78,7 @@ export function SecuritySettings() {
         </div>
         <div className="flex items-center justify-between">
           <div className="space-y-0.5">
-            <Label htmlFor="twoFactorRequired">Require Two-Factor Authentication</Label>
+            <Label htmlFor="twoFactorRequired">{t.requireTwoFactorAuthentication}</Label>
           </div>
           <Switch
             id="twoFactorRequired"
@@ -85,16 +87,16 @@ export function SecuritySettings() {
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="passwordPolicy">Password Policy</Label>
+          <Label htmlFor="passwordPolicy">{t.passwordPolicy}</Label>
           <Input
             id="passwordPolicy"
             value={passwordPolicy}
             onChange={(e) => setPasswordPolicy(e.target.value)}
-            placeholder="e.g., Minimum 8 characters"
+            placeholder={t.passwordPolicyPlaceholder}
           />
         </div>
         <Button onClick={handleSave} disabled={saveMutation.isPending}>
-          Save Changes
+          {t.saveChanges}
         </Button>
       </CardContent>
     </Card>

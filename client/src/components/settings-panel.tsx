@@ -11,10 +11,12 @@ import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "@/lib/i18n";
 import { SecuritySettings } from "./security-settings";
 import { ProfileSettings } from "./profile-settings";
 
 export function SettingsPanel() {
+  const { t } = useTranslation();
   const [settings, setSettings] = useState({
     // Business Settings
     businessName: "Main Store Laundry",
@@ -59,8 +61,8 @@ export function SettingsPanel() {
     // In a real app, this would save to backend
     localStorage.setItem('laundrySettings', JSON.stringify(settings));
     toast({
-      title: "Settings saved successfully",
-      description: "Your preferences have been updated."
+      title: t.settingsSaved,
+      description: t.preferencesUpdated
     });
   };
 
@@ -86,8 +88,8 @@ export function SettingsPanel() {
       compactMode: false
     });
     toast({
-      title: "Settings reset",
-      description: "All settings have been restored to defaults."
+      title: t.settingsReset,
+      description: t.settingsRestored
     });
   };
 
@@ -97,16 +99,16 @@ export function SettingsPanel() {
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center space-x-3">
             <Settings className="h-8 w-8 text-pos-primary" />
-            <h1 className="text-3xl font-bold text-gray-900">System Settings</h1>
+            <h1 className="text-3xl font-bold text-gray-900">{t.systemSettings}</h1>
           </div>
-          
+
           <div className="flex space-x-3">
             <Button variant="outline" onClick={resetSettings}>
-              Reset to Defaults
+              {t.resetToDefaults}
             </Button>
             <Button onClick={saveSettings} className="bg-pos-secondary hover:bg-green-600">
               <Save className="h-4 w-4 mr-2" />
-              Save Changes
+              {t.saveChanges}
             </Button>
           </div>
         </div>
@@ -121,13 +123,13 @@ export function SettingsPanel() {
               hasAdminAccess ? "grid-cols-7" : "grid-cols-3"
             )}
           >
-            <TabsTrigger value="profile">Profile</TabsTrigger>
-            {hasAdminAccess && <TabsTrigger value="business">Business</TabsTrigger>}
-            {hasAdminAccess && <TabsTrigger value="receipts">Receipts</TabsTrigger>}
-            <TabsTrigger value="system">System</TabsTrigger>
-            {hasAdminAccess && <TabsTrigger value="pricing">Pricing</TabsTrigger>}
-            <TabsTrigger value="appearance">Appearance</TabsTrigger>
-            {hasAdminAccess && <TabsTrigger value="security">Security</TabsTrigger>}
+            <TabsTrigger value="profile">{t.profile}</TabsTrigger>
+            {hasAdminAccess && <TabsTrigger value="business">{t.business}</TabsTrigger>}
+            {hasAdminAccess && <TabsTrigger value="receipts">{t.receipts}</TabsTrigger>}
+            <TabsTrigger value="system">{t.system}</TabsTrigger>
+            {hasAdminAccess && <TabsTrigger value="pricing">{t.pricing}</TabsTrigger>}
+            <TabsTrigger value="appearance">{t.appearance}</TabsTrigger>
+            {hasAdminAccess && <TabsTrigger value="security">{t.security}</TabsTrigger>}
           </TabsList>
 
           <TabsContent value="profile" className="space-y-6">
@@ -140,13 +142,13 @@ export function SettingsPanel() {
                 <CardHeader>
                   <CardTitle className="flex items-center space-x-2">
                     <User className="h-5 w-5" />
-                    <span>Business Information</span>
+                    <span>{t.businessInformation}</span>
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="businessName">Business Name</Label>
+                      <Label htmlFor="businessName">{t.businessNameLabel}</Label>
                       <Input
                         id="businessName"
                         value={settings.businessName}
@@ -156,7 +158,7 @@ export function SettingsPanel() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="phone">Phone Number</Label>
+                      <Label htmlFor="phone">{t.phoneNumber}</Label>
                       <Input
                         id="phone"
                         value={settings.phone}
@@ -168,7 +170,7 @@ export function SettingsPanel() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="address">Business Address</Label>
+                    <Label htmlFor="address">{t.businessAddress}</Label>
                     <Input
                       id="address"
                       value={settings.address}
@@ -180,7 +182,7 @@ export function SettingsPanel() {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="email">Email Address</Label>
+                      <Label htmlFor="email">{t.emailAddress}</Label>
                       <Input
                         id="email"
                         type="email"
@@ -191,7 +193,7 @@ export function SettingsPanel() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="currency">Currency</Label>
+                      <Label htmlFor="currency">{t.currency}</Label>
                       <Select
                         value={settings.currency}
                         onValueChange={(value) =>
@@ -202,10 +204,10 @@ export function SettingsPanel() {
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="USD">US Dollar ($)</SelectItem>
-                          <SelectItem value="EUR">Euro (€)</SelectItem>
-                          <SelectItem value="GBP">British Pound (£)</SelectItem>
-                          <SelectItem value="CAD">Canadian Dollar (CAD)</SelectItem>
+                          <SelectItem value="USD">{t.usDollar}</SelectItem>
+                          <SelectItem value="EUR">{t.euro}</SelectItem>
+                          <SelectItem value="GBP">{t.britishPound}</SelectItem>
+                          <SelectItem value="CAD">{t.canadianDollar}</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -221,12 +223,12 @@ export function SettingsPanel() {
                 <CardHeader>
                   <CardTitle className="flex items-center space-x-2">
                     <Receipt className="h-5 w-5" />
-                    <span>Receipt Configuration</span>
+                    <span>{t.receiptConfiguration}</span>
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="receiptHeader">Receipt Header Message</Label>
+                    <Label htmlFor="receiptHeader">{t.receiptHeaderMessage}</Label>
                     <Input
                       id="receiptHeader"
                       value={settings.receiptHeader}
@@ -237,7 +239,7 @@ export function SettingsPanel() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="receiptFooter">Receipt Footer Message</Label>
+                    <Label htmlFor="receiptFooter">{t.receiptFooterMessage}</Label>
                     <Input
                       id="receiptFooter"
                       value={settings.receiptFooter}
@@ -249,9 +251,9 @@ export function SettingsPanel() {
 
                   <div className="flex items-center justify-between">
                     <div className="space-y-0.5">
-                      <Label>Print Business Logo</Label>
+                      <Label>{t.printBusinessLogo}</Label>
                       <div className="text-sm text-gray-600">
-                        Include logo on printed receipts
+                        {t.includeLogoPrintedReceipts}
                       </div>
                     </div>
                     <Switch
@@ -271,13 +273,13 @@ export function SettingsPanel() {
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
                   <Shield className="h-5 w-5" />
-                  <span>System Preferences</span>
+                  <span>{t.systemPreferences}</span>
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="autoLogout">Auto Logout (minutes)</Label>
+                    <Label htmlFor="autoLogout">{t.autoLogoutMinutes}</Label>
                     <Select 
                       value={settings.autoLogout} 
                       onValueChange={(value) => handleSettingChange('autoLogout', value)}
@@ -286,11 +288,11 @@ export function SettingsPanel() {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="15">15 minutes</SelectItem>
-                        <SelectItem value="30">30 minutes</SelectItem>
-                        <SelectItem value="60">1 hour</SelectItem>
-                        <SelectItem value="120">2 hours</SelectItem>
-                        <SelectItem value="never">Never</SelectItem>
+                        <SelectItem value="15">{t.minutes15}</SelectItem>
+                        <SelectItem value="30">{t.minutes30}</SelectItem>
+                        <SelectItem value="60">{t.oneHour}</SelectItem>
+                        <SelectItem value="120">{t.twoHours}</SelectItem>
+                        <SelectItem value="never">{t.never}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -301,8 +303,8 @@ export function SettingsPanel() {
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <div className="space-y-0.5">
-                      <Label>Enable Notifications</Label>
-                      <div className="text-sm text-gray-600">Show system notifications and alerts</div>
+                      <Label>{t.enableNotifications}</Label>
+                      <div className="text-sm text-gray-600">{t.showSystemNotificationsAlerts}</div>
                     </div>
                     <Switch
                       checked={settings.enableNotifications}
@@ -312,8 +314,8 @@ export function SettingsPanel() {
                   
                   <div className="flex items-center justify-between">
                     <div className="space-y-0.5">
-                      <Label>Sound Effects</Label>
-                      <div className="text-sm text-gray-600">Play sounds for button clicks and alerts</div>
+                      <Label>{t.soundEffects}</Label>
+                      <div className="text-sm text-gray-600">{t.playSoundsForClicks}</div>
                     </div>
                     <Switch
                       checked={settings.soundEffects}
@@ -331,13 +333,13 @@ export function SettingsPanel() {
                 <CardHeader>
                   <CardTitle className="flex items-center space-x-2">
                     <DollarSign className="h-5 w-5" />
-                    <span>Pricing & Tax Settings</span>
+                    <span>{t.pricingTaxSettings}</span>
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="taxRate">Tax Rate (%)</Label>
+                      <Label htmlFor="taxRate">{t.taxRate}</Label>
                       <Input
                         id="taxRate"
                         type="number"
@@ -350,7 +352,7 @@ export function SettingsPanel() {
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="minimumOrder">Minimum Order Amount</Label>
+                      <Label htmlFor="minimumOrder">{t.minimumOrderAmount}</Label>
                       <Input
                         id="minimumOrder"
                         type="number"
@@ -364,7 +366,7 @@ export function SettingsPanel() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label>Price Rounding Method</Label>
+                    <Label>{t.priceRoundingMethod}</Label>
                     <Select
                       value={settings.roundingMethod}
                       onValueChange={(value) =>
@@ -375,9 +377,9 @@ export function SettingsPanel() {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="nearest">Round to Nearest Cent</SelectItem>
-                        <SelectItem value="up">Always Round Up</SelectItem>
-                        <SelectItem value="down">Always Round Down</SelectItem>
+                        <SelectItem value="nearest">{t.roundToNearestCent}</SelectItem>
+                        <SelectItem value="up">{t.alwaysRoundUp}</SelectItem>
+                        <SelectItem value="down">{t.alwaysRoundDown}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -391,13 +393,13 @@ export function SettingsPanel() {
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
                   <Palette className="h-5 w-5" />
-                  <span>Appearance Settings</span>
+                  <span>{t.appearanceSettings}</span>
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label>Theme</Label>
+                    <Label>{t.theme}</Label>
                     <Select 
                       value={settings.theme} 
                       onValueChange={(value) => handleSettingChange('theme', value)}
@@ -406,15 +408,15 @@ export function SettingsPanel() {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="light">Light Theme</SelectItem>
-                        <SelectItem value="dark">Dark Theme</SelectItem>
-                        <SelectItem value="auto">Auto (System)</SelectItem>
+                        <SelectItem value="light">{t.lightTheme}</SelectItem>
+                        <SelectItem value="dark">{t.darkTheme}</SelectItem>
+                        <SelectItem value="auto">{t.autoSystem}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="primaryColor">Primary Color</Label>
+                    <Label htmlFor="primaryColor">{t.primaryColor}</Label>
                     <div className="flex space-x-2">
                       <Input
                         id="primaryColor"
@@ -434,8 +436,8 @@ export function SettingsPanel() {
                 
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
-                    <Label>Compact Mode</Label>
-                    <div className="text-sm text-gray-600">Use smaller spacing and fonts</div>
+                    <Label>{t.compactMode}</Label>
+                    <div className="text-sm text-gray-600">{t.useSmallerSpacingFonts}</div>
                   </div>
                   <Switch
                     checked={settings.compactMode}

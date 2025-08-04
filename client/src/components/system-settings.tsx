@@ -33,8 +33,8 @@ export function SystemSettings() {
     localStorage.setItem('companyPhone', companyPhone);
     
     toast({
-      title: "Settings saved",
-      description: "System settings have been updated successfully",
+      title: t.settingsSaved,
+      description: t.settingsUpdated,
     });
   };
 
@@ -44,24 +44,24 @@ export function SystemSettings() {
     <div className="space-y-6">
       <div className="flex items-center space-x-2">
         <Settings className="h-6 w-6" />
-        <h2 className="text-2xl font-bold">System Settings</h2>
+        <h2 className="text-2xl font-bold">{t.systemSettings}</h2>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
         {/* Currency Settings */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <DollarSign className="h-5 w-5" />
-              Currency Settings
-            </CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <DollarSign className="h-5 w-5" />
+                {t.currencySettings}
+              </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="currency">Default Currency</Label>
+              <Label htmlFor="currency">{t.defaultCurrency}</Label>
               <Select value={currency} onValueChange={(value: Currency) => setCurrency(value)}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select currency" />
+                  <SelectValue placeholder={t.selectCurrency} />
                 </SelectTrigger>
                 <SelectContent>
                   {currencies.map((curr) => (
@@ -75,14 +75,14 @@ export function SystemSettings() {
                 </SelectContent>
               </Select>
               <p className="text-sm text-gray-500">
-                Preview: {formatCurrency(100)}
+                {t.preview}: {formatCurrency(100)}
               </p>
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="taxRate" className="flex items-center gap-2">
                 <Percent className="h-4 w-4" />
-                Tax Rate (%)
+                {t.taxRate}
               </Label>
               <Input
                 id="taxRate"
@@ -99,34 +99,34 @@ export function SystemSettings() {
         {/* Language Settings */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Globe className="h-5 w-5" />
-              Language & Localization
-            </CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <Globe className="h-5 w-5" />
+                {t.languageLocalization}
+              </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="language">System Language</Label>
+              <Label htmlFor="language">{t.systemLanguage}</Label>
               <Select value={language} onValueChange={(value: Language) => setLanguage(value)}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select language" />
+                  <SelectValue placeholder={t.selectLanguage} />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="en">
                     <div className="flex items-center gap-2">
-                      <span>English</span>
+                      <span>{t.english}</span>
                       <span className="text-gray-500">🇺🇸</span>
                     </div>
                   </SelectItem>
                   <SelectItem value="ar">
                     <div className="flex items-center gap-2">
-                      <span>العربية</span>
+                      <span>{t.arabic}</span>
                       <span className="text-gray-500">🇰🇼</span>
                     </div>
                   </SelectItem>
                   <SelectItem value="ur">
                     <div className="flex items-center gap-2">
-                      <span>اردو</span>
+                      <span>{t.urdu}</span>
                       <span className="text-gray-500">🇵🇰</span>
                     </div>
                   </SelectItem>
@@ -139,24 +139,24 @@ export function SystemSettings() {
         {/* Company Information */}
         <Card className="md:col-span-2">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Store className="h-5 w-5" />
-              Company Information
-            </CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <Store className="h-5 w-5" />
+                {t.companyInformation}
+              </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="companyName">Company Name</Label>
+                <Label htmlFor="companyName">{t.companyNameLabel}</Label>
                 <Input
                   id="companyName"
                   value={companyName}
                   onChange={(e) => setCompanyName(e.target.value)}
-                  placeholder="Laundry Services"
+                  placeholder={t.laundryServices}
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="companyPhone">Phone Number</Label>
+                <Label htmlFor="companyPhone">{t.phoneNumber}</Label>
                 <Input
                   id="companyPhone"
                   value={companyPhone}
@@ -173,7 +173,7 @@ export function SystemSettings() {
 
       <div className="flex justify-end">
         <Button onClick={handleSaveSettings} className="px-8">
-          Save Settings
+          {t.saveSettings}
         </Button>
       </div>
     </div>
