@@ -213,7 +213,9 @@ export function ReceiptModal({ transaction, order, customer, isOpen, onClose }: 
             )}
             <div className="flex">
               <p className="flex-1 text-gray-600">{branchPhone}</p>
-              <p className="flex-1 text-gray-600 text-right" dir="rtl">{branchPhone}</p>
+              <p className="flex-1 text-gray-600 text-right" dir="rtl">
+                <span dir="ltr">{branchPhone}</span>
+              </p>
             </div>
           </div>
 
@@ -395,7 +397,7 @@ export function ReceiptModal({ transaction, order, customer, isOpen, onClose }: 
                 {tEn.inquiriesCall} {branchPhone}
               </p>
               <p className="flex-1 text-right" dir="rtl">
-                {tAr.inquiriesCall} {branchPhone}
+                {tAr.inquiriesCall} <span dir="ltr">{branchPhone}</span>
               </p>
             </div>
             {isPayLater && (
