@@ -78,6 +78,85 @@ export interface Translations {
   companyTagline: string;
   location: string;
   phone: string;
+
+  // Settings
+  error: string;
+  settingsSaved: string;
+  settingsUpdated: string;
+  preferencesUpdated: string;
+  systemSettings: string;
+  currencySettings: string;
+  defaultCurrency: string;
+  selectCurrency: string;
+  preview: string;
+  taxRate: string;
+  languageLocalization: string;
+  systemLanguage: string;
+  selectLanguage: string;
+  english: string;
+  arabic: string;
+  urdu: string;
+  companyInformation: string;
+  companyNameLabel: string;
+  saveSettings: string;
+  resetToDefaults: string;
+  saveChanges: string;
+  settingsReset: string;
+  settingsRestored: string;
+  profile: string;
+  business: string;
+  receipts: string;
+  system: string;
+  pricing: string;
+  appearance: string;
+  security: string;
+  businessInformation: string;
+  businessNameLabel: string;
+  businessAddress: string;
+  currency: string;
+  usDollar: string;
+  euro: string;
+  britishPound: string;
+  canadianDollar: string;
+  receiptConfiguration: string;
+  receiptHeaderMessage: string;
+  receiptFooterMessage: string;
+  printBusinessLogo: string;
+  includeLogoPrintedReceipts: string;
+  systemPreferences: string;
+  autoLogoutMinutes: string;
+  minutes15: string;
+  minutes30: string;
+  oneHour: string;
+  twoHours: string;
+  never: string;
+  enableNotifications: string;
+  showSystemNotificationsAlerts: string;
+  soundEffects: string;
+  playSoundsForClicks: string;
+  pricingTaxSettings: string;
+  minimumOrderAmount: string;
+  priceRoundingMethod: string;
+  roundToNearestCent: string;
+  alwaysRoundUp: string;
+  alwaysRoundDown: string;
+  appearanceSettings: string;
+  theme: string;
+  lightTheme: string;
+  darkTheme: string;
+  autoSystem: string;
+  primaryColor: string;
+  compactMode: string;
+  useSmallerSpacingFonts: string;
+  securitySettings: string;
+  sessionTimeoutMinutes: string;
+  requireTwoFactorAuthentication: string;
+  passwordPolicy: string;
+  passwordPolicyPlaceholder: string;
+  failedSaveSecuritySettings: string;
+  name: string;
+  newPassword: string;
+  profileUpdated: string;
 }
 
 const translations: Record<Language, Translations> = {
@@ -157,6 +236,84 @@ const translations: Record<Language, Translations> = {
     companyTagline: "Professional Cleaning Solutions",
     location: "Kuwait City, Kuwait",
     phone: "+965-2XXX-XXXX",
+    // Settings
+    error: "Error",
+    settingsSaved: "Settings saved",
+    settingsUpdated: "System settings have been updated successfully",
+    preferencesUpdated: "Your preferences have been updated.",
+    systemSettings: "System Settings",
+    currencySettings: "Currency Settings",
+    defaultCurrency: "Default Currency",
+    selectCurrency: "Select currency",
+    preview: "Preview",
+    taxRate: "Tax Rate (%)",
+    languageLocalization: "Language & Localization",
+    systemLanguage: "System Language",
+    selectLanguage: "Select language",
+    english: "English",
+    arabic: "Arabic",
+    urdu: "Urdu",
+    companyInformation: "Company Information",
+    companyNameLabel: "Company Name",
+    saveSettings: "Save Settings",
+    resetToDefaults: "Reset to Defaults",
+    saveChanges: "Save Changes",
+    settingsReset: "Settings reset",
+    settingsRestored: "All settings have been restored to defaults.",
+    profile: "Profile",
+    business: "Business",
+    receipts: "Receipts",
+    system: "System",
+    pricing: "Pricing",
+    appearance: "Appearance",
+    security: "Security",
+    businessInformation: "Business Information",
+    businessNameLabel: "Business Name",
+    businessAddress: "Business Address",
+    currency: "Currency",
+    usDollar: "US Dollar ($)",
+    euro: "Euro (€)",
+    britishPound: "British Pound (£)",
+    canadianDollar: "Canadian Dollar (CAD)",
+    receiptConfiguration: "Receipt Configuration",
+    receiptHeaderMessage: "Receipt Header Message",
+    receiptFooterMessage: "Receipt Footer Message",
+    printBusinessLogo: "Print Business Logo",
+    includeLogoPrintedReceipts: "Include logo on printed receipts",
+    systemPreferences: "System Preferences",
+    autoLogoutMinutes: "Auto Logout (minutes)",
+    minutes15: "15 minutes",
+    minutes30: "30 minutes",
+    oneHour: "1 hour",
+    twoHours: "2 hours",
+    never: "Never",
+    enableNotifications: "Enable Notifications",
+    showSystemNotificationsAlerts: "Show system notifications and alerts",
+    soundEffects: "Sound Effects",
+    playSoundsForClicks: "Play sounds for button clicks and alerts",
+    pricingTaxSettings: "Pricing & Tax Settings",
+    minimumOrderAmount: "Minimum Order Amount",
+    priceRoundingMethod: "Price Rounding Method",
+    roundToNearestCent: "Round to Nearest Cent",
+    alwaysRoundUp: "Always Round Up",
+    alwaysRoundDown: "Always Round Down",
+    appearanceSettings: "Appearance Settings",
+    theme: "Theme",
+    lightTheme: "Light Theme",
+    darkTheme: "Dark Theme",
+    autoSystem: "Auto (System)",
+    primaryColor: "Primary Color",
+    compactMode: "Compact Mode",
+    useSmallerSpacingFonts: "Use smaller spacing and fonts",
+    securitySettings: "Security Settings",
+    sessionTimeoutMinutes: "Session Timeout (minutes)",
+    requireTwoFactorAuthentication: "Require Two-Factor Authentication",
+    passwordPolicy: "Password Policy",
+    passwordPolicyPlaceholder: "e.g., Minimum 8 characters",
+    failedSaveSecuritySettings: "Failed to save security settings",
+    name: "Name",
+    newPassword: "New Password",
+    profileUpdated: "Profile updated",
   },
   ar: {
     // Common
@@ -234,6 +391,84 @@ const translations: Record<Language, Translations> = {
     companyTagline: "حلول التنظيف المهنية",
     location: "مدينة الكويت، الكويت",
     phone: "+965-2XXX-XXXX",
+    // Settings
+    error: "خطأ",
+    settingsSaved: "تم حفظ الإعدادات",
+    settingsUpdated: "تم تحديث إعدادات النظام بنجاح",
+    preferencesUpdated: "تم تحديث تفضيلاتك.",
+    systemSettings: "إعدادات النظام",
+    currencySettings: "إعدادات العملة",
+    defaultCurrency: "العملة الافتراضية",
+    selectCurrency: "اختر العملة",
+    preview: "معاينة",
+    taxRate: "نسبة الضريبة (%)",
+    languageLocalization: "اللغة والتعريب",
+    systemLanguage: "لغة النظام",
+    selectLanguage: "اختر اللغة",
+    english: "الإنجليزية",
+    arabic: "العربية",
+    urdu: "الأردية",
+    companyInformation: "معلومات الشركة",
+    companyNameLabel: "اسم الشركة",
+    saveSettings: "حفظ الإعدادات",
+    resetToDefaults: "إعادة التعيين للوضع الافتراضي",
+    saveChanges: "حفظ التغييرات",
+    settingsReset: "تمت إعادة تعيين الإعدادات",
+    settingsRestored: "تمت استعادة جميع الإعدادات إلى الوضع الافتراضي.",
+    profile: "الملف الشخصي",
+    business: "الأعمال",
+    receipts: "الإيصالات",
+    system: "النظام",
+    pricing: "التسعير",
+    appearance: "المظهر",
+    security: "الأمان",
+    businessInformation: "معلومات العمل",
+    businessNameLabel: "اسم العمل",
+    businessAddress: "عنوان العمل",
+    currency: "العملة",
+    usDollar: "دولار أمريكي ($)",
+    euro: "يورو (€)",
+    britishPound: "جنيه إسترليني (£)",
+    canadianDollar: "دولار كندي (CAD)",
+    receiptConfiguration: "إعدادات الإيصال",
+    receiptHeaderMessage: "رسالة رأس الإيصال",
+    receiptFooterMessage: "رسالة ذيل الإيصال",
+    printBusinessLogo: "طباعة شعار العمل",
+    includeLogoPrintedReceipts: "تضمين الشعار في الإيصالات المطبوعة",
+    systemPreferences: "تفضيلات النظام",
+    autoLogoutMinutes: "تسجيل الخروج التلقائي (بالدقائق)",
+    minutes15: "15 دقيقة",
+    minutes30: "30 دقيقة",
+    oneHour: "ساعة واحدة",
+    twoHours: "ساعتان",
+    never: "أبداً",
+    enableNotifications: "تمكين الإشعارات",
+    showSystemNotificationsAlerts: "عرض إشعارات النظام والتنبيهات",
+    soundEffects: "المؤثرات الصوتية",
+    playSoundsForClicks: "تشغيل الأصوات للنقرات والتنبيهات",
+    pricingTaxSettings: "إعدادات التسعير والضريبة",
+    minimumOrderAmount: "الحد الأدنى للطلب",
+    priceRoundingMethod: "طريقة تقريب السعر",
+    roundToNearestCent: "تقريب لأقرب سنت",
+    alwaysRoundUp: "التقريب دائماً للأعلى",
+    alwaysRoundDown: "التقريب دائماً للأسفل",
+    appearanceSettings: "إعدادات المظهر",
+    theme: "السمة",
+    lightTheme: "سمة فاتحة",
+    darkTheme: "سمة داكنة",
+    autoSystem: "تلقائي (النظام)",
+    primaryColor: "اللون الأساسي",
+    compactMode: "وضع مضغوط",
+    useSmallerSpacingFonts: "استخدام تباعد وخطوط أصغر",
+    securitySettings: "إعدادات الأمان",
+    sessionTimeoutMinutes: "انتهاء الجلسة (بالدقائق)",
+    requireTwoFactorAuthentication: "طلب المصادقة الثنائية",
+    passwordPolicy: "سياسة كلمة المرور",
+    passwordPolicyPlaceholder: "مثال: حد أدنى 8 أحرف",
+    failedSaveSecuritySettings: "فشل حفظ إعدادات الأمان",
+    name: "الاسم",
+    newPassword: "كلمة مرور جديدة",
+    profileUpdated: "تم تحديث الملف الشخصي",
   },
   ur: {
     // Common
@@ -311,6 +546,84 @@ const translations: Record<Language, Translations> = {
     companyTagline: "پیشہ ورانہ صفائی کے حل",
     location: "کویت سٹی، کویت",
     phone: "+965-2XXX-XXXX",
+    // Settings
+    error: "غلطی",
+    settingsSaved: "ترتیبات محفوظ ہو گئیں",
+    settingsUpdated: "سسٹم کی ترتیبات کامیابی سے اپ ڈیٹ ہو گئیں",
+    preferencesUpdated: "آپ کی ترجیحات اپ ڈیٹ ہو گئیں۔",
+    systemSettings: "سسٹم سیٹنگز",
+    currencySettings: "کرنسی کی ترتیبات",
+    defaultCurrency: "طے شدہ کرنسی",
+    selectCurrency: "کرنسی منتخب کریں",
+    preview: "پیش نظارہ",
+    taxRate: "ٹیکس کی شرح (%)",
+    languageLocalization: "زبان اور مقامی سازی",
+    systemLanguage: "سسٹم کی زبان",
+    selectLanguage: "زبان منتخب کریں",
+    english: "انگریزی",
+    arabic: "عربی",
+    urdu: "اردو",
+    companyInformation: "کمپنی کی معلومات",
+    companyNameLabel: "کمپنی کا نام",
+    saveSettings: "ترتیبات محفوظ کریں",
+    resetToDefaults: "پہلے جیسی کریں",
+    saveChanges: "تبدیلیاں محفوظ کریں",
+    settingsReset: "ترتیبات ری سیٹ ہو گئیں",
+    settingsRestored: "تمام ترتیبات کو ڈیفالٹ پر بحال کر دیا گیا ہے۔",
+    profile: "پروفائل",
+    business: "کاروبار",
+    receipts: "رسیدیں",
+    system: "سسٹم",
+    pricing: "قیمتیں",
+    appearance: "ظاہری شکل",
+    security: "سیکیورٹی",
+    businessInformation: "کاروباری معلومات",
+    businessNameLabel: "کاروبار کا نام",
+    businessAddress: "کاروباری پتہ",
+    currency: "کرنسی",
+    usDollar: "امریکی ڈالر ($)",
+    euro: "یورو (€)",
+    britishPound: "برطانوی پاؤنڈ (£)",
+    canadianDollar: "کینیڈین ڈالر (CAD)",
+    receiptConfiguration: "رسید کی ترتیبات",
+    receiptHeaderMessage: "رسید کے سر کی عبارت",
+    receiptFooterMessage: "رسید کے آخر کی عبارت",
+    printBusinessLogo: "کاروباری لوگو پرنٹ کریں",
+    includeLogoPrintedReceipts: "پرنٹ شدہ رسیدوں پر لوگو شامل کریں",
+    systemPreferences: "سسٹم کی ترجیحات",
+    autoLogoutMinutes: "خود کار لاگ آؤٹ (منٹوں میں)",
+    minutes15: "15 منٹ",
+    minutes30: "30 منٹ",
+    oneHour: "1 گھنٹہ",
+    twoHours: "2 گھنٹے",
+    never: "کبھی نہیں",
+    enableNotifications: "نوٹیفکیشن فعال کریں",
+    showSystemNotificationsAlerts: "سسٹم نوٹیفکیشن اور الرٹس دکھائیں",
+    soundEffects: "ساؤنڈ ایفیکٹس",
+    playSoundsForClicks: "بٹن کلکس اور الرٹس کے لیے آوازیں چلائیں",
+    pricingTaxSettings: "قیمت اور ٹیکس کی ترتیبات",
+    minimumOrderAmount: "کم از کم آرڈر رقم",
+    priceRoundingMethod: "قیمت کو گول کرنے کا طریقہ",
+    roundToNearestCent: "قریب ترین سینٹ تک گول کریں",
+    alwaysRoundUp: "ہمیشہ اوپر گول کریں",
+    alwaysRoundDown: "ہمیشہ نیچے گول کریں",
+    appearanceSettings: "ظاہری شکل کی ترتیبات",
+    theme: "تھیم",
+    lightTheme: "لائٹ تھیم",
+    darkTheme: "ڈارک تھیم",
+    autoSystem: "خودکار (سسٹم)",
+    primaryColor: "بنیادی رنگ",
+    compactMode: "کمپیکٹ موڈ",
+    useSmallerSpacingFonts: "کم فاصلے اور فونٹس استعمال کریں",
+    securitySettings: "سیکیورٹی سیٹنگز",
+    sessionTimeoutMinutes: "سیشن ٹائم آؤٹ (منٹوں میں)",
+    requireTwoFactorAuthentication: "ٹو فیکٹر تصدیق درکار ہے",
+    passwordPolicy: "پاس ورڈ پالیسی",
+    passwordPolicyPlaceholder: "مثال: کم از کم 8 حروف",
+    failedSaveSecuritySettings: "سیکیورٹی سیٹنگز محفوظ کرنے میں ناکام",
+    name: "نام",
+    newPassword: "نیا پاس ورڈ",
+    profileUpdated: "پروفائل اپ ڈیٹ ہو گیا",
   }
 };
 
