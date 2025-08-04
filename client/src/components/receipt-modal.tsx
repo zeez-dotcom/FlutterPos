@@ -2,9 +2,9 @@ import { X, Printer, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Transaction, Customer } from "@shared/schema";
-import { useTranslation } from "@/lib/i18n";
+import { useTranslation, translations } from "@/lib/i18n";
 import { useCurrency } from "@/lib/currency";
-import { useState, useEffect } from "react";
+import { useState, useEffect, ReactNode } from "react";
 import logoImage from "@/assets/logo.png";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
@@ -24,6 +24,34 @@ export function ReceiptModal({ transaction, order, customer, isOpen, onClose }: 
   const { formatCurrency } = useCurrency();
   const { toast } = useToast();
   const taxRate = getTaxRate();
+  const tEn = translations.en;
+  const tAr = translations.ar;
+
+  const renderBilingualRow = (
+    enLabel: string,
+    enValue: ReactNode,
+    arLabel: string,
+    arValue: ReactNode = enValue,
+    className = ''
+  ) => (
+    <div className={`flex ${className}`}>
+      <span className="flex-1">
+        {enLabel}: {enValue}
+      </span>
+      <span className="flex-1 text-right" dir="rtl">
+        {arLabel}: {arValue}
+      </span>
+    </div>
+  );
+
+  const paymentMethodKey =
+    receiptData.paymentMethod === 'pay_later'
+      ? 'payLater'
+      : receiptData.paymentMethod === 'cash'
+        ? 'cash'
+        : 'card';
+  const estimatedPickupEn = 'Est. Pickup';
+  const estimatedPickupAr = 'الاستلام المتوقع';
   
   // Get dynamic company settings
   const [companyName, setCompanyName] = useState('');
@@ -65,6 +93,7 @@ export function ReceiptModal({ transaction, order, customer, isOpen, onClose }: 
             .space-y-2 > * + * { margin-top: 0.5rem; }
             .space-y-1 > * + * { margin-top: 0.25rem; }
             .text-center { text-align: center; }
+            .text-right { text-align: right; }
             .text-xs { font-size: 10px; }
             .font-bold { font-weight: bold; }
             .text-lg { font-size: 16px; }
@@ -177,112 +206,182 @@ export function ReceiptModal({ transaction, order, customer, isOpen, onClose }: 
               className="w-16 h-16 mx-auto object-contain rounded-lg"
             />
             <h3 className="font-bold text-lg">{companyName}</h3>
-            <p className="text-gray-600">{t.companyTagline}</p>
-            <p className="text-gray-600">{t.location}</p>
-            <p className="text-gray-600">{companyPhone}</p>
+            <div className="flex">
+              <p className="flex-1 text-gray-600">{tEn.companyTagline}</p>
+              <p className="flex-1 text-gray-600 text-right" dir="rtl">{tAr.companyTagline}</p>
+            </div>
+            <div className="flex">
+              <p className="flex-1 text-gray-600">{tEn.location}</p>
+              <p className="flex-1 text-gray-600 text-right" dir="rtl">{tAr.location}</p>
+            </div>
+            <div className="flex">
+              <p className="flex-1 text-gray-600">{companyPhone}</p>
+              <p className="flex-1 text-gray-600 text-right" dir="rtl">{companyPhone}</p>
+            </div>
           </div>
 
           <div className="border-t border-b border-gray-400 py-3 space-y-1">
-            <div className="flex justify-between">
-              <span>{t.date}:</span>
-              <span>{date.toLocaleDateString()}</span>
-            </div>
-            <div className="flex justify-between">
-              <span>{t.time}:</span>
-              <span>{date.toLocaleTimeString()}</span>
-            </div>
-            <div className="flex justify-between">
-              <span>{isPayLater ? t.orderNumber : t.receiptNumber}:</span>
-              <span>{receiptData.id.slice(-6).toUpperCase()}</span>
-            </div>
-            {receiptData.cashierName && (
-              <div className="flex justify-between">
-                <span>{t.staff}:</span>
-                <span>{receiptData.cashierName}</span>
-              </div>
+            {renderBilingualRow(
+              tEn.date,
+              date.toLocaleDateString(),
+              tAr.date,
+              date.toLocaleDateString()
             )}
-            {receiptData.createdBy && (
-              <div className="flex justify-between">
-                <span>{t.staff}:</span>
-                <span>{receiptData.createdBy}</span>
-              </div>
+            {renderBilingualRow(
+              tEn.time,
+              date.toLocaleTimeString(),
+              tAr.time,
+              date.toLocaleTimeString()
             )}
-            {customer && (
-              <div className="flex justify-between">
-                <span>{t.customer}:</span>
-                <span>{customer.name}</span>
-              </div>
+            {renderBilingualRow(
+              isPayLater ? tEn.orderNumber : tEn.receiptNumber,
+              receiptData.id.slice(-6).toUpperCase(),
+              isPayLater ? tAr.orderNumber : tAr.receiptNumber,
+              receiptData.id.slice(-6).toUpperCase()
             )}
-            {receiptData.customerName && (
-              <div className="flex justify-between">
-                <span>{t.customer}:</span>
-                <span>{receiptData.customerName}</span>
-              </div>
-            )}
+            {receiptData.cashierName &&
+              renderBilingualRow(
+                tEn.staff,
+                receiptData.cashierName,
+                tAr.staff,
+                receiptData.cashierName
+              )}
+            {receiptData.createdBy &&
+              renderBilingualRow(
+                tEn.staff,
+                receiptData.createdBy,
+                tAr.staff,
+                receiptData.createdBy
+              )}
+            {customer &&
+              renderBilingualRow(
+                tEn.customer,
+                customer.name,
+                tAr.customer,
+                customer.name
+              )}
+            {receiptData.customerName &&
+              renderBilingualRow(
+                tEn.customer,
+                receiptData.customerName,
+                tAr.customer,
+                receiptData.customerName
+              )}
           </div>
 
           {/* Items */}
           <div className="space-y-2">
             {items.map((item, index) => (
               <div key={index} className="space-y-1">
-                <div className="flex justify-between">
-                  <span className="flex-1">{item.name}</span>
-                  <span>{formatCurrency(item.total)}</span>
+                <div className="flex">
+                  <div className="flex-1 flex justify-between">
+                    <span className="flex-1">{item.name}</span>
+                    <span>{formatCurrency(item.total)}</span>
+                  </div>
+                  <div className="flex-1 flex justify-between text-right" dir="rtl">
+                    <span className="flex-1">{item.name}</span>
+                    <span>{formatCurrency(item.total)}</span>
+                  </div>
                 </div>
-                <div className="text-xs text-gray-600 pl-2">
-                  {item.service} × {item.quantity}
+                <div className="flex">
+                  <span className="text-xs text-gray-600 flex-1 pl-2">
+                    {item.service} × {item.quantity}
+                  </span>
+                  <span className="text-xs text-gray-600 flex-1 text-right" dir="rtl">
+                    {item.service} × {item.quantity}
+                  </span>
                 </div>
               </div>
             ))}
           </div>
 
           <div className="border-t border-gray-400 pt-3 space-y-1">
-            <div className="flex justify-between">
-              <span>{t.subtotal}:</span>
-              <span>{formatCurrency(receiptData.subtotal)}</span>
-            </div>
-            {taxRate > 0 && (
-              <div className="flex justify-between">
-                <span>{t.tax}:</span>
-                <span>{formatCurrency(receiptData.tax)}</span>
-              </div>
+            {renderBilingualRow(
+              tEn.subtotal,
+              formatCurrency(receiptData.subtotal),
+              tAr.subtotal,
+              formatCurrency(receiptData.subtotal)
             )}
-            <div className="flex justify-between font-bold border-t pt-1">
-              <span>{t.total}:</span>
-              <span>{formatCurrency(receiptData.total)}</span>
-            </div>
+            {taxRate > 0 &&
+              renderBilingualRow(
+                tEn.tax,
+                formatCurrency(receiptData.tax),
+                tAr.tax,
+                formatCurrency(receiptData.tax)
+              )}
+            {renderBilingualRow(
+              tEn.total,
+              formatCurrency(receiptData.total),
+              tAr.total,
+              formatCurrency(receiptData.total),
+              'font-bold border-t pt-1'
+            )}
           </div>
 
           {/* Payment Information */}
           <div className="border-t border-gray-400 pt-3 space-y-1">
-            <div className="flex justify-between">
-              <span>{t.paymentMethod}:</span>
-              <span className="capitalize">{receiptData.paymentMethod.replace('_', ' ')}</span>
-            </div>
-            
+            {renderBilingualRow(
+              tEn.paymentMethod,
+              tEn[paymentMethodKey],
+              tAr.paymentMethod,
+              tAr[paymentMethodKey]
+            )}
+
             {isPayLater ? (
               <>
                 <div className="bg-yellow-50 border border-yellow-200 rounded p-3 mt-3">
-                  <div className="text-center">
-                    <p className="font-bold text-yellow-800">{t.paymentDue}</p>
-                    <p className="text-lg font-bold text-red-600">{formatCurrency(receiptData.total)}</p>
-                    <p className="text-xs text-yellow-700 mt-1">
-                      {t.paymentDueUponPickup}
-                    </p>
+                  <div className="text-center space-y-1">
+                    <div className="flex">
+                      <p className="font-bold text-yellow-800 flex-1">{tEn.paymentDue}</p>
+                      <p className="font-bold text-yellow-800 flex-1 text-right" dir="rtl">
+                        {tAr.paymentDue}
+                      </p>
+                    </div>
+                    <div className="flex">
+                      <p className="text-lg font-bold text-red-600 flex-1">
+                        {formatCurrency(receiptData.total)}
+                      </p>
+                      <p className="text-lg font-bold text-red-600 flex-1 text-right" dir="rtl">
+                        {formatCurrency(receiptData.total)}
+                      </p>
+                    </div>
+                    <div className="flex">
+                      <p className="text-xs text-yellow-700 mt-1 flex-1">
+                        {tEn.paymentDueUponPickup}
+                      </p>
+                      <p
+                        className="text-xs text-yellow-700 mt-1 flex-1 text-right"
+                        dir="rtl"
+                      >
+                        {tAr.paymentDueUponPickup}
+                      </p>
+                    </div>
                   </div>
                 </div>
-                {receiptData.estimatedPickup && (
-                  <div className="flex justify-between text-xs">
-                    <span>Est. Pickup:</span>
-                    <span>{new Date(receiptData.estimatedPickup).toLocaleDateString()}</span>
-                  </div>
-                )}
+                {receiptData.estimatedPickup &&
+                  renderBilingualRow(
+                    estimatedPickupEn,
+                    new Date(receiptData.estimatedPickup).toLocaleDateString(),
+                    estimatedPickupAr,
+                    new Date(receiptData.estimatedPickup).toLocaleDateString(),
+                    'text-xs mt-2'
+                  )}
               </>
             ) : (
               <div className="bg-green-50 border border-green-200 rounded p-2 mt-2">
-                <div className="text-center">
-                  <p className="font-bold text-green-800">{t.paidInFull}</p>
-                  <p className="text-xs text-green-700">{t.thankYouPayment}</p>
+                <div className="text-center space-y-1">
+                  <div className="flex">
+                    <p className="font-bold text-green-800 flex-1">{tEn.paidInFull}</p>
+                    <p className="font-bold text-green-800 flex-1 text-right" dir="rtl">
+                      {tAr.paidInFull}
+                    </p>
+                  </div>
+                  <div className="flex">
+                    <p className="text-xs text-green-700 flex-1">{tEn.thankYouPayment}</p>
+                    <p className="text-xs text-green-700 flex-1 text-right" dir="rtl">
+                      {tAr.thankYouPayment}
+                    </p>
+                  </div>
                 </div>
               </div>
             )}
@@ -290,10 +389,27 @@ export function ReceiptModal({ transaction, order, customer, isOpen, onClose }: 
 
           {/* Footer */}
           <div className="border-t border-gray-400 pt-3 text-center text-xs text-gray-600 space-y-1">
-            <p>{t.thankYouService}</p>
-            <p>{t.inquiriesCall} {companyPhone}</p>
+            <div className="flex">
+              <p className="flex-1">{tEn.thankYouService}</p>
+              <p className="flex-1 text-right" dir="rtl">{tAr.thankYouService}</p>
+            </div>
+            <div className="flex">
+              <p className="flex-1">
+                {tEn.inquiriesCall} {companyPhone}
+              </p>
+              <p className="flex-1 text-right" dir="rtl">
+                {tAr.inquiriesCall} {companyPhone}
+              </p>
+            </div>
             {isPayLater && (
-              <p className="font-bold text-red-600">{t.bringReceiptPickup}</p>
+              <div className="flex">
+                <p className="font-bold text-red-600 flex-1">
+                  {tEn.bringReceiptPickup}
+                </p>
+                <p className="font-bold text-red-600 flex-1 text-right" dir="rtl">
+                  {tAr.bringReceiptPickup}
+                </p>
+              </div>
             )}
           </div>
         </div>

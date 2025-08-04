@@ -170,7 +170,7 @@ export interface Translations {
   missingCredentials: string;
 }
 
-const translations: Record<Language, Translations> = {
+export const translations: Record<Language, Translations> = {
   en: {
     // Common
     loading: "Loading...",
