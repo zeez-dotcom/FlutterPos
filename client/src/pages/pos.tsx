@@ -152,8 +152,8 @@ export default function POS() {
     const orderItems = cartSummary.items.map(item => ({
       id: item.id,
       name: item.clothingItem.name,
-      clothingItem: item.clothingItem.name,
-      service: item.service.name,
+      clothingItem: { name: item.clothingItem.name },
+      service: { name: item.service.name },
       quantity: item.quantity,
       price: parseFloat(item.service.price),
       total: item.total
