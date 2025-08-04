@@ -52,6 +52,8 @@ export function ReceiptModal({ transaction, order, customer, isOpen, onClose }: 
   const branchPhone = receiptData?.branchPhone || '+965-2XXX-XXXX';
   if (!receiptData) return null;
 
+  const staffName = receiptData.cashierName || receiptData.createdBy;
+
   const paymentMethodKey =
     receiptData.paymentMethod === 'pay_later'
       ? 'payLater'
@@ -238,19 +240,12 @@ export function ReceiptModal({ transaction, order, customer, isOpen, onClose }: 
               isPayLater ? tAr.orderNumber : tAr.receiptNumber,
               receiptData.id.slice(-6).toUpperCase()
             )}
-            {receiptData.cashierName &&
+            {staffName &&
               renderBilingualRow(
                 tEn.staff,
-                receiptData.cashierName,
+                staffName,
                 tAr.staff,
-                receiptData.cashierName
-              )}
-            {receiptData.createdBy &&
-              renderBilingualRow(
-                tEn.staff,
-                receiptData.createdBy,
-                tAr.staff,
-                receiptData.createdBy
+                staffName
               )}
             {customer &&
               renderBilingualRow(

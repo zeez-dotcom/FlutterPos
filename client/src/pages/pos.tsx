@@ -41,7 +41,7 @@ export default function POS() {
   const { t, language } = useTranslation();
   const { formatCurrency } = useCurrency();
   const { user, branch } = useAuth();
-  const cashierName = [user?.firstName, user?.lastName].filter(Boolean).join(" ");
+  const username = user?.username ?? "";
   
   const {
     cartItems,
@@ -75,7 +75,7 @@ export default function POS() {
           branchName: branch?.name,
           branchAddress: branch?.address,
           branchPhone: branch?.phone,
-          createdBy: cashierName,
+          createdBy: username,
         });
         setCurrentTransaction(null);
         toast({
@@ -85,7 +85,7 @@ export default function POS() {
       } else {
         setCurrentTransaction({
           ...result,
-          cashierName,
+          cashierName: username,
           branchName: branch?.name,
           branchAddress: branch?.address,
           branchPhone: branch?.phone,
@@ -171,7 +171,7 @@ export default function POS() {
         paymentMethod: "pay_later",
         status: "received",
         estimatedPickupDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(), // 3 days from now
-        createdBy: cashierName,
+        createdBy: username,
         branchName: branch?.name,
         branchAddress: branch?.address,
         branchPhone: branch?.phone,
@@ -187,7 +187,7 @@ export default function POS() {
         tax: cartSummary.tax.toString(),
         total: finalTotal.toString(),
         paymentMethod,
-        cashierName,
+        cashierName: username,
         branchName: branch?.name,
         branchAddress: branch?.address,
         branchPhone: branch?.phone,
