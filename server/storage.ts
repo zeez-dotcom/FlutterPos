@@ -16,7 +16,7 @@ import {
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { db } from "./db";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 
 export interface IStorage {
@@ -107,6 +107,16 @@ export interface IStorage {
   // Loyalty history
   getLoyaltyHistory(customerId: string): Promise<LoyaltyHistory[]>;
   createLoyaltyHistory(entry: InsertLoyaltyHistory): Promise<LoyaltyHistory>;
+
+  // Reports
+  getOrderStats(range: string): Promise<{ period: string; count: number; revenue: number }[]>;
+  getTopServices(range: string): Promise<{ service: string; count: number; revenue: number }[]>;
+  getTopProducts(range: string): Promise<{ product: string; count: number; revenue: number }[]>;
+  getSalesSummary(range: string): Promise<{
+    totalOrders: number;
+    totalRevenue: number;
+    stats: { period: string; count: number; revenue: number }[];
+  }>;
 }
 
 export class MemStorage {
@@ -915,6 +925,110 @@ export class DatabaseStorage implements IStorage {
       .values(entry)
       .returning();
     return record;
+  }
+
+  // Report methods
+  async getOrderStats(range: string): Promise<{ period: string; count: number; revenue: number }[]> {
+    const truncMap: Record<string, string> = {
+      daily: "day",
+      weekly: "week",
+      monthly: "month",
+      yearly: "year",
+    };
+    const intervalMap: Record<string, string> = {
+      daily: "1 day",
+      weekly: "7 days",
+      monthly: "1 month",
+      yearly: "1 year",
+    };
+    const trunc = truncMap[range] ?? "day";
+    const interval = intervalMap[range] ?? "1 day";
+
+    const { rows } = await db.execute<any>(sql.raw(`
+      SELECT
+        date_trunc('${trunc}', created_at)::date AS period,
+        COUNT(*)::int AS count,
+        COALESCE(SUM(total::numeric),0)::float AS revenue
+      FROM orders
+      WHERE created_at >= NOW() - INTERVAL '${interval}'
+      GROUP BY period
+      ORDER BY period;
+    `));
+
+    return rows.map((r: any) => ({
+      period: r.period,
+      count: Number(r.count),
+      revenue: Number(r.revenue),
+    }));
+  }
+
+  async getTopServices(range: string): Promise<{ service: string; count: number; revenue: number }[]> {
+    const intervalMap: Record<string, string> = {
+      daily: "1 day",
+      weekly: "7 days",
+      monthly: "1 month",
+      yearly: "1 year",
+    };
+    const interval = intervalMap[range] ?? "1 day";
+
+    const { rows } = await db.execute<any>(sql.raw(`
+      SELECT
+        item->>'service' AS service,
+        SUM((item->>'quantity')::int) AS count,
+        SUM((item->>'total')::numeric)::float AS revenue
+      FROM orders
+      CROSS JOIN LATERAL jsonb_array_elements(items) AS item
+      WHERE created_at >= NOW() - INTERVAL '${interval}'
+      GROUP BY service
+      ORDER BY revenue DESC
+      LIMIT 10;
+    `));
+
+    return rows.map((r: any) => ({
+      service: r.service,
+      count: Number(r.count),
+      revenue: Number(r.revenue),
+    }));
+  }
+
+  async getTopProducts(range: string): Promise<{ product: string; count: number; revenue: number }[]> {
+    const intervalMap: Record<string, string> = {
+      daily: "1 day",
+      weekly: "7 days",
+      monthly: "1 month",
+      yearly: "1 year",
+    };
+    const interval = intervalMap[range] ?? "1 day";
+
+    const { rows } = await db.execute<any>(sql.raw(`
+      SELECT
+        item->>'clothingItem' AS product,
+        SUM((item->>'quantity')::int) AS count,
+        SUM((item->>'total')::numeric)::float AS revenue
+      FROM orders
+      CROSS JOIN LATERAL jsonb_array_elements(items) AS item
+      WHERE created_at >= NOW() - INTERVAL '${interval}'
+      GROUP BY product
+      ORDER BY count DESC
+      LIMIT 10;
+    `));
+
+    return rows.map((r: any) => ({
+      product: r.product,
+      count: Number(r.count),
+      revenue: Number(r.revenue),
+    }));
+  }
+
+  async getSalesSummary(range: string): Promise<{
+    totalOrders: number;
+    totalRevenue: number;
+    stats: { period: string; count: number; revenue: number }[];
+  }> {
+    const stats = await this.getOrderStats(range);
+    const totalOrders = stats.reduce((acc, r) => acc + r.count, 0);
+    const totalRevenue = stats.reduce((acc, r) => acc + r.revenue, 0);
+    return { totalOrders, totalRevenue, stats };
   }
 }
 
