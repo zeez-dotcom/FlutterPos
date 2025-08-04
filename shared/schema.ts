@@ -223,6 +223,9 @@ export const insertUserSchema = createInsertSchema(users).omit({
   updatedAt: true,
 });
 
+// Schema for updating users where all fields are optional
+export const updateUserSchema = insertUserSchema.partial();
+
 export const insertCategorySchema = createInsertSchema(categories).omit({
   id: true,
   createdAt: true,
@@ -235,6 +238,7 @@ export const insertBranchSchema = createInsertSchema(branches).omit({
 
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
+export type UpdateUser = z.infer<typeof updateUserSchema>;
 export type UpsertUser = typeof users.$inferInsert;
 export type ClothingItem = typeof clothingItems.$inferSelect;
 export type InsertClothingItem = z.infer<typeof insertClothingItemSchema>;

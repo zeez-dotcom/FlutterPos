@@ -59,7 +59,7 @@ export function UserManager() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: InsertUser }) => {
+    mutationFn: async ({ id, data }: { id: string; data: Partial<InsertUser> }) => {
       const response = await apiRequest("PUT", `/api/users/${id}`, data);
       return await response.json();
     },
@@ -110,7 +110,19 @@ export function UserManager() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (editingUser) {
-      updateMutation.mutate({ id: editingUser.id, data: formData });
+      const updates: Partial<InsertUser> = {};
+      (Object.keys(formData) as (keyof InsertUser)[]).forEach((key) => {
+        const newValue = formData[key];
+        const oldValue = editingUser[key as keyof UserWithBranch];
+          if (key === "passwordHash") {
+            if (newValue) {
+              updates[key] = newValue as any;
+            }
+          } else if (newValue !== oldValue) {
+            updates[key] = newValue as any;
+          }
+      });
+      updateMutation.mutate({ id: editingUser.id, data: updates });
     } else {
       createMutation.mutate(formData);
     }

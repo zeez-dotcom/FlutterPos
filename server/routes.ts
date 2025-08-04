@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertTransactionSchema, insertClothingItemSchema, insertLaundryServiceSchema, insertUserSchema, insertCategorySchema, insertBranchSchema, insertCustomerSchema, insertOrderSchema, insertPaymentSchema, insertSecuritySettingsSchema } from "@shared/schema";
+import { insertTransactionSchema, insertClothingItemSchema, insertLaundryServiceSchema, insertUserSchema, updateUserSchema, insertCategorySchema, insertBranchSchema, insertCustomerSchema, insertOrderSchema, insertPaymentSchema, insertSecuritySettingsSchema } from "@shared/schema";
 import { setupAuth, requireAuth, requireSuperAdmin, requireAdminOrSuperAdmin } from "./auth";
 import passport from "passport";
 import type { UserWithBranch } from "@shared/schema";
@@ -116,7 +116,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/users/:id", requireSuperAdmin, async (req, res) => {
     try {
       const { id } = req.params;
-      const validatedData = insertUserSchema.parse(req.body);
+      const validatedData = updateUserSchema.parse(req.body);
+      if (validatedData.passwordHash === "") {
+        delete validatedData.passwordHash;
+      }
       const updatedUser = await storage.updateUser(id, validatedData);
       if (!updatedUser) {
         return res.status(404).json({ message: "User not found" });
