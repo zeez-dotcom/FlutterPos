@@ -293,11 +293,11 @@ export function ReceiptModal({ transaction, order, customer, isOpen, onClose }: 
               <div key={index} className="space-y-1">
                 <div className="flex">
                   <div className="flex-1 flex justify-between">
-                    <span className="flex-1">{item.name}</span>
+                    <span className="flex-1">{item.name || item.clothingItem}</span>
                     <span>{formatCurrency(item.total)}</span>
                   </div>
                   <div className="flex-1 flex justify-between text-right" dir="rtl">
-                    <span className="flex-1">{item.name}</span>
+                    <span className="flex-1">{item.name || item.clothingItem}</span>
                     <span>{formatCurrency(item.total)}</span>
                   </div>
                 </div>
