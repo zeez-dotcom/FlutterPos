@@ -575,10 +575,18 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateUser(id: string, userData: Partial<InsertUser>): Promise<UserWithBranch | undefined> {
-    const updateData = { ...userData };
-    if (updateData.passwordHash) {
-      const saltRounds = 10;
-      updateData.passwordHash = await bcrypt.hash(updateData.passwordHash, saltRounds);
+    const updateData = { ...userData } as Partial<InsertUser>;
+
+    if ("passwordHash" in updateData) {
+      if (typeof updateData.passwordHash !== "string") {
+        throw new Error("passwordHash must be a non-empty string");
+      }
+      if (updateData.passwordHash) {
+        const saltRounds = 10;
+        updateData.passwordHash = await bcrypt.hash(updateData.passwordHash, saltRounds);
+      } else {
+        delete updateData.passwordHash;
+      }
     }
 
     const [updated] = await db
