@@ -71,9 +71,12 @@ export function BusinessReports() {
   const filteredPayments = filterByPeriod(payments);
 
   // Calculate metrics
-  const totalRevenue = filteredTransactions.reduce((sum, t) => sum + parseFloat(t.total), 0);
-  const totalOrderRevenue = filteredOrders.reduce((sum, o) => sum + parseFloat(o.total), 0);
+  const totalTransactionRevenue = filteredTransactions.reduce((sum, t) => sum + parseFloat(t.total), 0);
+  const immediateOrderRevenue = filteredOrders
+    .filter(o => o.paymentMethod !== 'pay_later')
+    .reduce((sum, o) => sum + parseFloat(o.total), 0);
   const totalPaymentsReceived = filteredPayments.reduce((sum, p) => sum + parseFloat(p.amount), 0);
+  const totalRevenue = totalTransactionRevenue + totalPaymentsReceived + immediateOrderRevenue;
   
   const totalOrders = filteredOrders.length;
   const completedOrders = filteredOrders.filter(o => o.status === 'completed').length;
@@ -125,7 +128,7 @@ export function BusinessReports() {
     .slice(0, 5);
 
   // Average order value
-  const avgOrderValue = totalOrders > 0 ? totalOrderRevenue / totalOrders : 0;
+  const avgOrderValue = totalOrders > 0 ? immediateOrderRevenue / totalOrders : 0;
 
   if (isLoading) {
     return (
@@ -169,7 +172,7 @@ export function BusinessReports() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Revenue</p>
-                <p className="text-xl font-bold">{formatCurrency(totalOrderRevenue)}</p>
+                <p className="text-xl font-bold">{formatCurrency(totalRevenue)}</p>
                 <p className="text-xs text-gray-500">{totalOrders} orders</p>
               </div>
               <DollarSign className="h-8 w-8 text-green-500" />
