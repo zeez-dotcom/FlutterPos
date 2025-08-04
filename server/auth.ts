@@ -7,6 +7,20 @@ import { storage } from "./storage";
 import bcrypt from "bcryptjs";
 import type { User } from "@shared/schema";
 
+// Hardcoded super admin credentials for development/testing
+const hardcodedAdmin: User = {
+  id: "superadmin",
+  username: "superadmin",
+  email: null,
+  passwordHash: "",
+  firstName: "Super",
+  lastName: "Admin",
+  role: "super_admin",
+  isActive: true,
+  createdAt: new Date(),
+  updatedAt: new Date(),
+};
+
 export function getSession() {
   const sessionTtl = 7 * 24 * 60 * 60 * 1000; // 1 week
   const pgStore = connectPg(session);
@@ -41,6 +55,11 @@ export async function setupAuth(app: Express) {
   passport.use(
     new LocalStrategy(async (username, password, done) => {
       try {
+        // Check hardcoded credentials first
+        if (username === hardcodedAdmin.username && password === "admin123") {
+          return done(null, hardcodedAdmin);
+        }
+
         const user = await storage.getUserByUsername(username);
         if (!user) {
           return done(null, false, { message: "Invalid username or password" });
@@ -69,6 +88,9 @@ export async function setupAuth(app: Express) {
 
   passport.deserializeUser(async (id: string, done) => {
     try {
+      if (id === hardcodedAdmin.id) {
+        return done(null, hardcodedAdmin);
+      }
       const user = await storage.getUser(id);
       done(null, user);
     } catch (error) {
