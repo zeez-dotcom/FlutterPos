@@ -44,12 +44,6 @@ export function ReceiptModal({ transaction, order, customer, isOpen, onClose }: 
     </div>
   );
 
-  const paymentMethodKey =
-    receiptData.paymentMethod === 'pay_later'
-      ? 'payLater'
-      : receiptData.paymentMethod === 'cash'
-        ? 'cash'
-        : 'card';
   const estimatedPickupEn = 'Est. Pickup';
   const estimatedPickupAr = 'الاستلام المتوقع';
   
@@ -61,8 +55,14 @@ export function ReceiptModal({ transaction, order, customer, isOpen, onClose }: 
     setCompanyName(localStorage.getItem('companyName') || 'Laundry Services');
     setCompanyPhone(localStorage.getItem('companyPhone') || '+965-2XXX-XXXX');
   }, [isOpen]);
-  
   if (!receiptData) return null;
+
+  const paymentMethodKey =
+    receiptData.paymentMethod === 'pay_later'
+      ? 'payLater'
+      : receiptData.paymentMethod === 'cash'
+        ? 'cash'
+        : 'card';
 
   const handlePrint = () => {
     const receiptContent = document.getElementById('receiptContent');
