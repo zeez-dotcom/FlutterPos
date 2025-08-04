@@ -713,6 +713,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Reports routes
+  app.get("/api/reports/orders", requireAdminOrSuperAdmin, async (req, res) => {
+    try {
+      const range = (req.query.range as string) || "daily";
+      const summary = await storage.getSalesSummary(range);
+      res.json(summary);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch order reports" });
+    }
+  });
+
+  app.get("/api/reports/top-services", requireAdminOrSuperAdmin, async (req, res) => {
+    try {
+      const range = (req.query.range as string) || "daily";
+      const services = await storage.getTopServices(range);
+      res.json({ services });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch top services" });
+    }
+  });
+
+  app.get("/api/reports/top-products", requireAdminOrSuperAdmin, async (req, res) => {
+    try {
+      const range = (req.query.range as string) || "daily";
+      const products = await storage.getTopProducts(range);
+      res.json({ products });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch top products" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

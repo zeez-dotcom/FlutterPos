@@ -55,6 +55,10 @@ Preferred communication style: Simple, everyday language.
 - **Laundry Services API**: GET /api/laundry-services (with category/search filtering), GET /api/laundry-services/:id
 - **Transactions API**: POST /api/transactions for order processing
 - **Service Management**: No stock tracking needed as laundry services are unlimited capacity
+- **Reports API**:
+  - `GET /api/reports/orders?range=daily|weekly|monthly|yearly` → `{ totalOrders, totalRevenue, stats: [{ period, count, revenue }] }`
+  - `GET /api/reports/top-services?range=daily|weekly|monthly|yearly` → `{ services: [{ service, count, revenue }] }`
+  - `GET /api/reports/top-products?range=daily|weekly|monthly|yearly` → `{ products: [{ product, count, revenue }] }`
 
 ### Cart Management
 - **Local State**: Custom React hook managing laundry cart items (clothing + service combinations)
