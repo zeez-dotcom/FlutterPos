@@ -8,6 +8,7 @@ import { useState, useEffect } from "react";
 import logoImage from "@/assets/logo.png";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { getTaxRate } from "@/lib/tax";
 
 interface ReceiptModalProps {
   transaction?: Transaction | null;
@@ -22,6 +23,7 @@ export function ReceiptModal({ transaction, order, customer, isOpen, onClose }: 
   const { t } = useTranslation();
   const { formatCurrency } = useCurrency();
   const { toast } = useToast();
+  const taxRate = getTaxRate();
   
   // Get dynamic company settings
   const [companyName, setCompanyName] = useState('');
@@ -239,10 +241,12 @@ export function ReceiptModal({ transaction, order, customer, isOpen, onClose }: 
               <span>{t.subtotal}:</span>
               <span>{formatCurrency(receiptData.subtotal)}</span>
             </div>
-            <div className="flex justify-between">
-              <span>{t.tax}:</span>
-              <span>{formatCurrency(receiptData.tax)}</span>
-            </div>
+            {taxRate > 0 && (
+              <div className="flex justify-between">
+                <span>{t.tax}:</span>
+                <span>{formatCurrency(receiptData.tax)}</span>
+              </div>
+            )}
             <div className="flex justify-between font-bold border-t pt-1">
               <span>{t.total}:</span>
               <span>{formatCurrency(receiptData.total)}</span>

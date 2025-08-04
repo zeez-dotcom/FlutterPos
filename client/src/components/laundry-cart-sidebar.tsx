@@ -14,6 +14,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useCurrency } from "@/lib/currency";
+import { getTaxRate } from "@/lib/tax";
 
 interface LaundryCartSidebarProps {
   cartSummary: LaundryCartSummary;
@@ -46,6 +47,7 @@ export function LaundryCartSidebar({
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { formatCurrency } = useCurrency();
+  const taxRate = getTaxRate();
 
   const [isCustomerDialogOpen, setIsCustomerDialogOpen] = useState(false);
   const [customerSearch, setCustomerSearch] = useState("");
@@ -331,10 +333,12 @@ export function LaundryCartSidebar({
               <span className="text-gray-600">Subtotal:</span>
               <span className="font-medium">{formatCurrency(cartSummary.subtotal)}</span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600">Tax (8.5%):</span>
-              <span className="font-medium">{formatCurrency(cartSummary.tax)}</span>
-            </div>
+            {taxRate > 0 && (
+              <div className="flex justify-between">
+                <span className="text-gray-600">Tax ({(taxRate * 100).toString()}%):</span>
+                <span className="font-medium">{formatCurrency(cartSummary.tax)}</span>
+              </div>
+            )}
             {selectedCustomer && maxRedeemable > 0 && (
               <div className="flex items-center justify-between">
                 <span className="text-gray-600">
