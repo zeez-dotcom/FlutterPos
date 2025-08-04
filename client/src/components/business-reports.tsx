@@ -95,13 +95,13 @@ export function BusinessReports() {
     items.forEach((item: any) => {
       // Try multiple ways to get service name
       let serviceName = 'Unknown Service';
-      
-      if (item.service?.name) {
+
+      if (typeof item.service === 'string') {
+        serviceName = item.service;
+      } else if (item.service?.name) {
         serviceName = item.service.name;
       } else if (item.serviceName) {
         serviceName = item.serviceName;
-      } else if (item.service) {
-        serviceName = typeof item.service === 'string' ? item.service : 'Unknown Service';
       } else if (item.serviceId && laundryServices.length > 0) {
         // Look up service by ID
         const service = laundryServices.find(s => s.id === item.serviceId);

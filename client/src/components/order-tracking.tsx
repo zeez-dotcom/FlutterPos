@@ -82,8 +82,12 @@ export function OrderTracking() {
 
   const getItemsSummary = (items: any[]) => {
     return items.map(item => {
-      const clothingName = item.clothingItem?.name || 'Item';
-      const serviceName = item.service?.name || 'Service';
+      const clothingName = typeof item.clothingItem === 'string'
+        ? item.clothingItem
+        : item.clothingItem?.name || 'Item';
+      const serviceName = typeof item.service === 'string'
+        ? item.service
+        : item.service?.name || 'Service';
       return `${item.quantity}x ${clothingName} (${serviceName})`;
     }).join(", ");
   };
@@ -181,8 +185,8 @@ export function OrderTracking() {
                     <div className="space-y-1">
                       {items.slice(0, 3).map((item, index) => (
                         <div key={index} className="text-sm flex justify-between">
-                          <span>{item.quantity}x {item.clothingItem?.name || 'Item'}</span>
-                          <span className="text-gray-500">({item.service?.name || 'Service'})</span>
+                          <span>{item.quantity}x {typeof item.clothingItem === 'string' ? item.clothingItem : item.clothingItem?.name || 'Item'}</span>
+                          <span className="text-gray-500">({typeof item.service === 'string' ? item.service : item.service?.name || 'Service'})</span>
                         </div>
                       ))}
                       {items.length > 3 && (
