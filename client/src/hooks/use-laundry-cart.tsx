@@ -1,7 +1,6 @@
 import { useState, useCallback } from "react";
 import { LaundryCartItem, LaundryCartSummary, ClothingItem, LaundryService } from "@shared/schema";
-
-const TAX_RATE = 0.085; // 8.5%
+import { getTaxRate } from "@/lib/tax";
 
 export function useLaundryCart() {
   const [cartItems, setCartItems] = useState<LaundryCartItem[]>([]);
@@ -61,7 +60,8 @@ export function useLaundryCart() {
 
   const getCartSummary = useCallback((): LaundryCartSummary => {
     const subtotal = cartItems.reduce((sum, item) => sum + item.total, 0);
-    const tax = subtotal * TAX_RATE;
+    const taxRate = getTaxRate();
+    const tax = subtotal * taxRate;
     const total = subtotal + tax;
     const itemCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
 

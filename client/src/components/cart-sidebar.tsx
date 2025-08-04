@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { CartSummary } from "@shared/schema";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { getTaxRate } from "@/lib/tax";
 
 interface CartSidebarProps {
   cartSummary: CartSummary;
@@ -28,6 +29,7 @@ export function CartSidebar({
   onClose
 }: CartSidebarProps) {
   const isMobile = useIsMobile();
+  const taxRate = getTaxRate();
 
   return (
     <div className={`
@@ -118,10 +120,12 @@ export function CartSidebar({
               <span className="text-gray-600">Subtotal:</span>
               <span className="font-medium">${cartSummary.subtotal.toFixed(2)}</span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600">Tax (8.5%):</span>
-              <span className="font-medium">${cartSummary.tax.toFixed(2)}</span>
-            </div>
+            {taxRate > 0 && (
+              <div className="flex justify-between">
+                <span className="text-gray-600">Tax ({(taxRate * 100).toString()}%):</span>
+                <span className="font-medium">${cartSummary.tax.toFixed(2)}</span>
+              </div>
+            )}
             <div className="flex justify-between text-lg font-bold border-t border-gray-200 pt-3">
               <span>Total:</span>
               <span>${cartSummary.total.toFixed(2)}</span>
