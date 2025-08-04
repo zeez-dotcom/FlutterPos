@@ -46,7 +46,7 @@ export function SettingsPanel() {
 
   const { toast } = useToast();
   const { isAdmin, isSuperAdmin } = useAuth();
-  const showSecurity = isAdmin || isSuperAdmin;
+  const hasAdminAccess = isAdmin || isSuperAdmin;
 
   const handleSettingChange = (key: string, value: string | boolean | number) => {
     setSettings(prev => ({
@@ -111,130 +111,160 @@ export function SettingsPanel() {
           </div>
         </div>
 
-        <Tabs defaultValue="business" className="space-y-6">
-          <TabsList className={cn("grid w-full", showSecurity ? "grid-cols-7" : "grid-cols-6")}>
+        <Tabs
+          defaultValue={hasAdminAccess ? "business" : "profile"}
+          className="space-y-6"
+        >
+          <TabsList
+            className={cn(
+              "grid w-full",
+              hasAdminAccess ? "grid-cols-7" : "grid-cols-3"
+            )}
+          >
             <TabsTrigger value="profile">Profile</TabsTrigger>
-            <TabsTrigger value="business">Business</TabsTrigger>
-            <TabsTrigger value="receipts">Receipts</TabsTrigger>
+            {hasAdminAccess && <TabsTrigger value="business">Business</TabsTrigger>}
+            {hasAdminAccess && <TabsTrigger value="receipts">Receipts</TabsTrigger>}
             <TabsTrigger value="system">System</TabsTrigger>
-            <TabsTrigger value="pricing">Pricing</TabsTrigger>
+            {hasAdminAccess && <TabsTrigger value="pricing">Pricing</TabsTrigger>}
             <TabsTrigger value="appearance">Appearance</TabsTrigger>
-            {showSecurity && <TabsTrigger value="security">Security</TabsTrigger>}
+            {hasAdminAccess && <TabsTrigger value="security">Security</TabsTrigger>}
           </TabsList>
 
           <TabsContent value="profile" className="space-y-6">
             <ProfileSettings />
           </TabsContent>
 
-          <TabsContent value="business" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <User className="h-5 w-5" />
-                  <span>Business Information</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="businessName">Business Name</Label>
-                    <Input
-                      id="businessName"
-                      value={settings.businessName}
-                      onChange={(e) => handleSettingChange('businessName', e.target.value)}
-                    />
+          {hasAdminAccess && (
+            <TabsContent value="business" className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center space-x-2">
+                    <User className="h-5 w-5" />
+                    <span>Business Information</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="businessName">Business Name</Label>
+                      <Input
+                        id="businessName"
+                        value={settings.businessName}
+                        onChange={(e) =>
+                          handleSettingChange('businessName', e.target.value)
+                        }
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="phone">Phone Number</Label>
+                      <Input
+                        id="phone"
+                        value={settings.phone}
+                        onChange={(e) =>
+                          handleSettingChange('phone', e.target.value)
+                        }
+                      />
+                    </div>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="phone">Phone Number</Label>
-                    <Input
-                      id="phone"
-                      value={settings.phone}
-                      onChange={(e) => handleSettingChange('phone', e.target.value)}
-                    />
-                  </div>
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="address">Business Address</Label>
-                  <Input
-                    id="address"
-                    value={settings.address}
-                    onChange={(e) => handleSettingChange('address', e.target.value)}
-                  />
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email Address</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      value={settings.email}
-                      onChange={(e) => handleSettingChange('email', e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="currency">Currency</Label>
-                    <Select 
-                      value={settings.currency} 
-                      onValueChange={(value) => handleSettingChange('currency', value)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="USD">US Dollar ($)</SelectItem>
-                        <SelectItem value="EUR">Euro (€)</SelectItem>
-                        <SelectItem value="GBP">British Pound (£)</SelectItem>
-                        <SelectItem value="CAD">Canadian Dollar (CAD)</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
 
-          <TabsContent value="receipts" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <Receipt className="h-5 w-5" />
-                  <span>Receipt Configuration</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="receiptHeader">Receipt Header Message</Label>
-                  <Input
-                    id="receiptHeader"
-                    value={settings.receiptHeader}
-                    onChange={(e) => handleSettingChange('receiptHeader', e.target.value)}
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="receiptFooter">Receipt Footer Message</Label>
-                  <Input
-                    id="receiptFooter"
-                    value={settings.receiptFooter}
-                    onChange={(e) => handleSettingChange('receiptFooter', e.target.value)}
-                  />
-                </div>
-                
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label>Print Business Logo</Label>
-                    <div className="text-sm text-gray-600">Include logo on printed receipts</div>
+                  <div className="space-y-2">
+                    <Label htmlFor="address">Business Address</Label>
+                    <Input
+                      id="address"
+                      value={settings.address}
+                      onChange={(e) =>
+                        handleSettingChange('address', e.target.value)
+                      }
+                    />
                   </div>
-                  <Switch
-                    checked={settings.printLogo}
-                    onCheckedChange={(checked) => handleSettingChange('printLogo', checked)}
-                  />
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="email">Email Address</Label>
+                      <Input
+                        id="email"
+                        type="email"
+                        value={settings.email}
+                        onChange={(e) =>
+                          handleSettingChange('email', e.target.value)
+                        }
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="currency">Currency</Label>
+                      <Select
+                        value={settings.currency}
+                        onValueChange={(value) =>
+                          handleSettingChange('currency', value)
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="USD">US Dollar ($)</SelectItem>
+                          <SelectItem value="EUR">Euro (€)</SelectItem>
+                          <SelectItem value="GBP">British Pound (£)</SelectItem>
+                          <SelectItem value="CAD">Canadian Dollar (CAD)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          )}
+
+          {hasAdminAccess && (
+            <TabsContent value="receipts" className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center space-x-2">
+                    <Receipt className="h-5 w-5" />
+                    <span>Receipt Configuration</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="receiptHeader">Receipt Header Message</Label>
+                    <Input
+                      id="receiptHeader"
+                      value={settings.receiptHeader}
+                      onChange={(e) =>
+                        handleSettingChange('receiptHeader', e.target.value)
+                      }
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="receiptFooter">Receipt Footer Message</Label>
+                    <Input
+                      id="receiptFooter"
+                      value={settings.receiptFooter}
+                      onChange={(e) =>
+                        handleSettingChange('receiptFooter', e.target.value)
+                      }
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label>Print Business Logo</Label>
+                      <div className="text-sm text-gray-600">
+                        Include logo on printed receipts
+                      </div>
+                    </div>
+                    <Switch
+                      checked={settings.printLogo}
+                      onCheckedChange={(checked) =>
+                        handleSettingChange('printLogo', checked)
+                      }
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          )}
 
           <TabsContent value="system" className="space-y-6">
             <Card>
@@ -295,58 +325,66 @@ export function SettingsPanel() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="pricing" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <DollarSign className="h-5 w-5" />
-                  <span>Pricing & Tax Settings</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="taxRate">Tax Rate (%)</Label>
-                    <Input
-                      id="taxRate"
-                      type="number"
-                      step="0.1"
-                      value={settings.taxRate}
-                      onChange={(e) => handleSettingChange('taxRate', e.target.value)}
-                    />
+          {hasAdminAccess && (
+            <TabsContent value="pricing" className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center space-x-2">
+                    <DollarSign className="h-5 w-5" />
+                    <span>Pricing & Tax Settings</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="taxRate">Tax Rate (%)</Label>
+                      <Input
+                        id="taxRate"
+                        type="number"
+                        step="0.1"
+                        value={settings.taxRate}
+                        onChange={(e) =>
+                          handleSettingChange('taxRate', e.target.value)
+                        }
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="minimumOrder">Minimum Order Amount</Label>
+                      <Input
+                        id="minimumOrder"
+                        type="number"
+                        step="0.01"
+                        value={settings.minimumOrder}
+                        onChange={(e) =>
+                          handleSettingChange('minimumOrder', e.target.value)
+                        }
+                      />
+                    </div>
                   </div>
-                  
+
                   <div className="space-y-2">
-                    <Label htmlFor="minimumOrder">Minimum Order Amount</Label>
-                    <Input
-                      id="minimumOrder"
-                      type="number"
-                      step="0.01"
-                      value={settings.minimumOrder}
-                      onChange={(e) => handleSettingChange('minimumOrder', e.target.value)}
-                    />
+                    <Label>Price Rounding Method</Label>
+                    <Select
+                      value={settings.roundingMethod}
+                      onValueChange={(value) =>
+                        handleSettingChange('roundingMethod', value)
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="nearest">Round to Nearest Cent</SelectItem>
+                        <SelectItem value="up">Always Round Up</SelectItem>
+                        <SelectItem value="down">Always Round Down</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
-                </div>
-                
-                <div className="space-y-2">
-                  <Label>Price Rounding Method</Label>
-                  <Select 
-                    value={settings.roundingMethod} 
-                    onValueChange={(value) => handleSettingChange('roundingMethod', value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="nearest">Round to Nearest Cent</SelectItem>
-                      <SelectItem value="up">Always Round Up</SelectItem>
-                      <SelectItem value="down">Always Round Down</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          )}
 
           <TabsContent value="appearance" className="space-y-6">
             <Card>
@@ -407,7 +445,7 @@ export function SettingsPanel() {
               </CardContent>
             </Card>
           </TabsContent>
-          {showSecurity && (
+          {hasAdminAccess && (
             <TabsContent value="security" className="space-y-6">
               <SecuritySettings />
             </TabsContent>
