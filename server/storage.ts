@@ -19,6 +19,12 @@ import { db } from "./db";
 import { eq, sql, and } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 
+const PAY_LATER_AGGREGATE = `
+  SELECT order_id, SUM(amount::numeric) AS amount
+  FROM payments
+  GROUP BY order_id
+`;
+
 export interface IStorage {
   // User operations
   getUser(id: string): Promise<UserWithBranch | undefined>;
@@ -1000,14 +1006,31 @@ export class DatabaseStorage implements IStorage {
     const trunc = truncMap[range] ?? "day";
     const interval = intervalMap[range] ?? "1 day";
 
-    const branchFilter = branchId ? `AND branch_id = '${branchId}'` : "";
+    const branchFilter = branchId ? `AND o.branch_id = '${branchId}'` : "";
     const { rows } = await db.execute<any>(sql.raw(`
-      SELECT
-        date_trunc('${trunc}', created_at)::date AS period,
-        COUNT(*)::int AS count,
-        COALESCE(SUM(total::numeric),0)::float AS revenue
-      FROM orders
-      WHERE created_at >= NOW() - INTERVAL '${interval}' ${branchFilter}
+      SELECT period,
+             SUM(count)::int AS count,
+             SUM(revenue)::float AS revenue
+      FROM (
+        SELECT
+          date_trunc('${trunc}', o.created_at)::date AS period,
+          1 AS count,
+          o.total::numeric AS revenue
+        FROM orders o
+        WHERE o.created_at >= NOW() - INTERVAL '${interval}' ${branchFilter}
+          AND o.payment_method <> 'pay_later'
+
+        UNION ALL
+
+        SELECT
+          date_trunc('${trunc}', o.created_at)::date AS period,
+          1 AS count,
+          p.amount AS revenue
+        FROM orders o
+        JOIN (${PAY_LATER_AGGREGATE}) p ON p.order_id = o.id
+        WHERE o.created_at >= NOW() - INTERVAL '${interval}' ${branchFilter}
+          AND o.payment_method = 'pay_later'
+      ) s
       GROUP BY period
       ORDER BY period;
     `));
@@ -1028,15 +1051,33 @@ export class DatabaseStorage implements IStorage {
     };
     const interval = intervalMap[range] ?? "1 day";
 
-    const branchFilter = branchId ? `AND branch_id = '${branchId}'` : "";
+    const branchFilter = branchId ? `AND o.branch_id = '${branchId}'` : "";
     const { rows } = await db.execute<any>(sql.raw(`
-      SELECT
-        item->>'service' AS service,
-        SUM((item->>'quantity')::int) AS count,
-        SUM((item->>'total')::numeric)::float AS revenue
-      FROM orders
-      CROSS JOIN LATERAL jsonb_array_elements(items) AS item
-      WHERE created_at >= NOW() - INTERVAL '${interval}' ${branchFilter}
+      SELECT service,
+             SUM(count)::int AS count,
+             SUM(revenue)::float AS revenue
+      FROM (
+        SELECT
+          item->>'service' AS service,
+          (item->>'quantity')::int AS count,
+          (item->>'total')::numeric AS revenue
+        FROM orders o
+        CROSS JOIN LATERAL jsonb_array_elements(o.items) AS item
+        WHERE o.created_at >= NOW() - INTERVAL '${interval}' ${branchFilter}
+          AND o.payment_method <> 'pay_later'
+
+        UNION ALL
+
+        SELECT
+          item->>'service' AS service,
+          (item->>'quantity')::int AS count,
+          (item->>'total')::numeric AS revenue
+        FROM orders o
+        JOIN (${PAY_LATER_AGGREGATE}) p ON p.order_id = o.id
+        CROSS JOIN LATERAL jsonb_array_elements(o.items) AS item
+        WHERE o.created_at >= NOW() - INTERVAL '${interval}' ${branchFilter}
+          AND o.payment_method = 'pay_later'
+      ) s
       GROUP BY service
       ORDER BY revenue DESC
       LIMIT 10;
@@ -1058,15 +1099,33 @@ export class DatabaseStorage implements IStorage {
     };
     const interval = intervalMap[range] ?? "1 day";
 
-    const branchFilter = branchId ? `AND branch_id = '${branchId}'` : "";
+    const branchFilter = branchId ? `AND o.branch_id = '${branchId}'` : "";
     const { rows } = await db.execute<any>(sql.raw(`
-      SELECT
-        item->>'clothingItem' AS product,
-        SUM((item->>'quantity')::int) AS count,
-        SUM((item->>'total')::numeric)::float AS revenue
-      FROM orders
-      CROSS JOIN LATERAL jsonb_array_elements(items) AS item
-      WHERE created_at >= NOW() - INTERVAL '${interval}' ${branchFilter}
+      SELECT product,
+             SUM(count)::int AS count,
+             SUM(revenue)::float AS revenue
+      FROM (
+        SELECT
+          item->>'clothingItem' AS product,
+          (item->>'quantity')::int AS count,
+          (item->>'total')::numeric AS revenue
+        FROM orders o
+        CROSS JOIN LATERAL jsonb_array_elements(o.items) AS item
+        WHERE o.created_at >= NOW() - INTERVAL '${interval}' ${branchFilter}
+          AND o.payment_method <> 'pay_later'
+
+        UNION ALL
+
+        SELECT
+          item->>'clothingItem' AS product,
+          (item->>'quantity')::int AS count,
+          (item->>'total')::numeric AS revenue
+        FROM orders o
+        JOIN (${PAY_LATER_AGGREGATE}) p ON p.order_id = o.id
+        CROSS JOIN LATERAL jsonb_array_elements(o.items) AS item
+        WHERE o.created_at >= NOW() - INTERVAL '${interval}' ${branchFilter}
+          AND o.payment_method = 'pay_later'
+      ) s
       GROUP BY product
       ORDER BY count DESC
       LIMIT 10;
