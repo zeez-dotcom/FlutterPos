@@ -7,6 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { ClothingItem, LaundryService } from "@shared/schema";
 import { useCurrency } from "@/lib/currency";
+import { useTranslation } from "@/lib/i18n";
 
 interface ServiceSelectionModalProps {
   isOpen: boolean;
@@ -32,6 +33,7 @@ export function ServiceSelectionModal({
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [quantities, setQuantities] = useState<Record<string, number>>({});
   const { formatCurrency } = useCurrency();
+  const { language } = useTranslation();
 
   const { data: services = [] } = useQuery({
     queryKey: ["/api/laundry-services", selectedCategory],
@@ -79,7 +81,7 @@ export function ServiceSelectionModal({
         <DialogHeader>
           <DialogTitle className="flex items-center space-x-2">
             <span>Select Service for</span>
-            <span className="text-pos-primary">{clothingItem?.name}</span>
+            <span className="text-pos-primary">{language === 'ar' && clothingItem?.nameAr ? clothingItem.nameAr : clothingItem?.name}</span>
           </DialogTitle>
         </DialogHeader>
 
@@ -109,7 +111,7 @@ export function ServiceSelectionModal({
               <CardContent className="p-4">
                 <div className="flex justify-between items-start mb-3">
                   <div className="flex-1">
-                    <h3 className="font-medium text-gray-900 mb-1">{service.name}</h3>
+                    <h3 className="font-medium text-gray-900 mb-1">{language === 'ar' && service.nameAr ? service.nameAr : service.name}</h3>
                     {service.description && (
                       <p className="text-sm text-gray-600 mb-2">{service.description}</p>
                     )}

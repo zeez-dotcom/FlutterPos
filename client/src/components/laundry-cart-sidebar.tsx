@@ -14,6 +14,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useCurrency } from "@/lib/currency";
+import { useTranslation } from "@/lib/i18n";
 import { getTaxRate } from "@/lib/tax";
 
 interface LaundryCartSidebarProps {
@@ -48,6 +49,7 @@ export function LaundryCartSidebar({
   const queryClient = useQueryClient();
   const { formatCurrency } = useCurrency();
   const taxRate = getTaxRate();
+  const { language } = useTranslation();
 
   const [isCustomerDialogOpen, setIsCustomerDialogOpen] = useState(false);
   const [customerSearch, setCustomerSearch] = useState("");
@@ -264,16 +266,16 @@ export function LaundryCartSidebar({
                     {item.clothingItem.imageUrl && (
                       <img
                         src={item.clothingItem.imageUrl}
-                        alt={item.clothingItem.name}
+                        alt={language === 'ar' && item.clothingItem.nameAr ? item.clothingItem.nameAr : item.clothingItem.name}
                         className="w-12 h-12 rounded object-cover flex-shrink-0"
                       />
                     )}
                     <div className="flex-1 min-w-0">
                       <h4 className="font-medium text-gray-900 truncate">
-                        {item.clothingItem.name}
+                        {language === 'ar' && item.clothingItem.nameAr ? item.clothingItem.nameAr : item.clothingItem.name}
                       </h4>
                       <p className="text-sm text-blue-600 font-medium">
-                        {item.service.name}
+                        {language === 'ar' && item.service.nameAr ? item.service.nameAr : item.service.name}
                       </p>
                       <p className="text-xs text-gray-500">
                         {formatCurrency(item.service.price)} each

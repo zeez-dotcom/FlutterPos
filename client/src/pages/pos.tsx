@@ -37,7 +37,7 @@ export default function POS() {
   const isMobile = useIsMobile();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const { formatCurrency } = useCurrency();
   
   const {
@@ -107,7 +107,7 @@ export default function POS() {
     addToCart(clothingItem, service, quantity);
     toast({
       title: "Added to cart",
-      description: `${quantity}x ${clothingItem.name} with ${service.name} service`,
+      description: `${quantity}x ${language === 'ar' && clothingItem.nameAr ? clothingItem.nameAr : clothingItem.name} with ${language === 'ar' && service.nameAr ? service.nameAr : service.name} service`,
     });
   };
 

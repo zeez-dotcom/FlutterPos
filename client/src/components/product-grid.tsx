@@ -5,10 +5,12 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useTranslation } from "@/lib/i18n";
 
 interface Product {
   id: string;
   name: string;
+  nameAr?: string;
   description?: string;
   category?: string;
   price: string;
@@ -35,6 +37,7 @@ export function ProductGrid({ onAddToCart, cartItemCount, onToggleCart }: Produc
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const isMobile = useIsMobile();
+  const { language } = useTranslation();
 
   const { data: products = [], isLoading } = useQuery<Product[]>({
     queryKey: ["/api/products", selectedCategory, searchQuery],
@@ -117,12 +120,12 @@ export function ProductGrid({ onAddToCart, cartItemCount, onToggleCart }: Produc
                 {product.imageUrl && (
                   <img
                     src={product.imageUrl}
-                    alt={product.name}
+                    alt={language === 'ar' && product.nameAr ? product.nameAr : product.name}
                     className="w-full h-32 object-cover rounded-t-lg"
                   />
                 )}
                 <CardContent className="p-3">
-                  <h3 className="font-medium text-gray-900 mb-1">{product.name}</h3>
+                  <h3 className="font-medium text-gray-900 mb-1">{language === 'ar' && product.nameAr ? product.nameAr : product.name}</h3>
                   {product.description && (
                     <p className="text-sm text-gray-600 mb-2">{product.description}</p>
                   )}

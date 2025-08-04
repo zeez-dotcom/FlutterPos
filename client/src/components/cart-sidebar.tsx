@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { CartSummary } from "@shared/schema";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { getTaxRate } from "@/lib/tax";
+import { useTranslation } from "@/lib/i18n";
 
 interface CartSidebarProps {
   cartSummary: CartSummary;
@@ -30,6 +31,7 @@ export function CartSidebar({
 }: CartSidebarProps) {
   const isMobile = useIsMobile();
   const taxRate = getTaxRate();
+  const { language } = useTranslation();
 
   return (
     <div className={`
@@ -63,12 +65,12 @@ export function CartSidebar({
                   {item.imageUrl && (
                     <img
                       src={item.imageUrl}
-                      alt={item.name}
+                      alt={language === 'ar' && item.nameAr ? item.nameAr : item.name}
                       className="w-12 h-12 rounded object-cover"
                     />
                   )}
                   <div className="flex-1">
-                    <h4 className="font-medium text-gray-900">{item.name}</h4>
+                    <h4 className="font-medium text-gray-900">{language === 'ar' && item.nameAr ? item.nameAr : item.name}</h4>
                     <div className="flex items-center space-x-2 mt-1">
                       <Button
                         variant="secondary"

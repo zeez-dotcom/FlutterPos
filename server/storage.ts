@@ -310,6 +310,7 @@ export class MemStorage {
     const newProduct: Product = {
       id,
       name: product.name,
+      nameAr: product.nameAr || null,
       description: product.description || null,
       category: product.category || null,
       price: product.price,
@@ -327,6 +328,7 @@ export class MemStorage {
     const updated: Product = {
       ...existing,
       name: product.name ?? existing.name,
+      nameAr: product.nameAr ?? existing.nameAr,
       description: product.description ?? existing.description,
       category: product.category ?? existing.category,
       price: product.price ?? existing.price,
@@ -355,9 +357,10 @@ export class MemStorage {
 
   async createClothingItem(item: InsertClothingItem): Promise<ClothingItem> {
     const id = randomUUID();
-    const newItem: ClothingItem = { 
-      id, 
+    const newItem: ClothingItem = {
+      id,
       name: item.name,
+      nameAr: item.nameAr || null,
       description: item.description || null,
       category: item.category,
       imageUrl: item.imageUrl || null
@@ -369,10 +372,11 @@ export class MemStorage {
   async updateClothingItem(id: string, item: Partial<InsertClothingItem>): Promise<ClothingItem | undefined> {
     const existing = this.clothingItems.get(id);
     if (!existing) return undefined;
-    
-    const updated: ClothingItem = { 
-      ...existing, 
+
+    const updated: ClothingItem = {
+      ...existing,
       name: item.name ?? existing.name,
+      nameAr: item.nameAr ?? existing.nameAr,
       description: item.description ?? existing.description,
       category: item.category ?? existing.category,
       imageUrl: item.imageUrl ?? existing.imageUrl
@@ -399,9 +403,10 @@ export class MemStorage {
 
   async createLaundryService(service: InsertLaundryService): Promise<LaundryService> {
     const id = randomUUID();
-    const newService: LaundryService = { 
-      id, 
+    const newService: LaundryService = {
+      id,
       name: service.name,
+      nameAr: service.nameAr || null,
       description: service.description || null,
       price: service.price,
       category: service.category
@@ -413,10 +418,11 @@ export class MemStorage {
   async updateLaundryService(id: string, service: Partial<InsertLaundryService>): Promise<LaundryService | undefined> {
     const existing = this.laundryServices.get(id);
     if (!existing) return undefined;
-    
-    const updated: LaundryService = { 
-      ...existing, 
+
+    const updated: LaundryService = {
+      ...existing,
       name: service.name ?? existing.name,
+      nameAr: service.nameAr ?? existing.nameAr,
       description: service.description ?? existing.description,
       price: service.price ?? existing.price,
       category: service.category ?? existing.category

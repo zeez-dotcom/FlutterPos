@@ -14,6 +14,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { ClothingItem, LaundryService, insertClothingItemSchema, insertLaundryServiceSchema } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "@/lib/i18n";
 
 export function InventoryManagement() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -21,9 +22,10 @@ export function InventoryManagement() {
   const [isServiceModalOpen, setIsServiceModalOpen] = useState(false);
   const [editingClothing, setEditingClothing] = useState<ClothingItem | null>(null);
   const [editingService, setEditingService] = useState<LaundryService | null>(null);
-  
+
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { language } = useTranslation();
 
   // Fetch clothing items
   const { data: clothingItems = [] } = useQuery({
@@ -48,6 +50,7 @@ export function InventoryManagement() {
     resolver: zodResolver(insertClothingItemSchema),
     defaultValues: {
       name: "",
+      nameAr: "",
       description: "",
       category: "",
       imageUrl: ""
@@ -58,6 +61,7 @@ export function InventoryManagement() {
     resolver: zodResolver(insertLaundryServiceSchema),
     defaultValues: {
       name: "",
+      nameAr: "",
       description: "",
       price: "",
       category: ""
@@ -140,6 +144,7 @@ export function InventoryManagement() {
     setEditingClothing(item);
     clothingForm.reset({
       name: item.name,
+      nameAr: item.nameAr || "",
       description: item.description || "",
       category: item.category,
       imageUrl: item.imageUrl || ""
@@ -151,6 +156,7 @@ export function InventoryManagement() {
     setEditingService(service);
     serviceForm.reset({
       name: service.name,
+      nameAr: service.nameAr || "",
       description: service.description || "",
       price: service.price,
       category: service.category
@@ -161,11 +167,13 @@ export function InventoryManagement() {
   // Filter items based on search
   const filteredClothing = clothingItems.filter(item =>
     item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    item.nameAr?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     item.category.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const filteredServices = services.filter(service =>
     service.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    service.nameAr?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     service.category.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
@@ -221,6 +229,18 @@ export function InventoryManagement() {
                             <FormLabel>Name</FormLabel>
                             <FormControl>
                               <Input placeholder="e.g., Pants, Shirt" {...field} />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={clothingForm.control}
+                        name="nameAr"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Arabic Name</FormLabel>
+                            <FormControl>
+                              <Input placeholder="الاسم بالعربي" {...field} />
                             </FormControl>
                           </FormItem>
                         )}
@@ -288,7 +308,7 @@ export function InventoryManagement() {
                   <CardContent className="p-4">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
-                        <h3 className="font-semibold text-gray-900 mb-1">{item.name}</h3>
+                        <h3 className="font-semibold text-gray-900 mb-1">{language === 'ar' && item.nameAr ? item.nameAr : item.name}</h3>
                         <p className="text-sm text-gray-600 mb-2">{item.description}</p>
                         <span className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded capitalize">
                           {item.category}
@@ -336,6 +356,18 @@ export function InventoryManagement() {
                             <FormLabel>Service Name</FormLabel>
                             <FormControl>
                               <Input placeholder="e.g., Wash & Fold" {...field} />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={serviceForm.control}
+                        name="nameAr"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Arabic Name</FormLabel>
+                            <FormControl>
+                              <Input placeholder="اسم الخدمة بالعربي" {...field} />
                             </FormControl>
                           </FormItem>
                         )}
@@ -401,7 +433,7 @@ export function InventoryManagement() {
                   <CardContent className="p-4">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
-                        <h3 className="font-semibold text-gray-900 mb-1">{service.name}</h3>
+                        <h3 className="font-semibold text-gray-900 mb-1">{language === 'ar' && service.nameAr ? service.nameAr : service.name}</h3>
                         <p className="text-sm text-gray-600 mb-2">{service.description}</p>
                         <div className="flex items-center justify-between">
                           <span className="text-lg font-bold text-pos-primary">
