@@ -17,6 +17,7 @@ const hardcodedAdmin: User = {
   lastName: "Admin",
   role: "super_admin",
   isActive: true,
+  branchId: null,
   createdAt: new Date(),
   updatedAt: new Date(),
 };
