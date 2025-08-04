@@ -157,6 +157,17 @@ export interface Translations {
   name: string;
   newPassword: string;
   profileUpdated: string;
+  // Auth
+  loginTitle: string;
+  loginDescription: string;
+  usernameLabel: string;
+  passwordLabel: string;
+  loginButton: string;
+  signingIn: string;
+  loginSuccess: string;
+  welcome: string;
+  loginFailed: string;
+  missingCredentials: string;
 }
 
 const translations: Record<Language, Translations> = {
@@ -314,6 +325,17 @@ const translations: Record<Language, Translations> = {
     name: "Name",
     newPassword: "New Password",
     profileUpdated: "Profile updated",
+    // Auth
+    loginTitle: "Laundry Management",
+    loginDescription: "Sign in to access the system",
+    usernameLabel: "Username",
+    passwordLabel: "Password",
+    loginButton: "Sign In",
+    signingIn: "Signing in...",
+    loginSuccess: "Login Successful",
+    welcome: "Welcome to the Laundry Management System",
+    loginFailed: "Login Failed",
+    missingCredentials: "Please enter both username and password",
   },
   ar: {
     // Common
@@ -469,6 +491,17 @@ const translations: Record<Language, Translations> = {
     name: "الاسم",
     newPassword: "كلمة مرور جديدة",
     profileUpdated: "تم تحديث الملف الشخصي",
+    // Auth
+    loginTitle: "إدارة الغسيل",
+    loginDescription: "سجّل الدخول للوصول إلى النظام",
+    usernameLabel: "اسم المستخدم",
+    passwordLabel: "كلمة المرور",
+    loginButton: "تسجيل الدخول",
+    signingIn: "جاري تسجيل الدخول...",
+    loginSuccess: "تم تسجيل الدخول بنجاح",
+    welcome: "مرحباً بك في نظام إدارة الغسيل",
+    loginFailed: "فشل تسجيل الدخول",
+    missingCredentials: "يرجى إدخال اسم المستخدم وكلمة المرور",
   },
   ur: {
     // Common
@@ -624,6 +657,17 @@ const translations: Record<Language, Translations> = {
     name: "نام",
     newPassword: "نیا پاس ورڈ",
     profileUpdated: "پروفائل اپ ڈیٹ ہو گیا",
+    // Auth
+    loginTitle: "لانڈری مینجمنٹ",
+    loginDescription: "سسٹم تک رسائی کے لیے سائن ان کریں",
+    usernameLabel: "صارف نام",
+    passwordLabel: "پاس ورڈ",
+    loginButton: "سائن ان",
+    signingIn: "سائن ان ہو رہا ہے...",
+    loginSuccess: "لاگ اِن کامیاب",
+    welcome: "لانڈری مینجمنٹ سسٹم میں خوش آمدید",
+    loginFailed: "لاگ اِن ناکام",
+    missingCredentials: "براہ کرم صارف نام اور پاس ورڈ درج کریں",
   }
 };
 

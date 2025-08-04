@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import logoUrl from "@/assets/logo.png";
+import { useTranslation } from "@/lib/i18n";
 
 interface LoginFormProps {
   onLoginSuccess?: () => void;
@@ -17,6 +18,7 @@ export function LoginForm({ onLoginSuccess }: LoginFormProps) {
   const [password, setPassword] = useState("");
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { t } = useTranslation();
 
   const loginMutation = useMutation({
     mutationFn: async (credentials: { username: string; password: string }) => {
@@ -25,8 +27,8 @@ export function LoginForm({ onLoginSuccess }: LoginFormProps) {
     },
     onSuccess: (data) => {
       toast({
-        title: "Login Successful",
-        description: "Welcome to the Laundry Management System",
+        title: t.loginSuccess,
+        description: t.welcome,
       });
       // Force refresh the auth state
       queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
@@ -35,7 +37,7 @@ export function LoginForm({ onLoginSuccess }: LoginFormProps) {
     },
     onError: (error) => {
       toast({
-        title: "Login Failed",
+        title: t.loginFailed,
         description: error.message,
         variant: "destructive",
       });
@@ -46,8 +48,8 @@ export function LoginForm({ onLoginSuccess }: LoginFormProps) {
     e.preventDefault();
     if (!username || !password) {
       toast({
-        title: "Error",
-        description: "Please enter both username and password",
+        title: t.error,
+        description: t.missingCredentials,
         variant: "destructive",
       });
       return;
@@ -62,30 +64,30 @@ export function LoginForm({ onLoginSuccess }: LoginFormProps) {
           <div className="flex justify-center mb-4">
             <img src={logoUrl} alt="Laundry Logo" className="w-16 h-16 object-cover rounded-lg" />
           </div>
-          <CardTitle className="text-2xl">Laundry Management</CardTitle>
-          <CardDescription>Sign in to access the system</CardDescription>
+          <CardTitle className="text-2xl">{t.loginTitle}</CardTitle>
+          <CardDescription>{t.loginDescription}</CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit}>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="username">Username</Label>
+              <Label htmlFor="username">{t.usernameLabel}</Label>
               <Input
                 id="username"
                 type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                placeholder="Enter your username"
+                placeholder={t.usernameLabel}
                 required
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">{t.passwordLabel}</Label>
               <Input
                 id="password"
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="Enter your password"
+                placeholder={t.passwordLabel}
                 required
               />
             </div>
@@ -96,7 +98,7 @@ export function LoginForm({ onLoginSuccess }: LoginFormProps) {
               className="w-full" 
               disabled={loginMutation.isPending}
             >
-              {loginMutation.isPending ? "Signing in..." : "Sign In"}
+              {loginMutation.isPending ? t.signingIn : t.loginButton}
             </Button>
           </CardFooter>
         </form>
