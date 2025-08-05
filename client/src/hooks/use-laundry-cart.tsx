@@ -6,25 +6,25 @@ export function useLaundryCart() {
   const [cartItems, setCartItems] = useState<LaundryCartItem[]>([]);
   const [paymentMethod, setPaymentMethod] = useState<"cash" | "card" | "pay_later">("cash");
 
-  const addToCart = useCallback((clothingItem: ClothingItem, service: LaundryService, quantity: number = 1) => {
+  const addToCart = useCallback((clothingItem: ClothingItem, service: LaundryService & { itemPrice?: string }, quantity: number = 1) => {
     setCartItems(prev => {
       // Create unique ID combining clothing item and service
       const uniqueId = `${clothingItem.id}-${service.id}`;
       const existing = prev.find(item => item.id === uniqueId);
-      
+
       if (existing) {
         return prev.map(item =>
           item.id === uniqueId
-            ? { 
-                ...item, 
-                quantity: item.quantity + quantity, 
-                total: (item.quantity + quantity) * parseFloat(service.price) 
+            ? {
+                ...item,
+                quantity: item.quantity + quantity,
+                total: (item.quantity + quantity) * parseFloat(service.itemPrice ?? service.price)
               }
             : item
         );
       }
-      
-      const price = parseFloat(service.price);
+
+      const price = parseFloat(service.itemPrice ?? service.price);
       return [...prev, {
         id: uniqueId,
         clothingItem,
@@ -44,7 +44,7 @@ export function useLaundryCart() {
     setCartItems(prev =>
       prev.map(item =>
         item.id === id
-          ? { ...item, quantity, total: quantity * parseFloat(item.service.price) }
+          ? { ...item, quantity, total: quantity * parseFloat((item.service as any).itemPrice ?? item.service.price) }
           : item
       )
     );

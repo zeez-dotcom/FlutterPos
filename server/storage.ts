@@ -12,8 +12,10 @@ import {
   type LoyaltyHistory, type InsertLoyaltyHistory,
   type Notification, type InsertNotification,
   type SecuritySettings, type InsertSecuritySettings,
+  type ItemServicePrice, type InsertItemServicePrice,
   type BulkUploadResult,
-  clothingItems, laundryServices, transactions, users, categories, branches, customers, orders, payments, products, loyaltyHistory, notifications, securitySettings
+  clothingItems, laundryServices, itemServicePrices,
+  transactions, users, categories, branches, customers, orders, payments, products, loyaltyHistory, notifications, securitySettings
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { db } from "./db";
@@ -100,6 +102,20 @@ export interface IStorage {
   updateLaundryService(id: string, service: Partial<InsertLaundryService>, userId: string): Promise<LaundryService | undefined>;
   deleteLaundryService(id: string, userId: string): Promise<boolean>;
 
+  // Item-service prices
+  getServicesForClothingItem(
+    clothingItemId: string,
+    userId: string,
+    categoryId?: string,
+  ): Promise<(LaundryService & { itemPrice: string })[]>;
+  createItemServicePrice(data: InsertItemServicePrice): Promise<ItemServicePrice>;
+  updateItemServicePrice(
+    clothingItemId: string,
+    serviceId: string,
+    price: string,
+  ): Promise<ItemServicePrice | undefined>;
+  deleteItemServicePrice(clothingItemId: string, serviceId: string): Promise<boolean>;
+
   // Bulk catalog
   bulkUpsertBranchCatalog(branchId: string, rows: ParsedRow[]): Promise<BulkUploadResult>;
   
@@ -157,6 +173,7 @@ export class MemStorage {
   private products: Map<string, Product>;
   private clothingItems: Map<string, ClothingItem>;
   private laundryServices: Map<string, LaundryService>;
+  private itemServicePrices: Map<string, Map<string, ItemServicePrice>>;
   private transactions: Map<string, Transaction>;
   private users: Map<string, User>;
   private categories: Map<string, Category>;
@@ -169,6 +186,7 @@ export class MemStorage {
     this.products = new Map();
     this.clothingItems = new Map();
     this.laundryServices = new Map();
+    this.itemServicePrices = new Map();
     this.transactions = new Map();
     this.users = new Map();
     this.categories = new Map();
@@ -483,6 +501,53 @@ export class MemStorage {
     return this.laundryServices.delete(id);
   }
 
+  async getServicesForClothingItem(
+    clothingItemId: string,
+    _userId: string,
+    categoryId?: string,
+  ): Promise<(LaundryService & { itemPrice: string })[]> {
+    const serviceMap = this.itemServicePrices.get(clothingItemId);
+    if (!serviceMap) return [];
+    const services: (LaundryService & { itemPrice: string })[] = [];
+    for (const [serviceId, isp] of Array.from(serviceMap.entries())) {
+      const service = this.laundryServices.get(serviceId);
+      if (!service) continue;
+      if (categoryId && service.categoryId !== categoryId) continue;
+      services.push({ ...service, itemPrice: isp.price });
+    }
+    return services;
+  }
+
+  async createItemServicePrice(data: InsertItemServicePrice): Promise<ItemServicePrice> {
+    const map = this.itemServicePrices.get(data.clothingItemId) ?? new Map();
+    const record: ItemServicePrice = { ...data };
+    map.set(data.serviceId, record);
+    this.itemServicePrices.set(data.clothingItemId, map);
+    return record;
+  }
+
+  async updateItemServicePrice(
+    clothingItemId: string,
+    serviceId: string,
+    price: string,
+  ): Promise<ItemServicePrice | undefined> {
+    const map = this.itemServicePrices.get(clothingItemId);
+    if (!map) return undefined;
+    const existing = map.get(serviceId);
+    if (!existing) return undefined;
+    const updated = { ...existing, price };
+    map.set(serviceId, updated);
+    return updated;
+  }
+
+  async deleteItemServicePrice(clothingItemId: string, serviceId: string): Promise<boolean> {
+    const map = this.itemServicePrices.get(clothingItemId);
+    if (!map) return false;
+    const deleted = map.delete(serviceId);
+    if (map.size === 0) this.itemServicePrices.delete(clothingItemId);
+    return deleted;
+  }
+
   async createTransaction(insertTransaction: InsertTransaction & { branchId: string }): Promise<Transaction> {
     const id = randomUUID();
     const transaction: Transaction = {
@@ -639,17 +704,38 @@ export class DatabaseStorage implements IStorage {
         )
         .onConflictDoNothing();
 
-      const laundryRows = PRICE_MATRIX.flatMap((item) =>
-        Object.entries(item.prices).map(([serviceName, price]) => ({
-          name: item.name,
-          nameAr: item.nameAr,
-          price: price.toFixed(2),
-          categoryId: categoryMap[serviceName],
+      const serviceRows = CATEGORY_SEEDS.filter((c) => c.type === "service").map(
+        (s) => ({
+          name: s.name,
+          nameAr: s.nameAr,
+          price: "0.00",
+          categoryId: categoryMap[s.name],
           userId,
+        }),
+      );
+
+      await tx.insert(laundryServices).values(serviceRows).onConflictDoNothing();
+
+      const clothingRows = await tx
+        .select()
+        .from(clothingItems)
+        .where(eq(clothingItems.userId, userId));
+      const serviceRowsDb = await tx
+        .select()
+        .from(laundryServices)
+        .where(eq(laundryServices.userId, userId));
+      const clothingMap = Object.fromEntries(clothingRows.map((c) => [c.name, c.id]));
+      const serviceMap = Object.fromEntries(serviceRowsDb.map((s) => [s.name, s.id]));
+
+      const priceRows = PRICE_MATRIX.flatMap((item) =>
+        Object.entries(item.prices).map(([serviceName, price]) => ({
+          clothingItemId: clothingMap[item.name],
+          serviceId: serviceMap[serviceName],
+          price: price.toFixed(2),
         })),
       );
 
-      await tx.insert(laundryServices).values(laundryRows).onConflictDoNothing();
+      await tx.insert(itemServicePrices).values(priceRows).onConflictDoNothing();
     });
   }
 
@@ -967,6 +1053,74 @@ export class DatabaseStorage implements IStorage {
     const result = await db
       .delete(laundryServices)
       .where(and(eq(laundryServices.id, id), eq(laundryServices.userId, userId)));
+    return result.rowCount ? result.rowCount > 0 : false;
+  }
+
+  async getServicesForClothingItem(
+    clothingItemId: string,
+    userId: string,
+    categoryId?: string,
+  ): Promise<(LaundryService & { itemPrice: string })[]> {
+    const conditions: any[] = [
+      eq(itemServicePrices.clothingItemId, clothingItemId),
+      eq(clothingItems.userId, userId),
+      eq(laundryServices.userId, userId),
+    ];
+    if (categoryId && categoryId !== "all") {
+      conditions.push(eq(laundryServices.categoryId, categoryId));
+    }
+
+    const rows = await db
+      .select({
+        id: laundryServices.id,
+        name: laundryServices.name,
+        nameAr: laundryServices.nameAr,
+        description: laundryServices.description,
+        categoryId: laundryServices.categoryId,
+        price: laundryServices.price,
+        userId: laundryServices.userId,
+        itemPrice: itemServicePrices.price,
+      })
+      .from(itemServicePrices)
+      .innerJoin(laundryServices, eq(itemServicePrices.serviceId, laundryServices.id))
+      .innerJoin(clothingItems, eq(itemServicePrices.clothingItemId, clothingItems.id))
+      .where(and(...conditions));
+
+    return rows;
+  }
+
+  async createItemServicePrice(data: InsertItemServicePrice): Promise<ItemServicePrice> {
+    const [row] = await db.insert(itemServicePrices).values(data).returning();
+    return row;
+  }
+
+  async updateItemServicePrice(
+    clothingItemId: string,
+    serviceId: string,
+    price: string,
+  ): Promise<ItemServicePrice | undefined> {
+    const [row] = await db
+      .update(itemServicePrices)
+      .set({ price })
+      .where(
+        and(
+          eq(itemServicePrices.clothingItemId, clothingItemId),
+          eq(itemServicePrices.serviceId, serviceId),
+        ),
+      )
+      .returning();
+    return row || undefined;
+  }
+
+  async deleteItemServicePrice(clothingItemId: string, serviceId: string): Promise<boolean> {
+    const result = await db
+      .delete(itemServicePrices)
+      .where(
+        and(
+          eq(itemServicePrices.clothingItemId, clothingItemId),
+          eq(itemServicePrices.serviceId, serviceId),
+        ),
+      );
     return result.rowCount ? result.rowCount > 0 : false;
   }
 

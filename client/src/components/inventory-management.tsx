@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ClothingItem, LaundryService, insertClothingItemSchema, insertLaundryServiceSchema } from "@shared/schema";
+import { ClothingItem, LaundryService, insertClothingItemSchema, insertLaundryServiceSchema, insertItemServicePriceSchema } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "@/lib/i18n";
@@ -20,6 +20,7 @@ export function InventoryManagement() {
   const [searchQuery, setSearchQuery] = useState("");
   const [isClothingModalOpen, setIsClothingModalOpen] = useState(false);
   const [isServiceModalOpen, setIsServiceModalOpen] = useState(false);
+  const [isPriceModalOpen, setIsPriceModalOpen] = useState(false);
   const [editingClothing, setEditingClothing] = useState<ClothingItem | null>(null);
   const [editingService, setEditingService] = useState<LaundryService | null>(null);
 
@@ -69,6 +70,15 @@ export function InventoryManagement() {
       description: "",
       price: "",
       categoryId: ""
+    }
+  });
+
+  const priceForm = useForm({
+    resolver: zodResolver(insertItemServicePriceSchema),
+    defaultValues: {
+      clothingItemId: "",
+      serviceId: "",
+      price: "",
     }
   });
 
@@ -128,6 +138,18 @@ export function InventoryManagement() {
     }
   });
 
+  const priceMutation = useMutation({
+    mutationFn: async (data: any) => {
+      const response = await apiRequest("POST", "/api/item-service-prices", data);
+      return response.json();
+    },
+    onSuccess: () => {
+      setIsPriceModalOpen(false);
+      priceForm.reset();
+      toast({ title: "Price saved successfully" });
+    }
+  });
+
   const handleClothingSubmit = (data: any) => {
     if (editingClothing) {
       updateClothingMutation.mutate({ id: editingClothing.id, data });
@@ -142,6 +164,10 @@ export function InventoryManagement() {
     } else {
       createServiceMutation.mutate(data);
     }
+  };
+
+  const handlePriceSubmit = (data: any) => {
+    priceMutation.mutate(data);
   };
 
   const handleEditClothing = (item: ClothingItem) => {
@@ -199,6 +225,86 @@ export function InventoryManagement() {
               className="pl-10"
             />
           </div>
+        </div>
+
+        <div className="mb-4">
+          <Dialog open={isPriceModalOpen} onOpenChange={setIsPriceModalOpen}>
+            <DialogTrigger asChild>
+              <Button className="bg-pos-secondary hover:bg-green-600 text-white">
+                <Plus className="h-4 w-4 mr-2" /> Add Item Service Price
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Add Item Service Price</DialogTitle>
+              </DialogHeader>
+              <Form {...priceForm}>
+                <form onSubmit={priceForm.handleSubmit(handlePriceSubmit)} className="space-y-4">
+                  <FormField
+                    control={priceForm.control}
+                    name="clothingItemId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Clothing Item</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select item" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {clothingItems.map((item) => (
+                              <SelectItem key={item.id} value={item.id}>
+                                {item.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={priceForm.control}
+                    name="serviceId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Service</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select service" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {services.map((s) => (
+                              <SelectItem key={s.id} value={s.id}>
+                                {s.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={priceForm.control}
+                    name="price"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Price</FormLabel>
+                        <FormControl>
+                          <Input type="number" step="0.01" {...field} />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                  <Button type="submit" className="bg-pos-primary hover:bg-blue-700">
+                    Save
+                  </Button>
+                </form>
+              </Form>
+            </DialogContent>
+          </Dialog>
         </div>
 
         <Tabs defaultValue="clothing" className="space-y-6">
