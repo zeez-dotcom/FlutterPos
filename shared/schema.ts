@@ -275,6 +275,14 @@ export type SecuritySettings = typeof securitySettings.$inferSelect;
 export type InsertSecuritySettings = z.infer<typeof insertSecuritySettingsSchema>;
 export type UserWithBranch = User & { branch: Branch | null };
 
+export const bulkUploadResultSchema = z.object({
+  processed: z.number(),
+  created: z.number(),
+  updated: z.number(),
+});
+
+export type BulkUploadResult = z.infer<typeof bulkUploadResultSchema>;
+
 export interface LaundryCartItem {
   id: string;
   clothingItem: ClothingItem;

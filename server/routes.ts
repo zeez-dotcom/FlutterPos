@@ -1,11 +1,15 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
-import { storage } from "./storage";
+import { storage, type ParsedRow } from "./storage";
 import { insertTransactionSchema, insertClothingItemSchema, insertLaundryServiceSchema, insertProductSchema, insertUserSchema, updateUserSchema, insertCategorySchema, insertBranchSchema, insertCustomerSchema, insertOrderSchema, insertPaymentSchema, insertSecuritySettingsSchema } from "@shared/schema";
 import { setupAuth, requireAuth, requireSuperAdmin, requireAdminOrSuperAdmin } from "./auth";
 import passport from "passport";
 import type { UserWithBranch } from "@shared/schema";
 import nodemailer from "nodemailer";
+import multer from "multer";
+import * as XLSX from "xlsx";
+
+const upload = multer();
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Setup authentication
@@ -205,6 +209,77 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to delete category" });
     }
   });
+
+  app.get("/api/catalog/bulk-template", requireSuperAdmin, (_req, res) => {
+    const headers = [
+      "Item (English)",
+      "Item (Arabic)",
+      "Normal Iron",
+      "Normal Wash",
+      "Normal Wash & Iron",
+      "Urgent Iron",
+      "Urgent Wash",
+      "Urgent Wash & Iron",
+    ];
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet([headers]);
+    XLSX.utils.book_append_sheet(wb, ws, "Template");
+    const buf = XLSX.write(wb, { type: "buffer", bookType: "xlsx" });
+    res.setHeader("Content-Disposition", "attachment; filename=catalog_template.xlsx");
+    res.setHeader(
+      "Content-Type",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    );
+    res.send(buf);
+  });
+
+  app.post(
+    "/api/catalog/bulk-upload",
+    requireSuperAdmin,
+    upload.single("file"),
+    async (req, res) => {
+      try {
+        const branchId = req.body.branchId as string;
+        if (!branchId || !req.file) {
+          return res.status(400).json({ message: "branchId and file are required" });
+        }
+
+        const workbook = XLSX.read(req.file.buffer, { type: "buffer" });
+        const sheet = workbook.Sheets[workbook.SheetNames[0]];
+        const data = XLSX.utils.sheet_to_json<any>(sheet);
+        const rows: ParsedRow[] = data
+          .map((r: any) => ({
+            itemEn: String(r["Item (English)"] ?? "").trim(),
+            itemAr: r["Item (Arabic)"]
+              ? String(r["Item (Arabic)"]).trim()
+              : undefined,
+            normalIron:
+              r["Normal Iron"] !== undefined ? Number(r["Normal Iron"]) : undefined,
+            normalWash:
+              r["Normal Wash"] !== undefined ? Number(r["Normal Wash"]) : undefined,
+            normalWashIron:
+              r["Normal Wash & Iron"] !== undefined
+                ? Number(r["Normal Wash & Iron"])
+                : undefined,
+            urgentIron:
+              r["Urgent Iron"] !== undefined ? Number(r["Urgent Iron"]) : undefined,
+            urgentWash:
+              r["Urgent Wash"] !== undefined ? Number(r["Urgent Wash"]) : undefined,
+            urgentWashIron:
+              r["Urgent Wash & Iron"] !== undefined
+                ? Number(r["Urgent Wash & Iron"])
+                : undefined,
+          }))
+          .filter((r) => r.itemEn);
+
+        const result = await storage.bulkUpsertBranchCatalog(branchId, rows);
+        res.json(result);
+      } catch (error) {
+        console.error("Bulk upload failed:", error);
+        res.status(500).json({ message: "Bulk upload failed" });
+      }
+    },
+  );
 
   // Branch management routes (Super Admin only)
   app.get("/api/branches", requireSuperAdmin, async (_req, res) => {
