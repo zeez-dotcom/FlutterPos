@@ -126,3 +126,23 @@ test('updateUserBranch updates branch only', async () => {
   assert.strictEqual(setData.branchId, 'b1');
   assert.strictEqual(updated?.branchId, 'b1');
 });
+
+test('deleteClothingItem returns boolean based on deletion result', async () => {
+  const storage = new DatabaseStorage();
+  const originalDelete = db.delete;
+  (db as any).delete = () => ({ where: () => ({ rowCount: 1 }) });
+  assert.strictEqual(await storage.deleteClothingItem('1'), true);
+  (db as any).delete = () => ({ where: () => ({ rowCount: 0 }) });
+  assert.strictEqual(await storage.deleteClothingItem('1'), false);
+  (db as any).delete = originalDelete;
+});
+
+test('deleteLaundryService returns boolean based on deletion result', async () => {
+  const storage = new DatabaseStorage();
+  const originalDelete = db.delete;
+  (db as any).delete = () => ({ where: () => ({ rowCount: 1 }) });
+  assert.strictEqual(await storage.deleteLaundryService('1'), true);
+  (db as any).delete = () => ({ where: () => ({ rowCount: 0 }) });
+  assert.strictEqual(await storage.deleteLaundryService('1'), false);
+  (db as any).delete = originalDelete;
+});

@@ -68,13 +68,15 @@ export interface IStorage {
   getClothingItem(id: string): Promise<ClothingItem | undefined>;
   createClothingItem(item: InsertClothingItem): Promise<ClothingItem>;
   updateClothingItem(id: string, item: Partial<InsertClothingItem>): Promise<ClothingItem | undefined>;
-  
+  deleteClothingItem(id: string): Promise<boolean>;
+
   // Laundry Services
   getLaundryServices(): Promise<LaundryService[]>;
   getLaundryServicesByCategory(categoryId: string): Promise<LaundryService[]>;
   getLaundryService(id: string): Promise<LaundryService | undefined>;
   createLaundryService(service: InsertLaundryService): Promise<LaundryService>;
   updateLaundryService(id: string, service: Partial<InsertLaundryService>): Promise<LaundryService | undefined>;
+  deleteLaundryService(id: string): Promise<boolean>;
   
   // Transactions
   createTransaction(transaction: InsertTransaction & { branchId: string }): Promise<Transaction>;
@@ -392,6 +394,10 @@ export class MemStorage {
     return updated;
   }
 
+  async deleteClothingItem(id: string): Promise<boolean> {
+    return this.clothingItems.delete(id);
+  }
+
   // Laundry Services methods
   async getLaundryServices(): Promise<LaundryService[]> {
     return Array.from(this.laundryServices.values());
@@ -436,6 +442,10 @@ export class MemStorage {
     };
     this.laundryServices.set(id, updated);
     return updated;
+  }
+
+  async deleteLaundryService(id: string): Promise<boolean> {
+    return this.laundryServices.delete(id);
   }
 
   async createTransaction(insertTransaction: InsertTransaction & { branchId: string }): Promise<Transaction> {
@@ -775,6 +785,11 @@ export class DatabaseStorage implements IStorage {
     return updated || undefined;
   }
 
+  async deleteClothingItem(id: string): Promise<boolean> {
+    const result = await db.delete(clothingItems).where(eq(clothingItems.id, id));
+    return result.rowCount ? result.rowCount > 0 : false;
+  }
+
   // Laundry Services methods
   async getLaundryServices(): Promise<LaundryService[]> {
     return await db.select().from(laundryServices);
@@ -807,6 +822,11 @@ export class DatabaseStorage implements IStorage {
       .where(eq(laundryServices.id, id))
       .returning();
     return updated || undefined;
+  }
+
+  async deleteLaundryService(id: string): Promise<boolean> {
+    const result = await db.delete(laundryServices).where(eq(laundryServices.id, id));
+    return result.rowCount ? result.rowCount > 0 : false;
   }
 
   // Transactions methods

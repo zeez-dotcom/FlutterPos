@@ -383,6 +383,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.delete("/api/clothing-items/:id", requireAdminOrSuperAdmin, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const deleted = await storage.deleteClothingItem(id);
+      if (!deleted) {
+        return res.status(404).json({ message: "Clothing item not found" });
+      }
+      res.json({ message: "Clothing item deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting clothing item:", error);
+      res.status(500).json({ message: "Failed to delete clothing item" });
+    }
+  });
+
   // Laundry Services routes
   app.get("/api/laundry-services", async (req, res) => {
     try {
@@ -442,6 +456,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error updating laundry service:", error);
       res.status(500).json({ message: "Failed to update laundry service" });
+    }
+  });
+
+  app.delete("/api/laundry-services/:id", requireAdminOrSuperAdmin, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const deleted = await storage.deleteLaundryService(id);
+      if (!deleted) {
+        return res.status(404).json({ message: "Laundry service not found" });
+      }
+      res.json({ message: "Laundry service deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting laundry service:", error);
+      res.status(500).json({ message: "Failed to delete laundry service" });
     }
   });
 
