@@ -170,8 +170,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/categories", requireAdminOrSuperAdmin, async (req, res) => {
     try {
       const validatedData = insertCategorySchema.parse(req.body);
-      const userId = (req.user as UserWithBranch).id;
-      const newCategory = await storage.createCategory({ ...validatedData, userId });
+      const currentUser = req.user as UserWithBranch;
+      const { userId: bodyUserId, ...categoryData } = validatedData;
+      const userId =
+        currentUser.role === "super_admin"
+          ? bodyUserId ?? currentUser.id
+          : currentUser.id;
+      const newCategory = await storage.createCategory(categoryData, userId);
       res.json(newCategory);
     } catch (error) {
       console.error("Error creating category:", error);
@@ -183,8 +188,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { id } = req.params;
       const validatedData = insertCategorySchema.parse(req.body);
-      const userId = (req.user as UserWithBranch).id;
-      const updatedCategory = await storage.updateCategory(id, validatedData, userId);
+      const currentUser = req.user as UserWithBranch;
+      const { userId: bodyUserId, ...categoryData } = validatedData;
+      const userId =
+        currentUser.role === "super_admin"
+          ? bodyUserId ?? currentUser.id
+          : currentUser.id;
+      const updatedCategory = await storage.updateCategory(
+        id,
+        categoryData,
+        userId,
+      );
       if (!updatedCategory) {
         return res.status(404).json({ message: "Category not found" });
       }
