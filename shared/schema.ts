@@ -193,10 +193,16 @@ export const insertClothingItemSchema = createInsertSchema(clothingItems).omit({
   userId: true,
 });
 
-export const insertLaundryServiceSchema = createInsertSchema(laundryServices).omit({
-  id: true,
-  userId: true,
-});
+export const insertLaundryServiceSchema = createInsertSchema(laundryServices)
+  .omit({
+    id: true,
+    userId: true,
+  })
+  .extend({
+    price: z
+      .string()
+      .regex(/^[0-9]+(\.[0-9]+)?$/, { message: "Price must be a valid number" }),
+  });
 
 export const insertItemServicePriceSchema = createInsertSchema(itemServicePrices);
 
