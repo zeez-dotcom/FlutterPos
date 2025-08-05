@@ -39,8 +39,8 @@ export function ServiceSelectionModal({
     queryKey: ["/api/laundry-services", selectedCategory],
     queryFn: async () => {
       const params = new URLSearchParams();
-      if (selectedCategory !== "all") params.append("category", selectedCategory);
-      
+      if (selectedCategory !== "all") params.append("categoryId", selectedCategory);
+
       const response = await fetch(`/api/laundry-services?${params}`);
       if (!response.ok) throw new Error("Failed to fetch laundry services");
       return response.json();
@@ -120,7 +120,7 @@ export function ServiceSelectionModal({
                         {formatCurrency(service.price)}
                       </span>
                       <span className="text-xs text-gray-500 capitalize bg-gray-100 px-2 py-1 rounded">
-                        {service.category}
+                        {service.categoryId}
                       </span>
                     </div>
                   </div>

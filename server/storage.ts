@@ -57,21 +57,21 @@ export interface IStorage {
 
   // Products
   getProducts(): Promise<Product[]>;
-  getProductsByCategory(category: string): Promise<Product[]>;
+  getProductsByCategory(categoryId: string): Promise<Product[]>;
   getProduct(id: string): Promise<Product | undefined>;
   createProduct(product: InsertProduct): Promise<Product>;
   updateProduct(id: string, product: Partial<InsertProduct>): Promise<Product | undefined>;
 
   // Clothing Items
   getClothingItems(): Promise<ClothingItem[]>;
-  getClothingItemsByCategory(category: string): Promise<ClothingItem[]>;
+  getClothingItemsByCategory(categoryId: string): Promise<ClothingItem[]>;
   getClothingItem(id: string): Promise<ClothingItem | undefined>;
   createClothingItem(item: InsertClothingItem): Promise<ClothingItem>;
   updateClothingItem(id: string, item: Partial<InsertClothingItem>): Promise<ClothingItem | undefined>;
   
-  // Laundry Services  
+  // Laundry Services
   getLaundryServices(): Promise<LaundryService[]>;
-  getLaundryServicesByCategory(category: string): Promise<LaundryService[]>;
+  getLaundryServicesByCategory(categoryId: string): Promise<LaundryService[]>;
   getLaundryService(id: string): Promise<LaundryService | undefined>;
   createLaundryService(service: InsertLaundryService): Promise<LaundryService>;
   updateLaundryService(id: string, service: Partial<InsertLaundryService>): Promise<LaundryService | undefined>;
@@ -164,7 +164,7 @@ export class MemStorage {
       {
         name: "Cola",
         description: "Refreshing soda drink",
-        category: "beverages",
+        categoryId: "beverages",
         price: "1.99",
         stock: 50,
         imageUrl: "https://images.unsplash.com/photo-1580910051074-7bc38a51a79f?auto=format&fit=crop&w=300&h=200"
@@ -172,7 +172,7 @@ export class MemStorage {
       {
         name: "Potato Chips",
         description: "Crispy salted chips",
-        category: "snacks",
+        categoryId: "snacks",
         price: "2.49",
         stock: 40,
         imageUrl: "https://images.unsplash.com/photo-1585238342029-5a9b9e8e7044?auto=format&fit=crop&w=300&h=200"
@@ -180,7 +180,7 @@ export class MemStorage {
       {
         name: "Wireless Earbuds",
         description: "Bluetooth in-ear headphones",
-        category: "electronics",
+        categoryId: "electronics",
         price: "59.99",
         stock: 25,
         imageUrl: "https://images.unsplash.com/photo-1585386959984-a41552231685?auto=format&fit=crop&w=300&h=200"
@@ -188,7 +188,7 @@ export class MemStorage {
       {
         name: "Instant Noodles",
         description: "Quick and tasty meal",
-        category: "food",
+        categoryId: "food",
         price: "0.99",
         stock: 80,
         imageUrl: "https://images.unsplash.com/photo-1617196033361-c2d0cf79ab8f?auto=format&fit=crop&w=300&h=200"
@@ -196,7 +196,7 @@ export class MemStorage {
       {
         name: "Dish Soap",
         description: "Lemon scented detergent",
-        category: "household",
+        categoryId: "household",
         price: "3.49",
         stock: 60,
         imageUrl: "https://images.unsplash.com/photo-1602161414263-5a8d5449475a?auto=format&fit=crop&w=300&h=200"
@@ -212,37 +212,37 @@ export class MemStorage {
       {
         name: "Pants",
         description: "Regular trousers",
-        category: "pants",
+        categoryId: "pants",
         imageUrl: "https://images.unsplash.com/photo-1473966968600-fa801b869a1a?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&h=200"
       },
       {
         name: "Dishdasha",
         description: "Traditional long robe",
-        category: "traditional",
+        categoryId: "traditional",
         imageUrl: "https://images.unsplash.com/photo-1594069037019-f3ab4b0e6a21?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&h=200"
       },
       {
         name: "Shirt",
         description: "Dress shirt or casual shirt",
-        category: "shirts",
+        categoryId: "shirts",
         imageUrl: "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&h=200"
       },
       {
         name: "Dress",
         description: "Ladies dress",
-        category: "dresses",
+        categoryId: "dresses",
         imageUrl: "https://images.unsplash.com/photo-1515372039744-b8f02a3ae446?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&h=200"
       },
       {
         name: "Suit Jacket",
         description: "Formal jacket",
-        category: "formal",
+        categoryId: "formal",
         imageUrl: "https://images.unsplash.com/photo-1594938298603-c8148c4dae35?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&h=200"
       },
       {
         name: "Bed Sheets",
         description: "Full set of bed linens",
-        category: "linens",
+        categoryId: "linens",
         imageUrl: "https://images.unsplash.com/photo-1631049307264-da0ec9d70304?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&h=200"
       }
     ];
@@ -253,37 +253,37 @@ export class MemStorage {
         name: "Wash & Fold",
         description: "Basic washing and folding service",
         price: "3.00",
-        category: "basic"
+        categoryId: "basic"
       },
       {
         name: "Dry Cleaning",
         description: "Professional dry cleaning",
         price: "8.00",
-        category: "premium"
+        categoryId: "premium"
       },
       {
         name: "Iron & Press",
         description: "Professional ironing and pressing",
         price: "4.50",
-        category: "basic"
+        categoryId: "basic"
       },
       {
         name: "Stain Removal",
         description: "Specialized stain treatment",
         price: "6.00",
-        category: "specialty"
+        categoryId: "specialty"
       },
       {
         name: "Express Service",
         description: "Same day service",
         price: "12.00",
-        category: "express"
+        categoryId: "express"
       },
       {
         name: "Delicate Care",
         description: "Special care for delicate items",
         price: "10.00",
-        category: "specialty"
+        categoryId: "specialty"
       }
     ];
 
@@ -301,11 +301,11 @@ export class MemStorage {
     return Array.from(this.products.values());
   }
 
-  async getProductsByCategory(category: string): Promise<Product[]> {
-    if (category === "all") {
+  async getProductsByCategory(categoryId: string): Promise<Product[]> {
+    if (categoryId === "all") {
       return this.getProducts();
     }
-    return Array.from(this.products.values()).filter(product => product.category === category);
+    return Array.from(this.products.values()).filter(product => product.categoryId === categoryId);
   }
 
   async getProduct(id: string): Promise<Product | undefined> {
@@ -319,7 +319,7 @@ export class MemStorage {
       name: product.name,
       nameAr: product.nameAr || null,
       description: product.description || null,
-      category: product.category || null,
+      categoryId: product.categoryId || null,
       price: product.price,
       stock: product.stock ?? 0,
       imageUrl: product.imageUrl || null,
@@ -337,7 +337,7 @@ export class MemStorage {
       name: product.name ?? existing.name,
       nameAr: product.nameAr ?? existing.nameAr,
       description: product.description ?? existing.description,
-      category: product.category ?? existing.category,
+      categoryId: product.categoryId ?? existing.categoryId,
       price: product.price ?? existing.price,
       stock: product.stock ?? existing.stock,
       imageUrl: product.imageUrl ?? existing.imageUrl,
@@ -351,11 +351,11 @@ export class MemStorage {
     return Array.from(this.clothingItems.values());
   }
 
-  async getClothingItemsByCategory(category: string): Promise<ClothingItem[]> {
-    if (category === "all") {
+  async getClothingItemsByCategory(categoryId: string): Promise<ClothingItem[]> {
+    if (categoryId === "all") {
       return this.getClothingItems();
     }
-    return Array.from(this.clothingItems.values()).filter(item => item.category === category);
+    return Array.from(this.clothingItems.values()).filter(item => item.categoryId === categoryId);
   }
 
   async getClothingItem(id: string): Promise<ClothingItem | undefined> {
@@ -369,7 +369,7 @@ export class MemStorage {
       name: item.name,
       nameAr: item.nameAr || null,
       description: item.description || null,
-      category: item.category,
+      categoryId: item.categoryId,
       imageUrl: item.imageUrl || null
     };
     this.clothingItems.set(id, newItem);
@@ -385,7 +385,7 @@ export class MemStorage {
       name: item.name ?? existing.name,
       nameAr: item.nameAr ?? existing.nameAr,
       description: item.description ?? existing.description,
-      category: item.category ?? existing.category,
+      categoryId: item.categoryId ?? existing.categoryId,
       imageUrl: item.imageUrl ?? existing.imageUrl
     };
     this.clothingItems.set(id, updated);
@@ -397,11 +397,11 @@ export class MemStorage {
     return Array.from(this.laundryServices.values());
   }
 
-  async getLaundryServicesByCategory(category: string): Promise<LaundryService[]> {
-    if (category === "all") {
+  async getLaundryServicesByCategory(categoryId: string): Promise<LaundryService[]> {
+    if (categoryId === "all") {
       return this.getLaundryServices();
     }
-    return Array.from(this.laundryServices.values()).filter(service => service.category === category);
+    return Array.from(this.laundryServices.values()).filter(service => service.categoryId === categoryId);
   }
 
   async getLaundryService(id: string): Promise<LaundryService | undefined> {
@@ -416,7 +416,7 @@ export class MemStorage {
       nameAr: service.nameAr || null,
       description: service.description || null,
       price: service.price,
-      category: service.category
+      categoryId: service.categoryId
     };
     this.laundryServices.set(id, newService);
     return newService;
@@ -432,7 +432,7 @@ export class MemStorage {
       nameAr: service.nameAr ?? existing.nameAr,
       description: service.description ?? existing.description,
       price: service.price ?? existing.price,
-      category: service.category ?? existing.category
+      categoryId: service.categoryId ?? existing.categoryId
     };
     this.laundryServices.set(id, updated);
     return updated;
@@ -712,11 +712,11 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(products);
   }
 
-  async getProductsByCategory(category: string): Promise<Product[]> {
-    if (category === "all") {
+  async getProductsByCategory(categoryId: string): Promise<Product[]> {
+    if (categoryId === "all") {
       return this.getProducts();
     }
-    return await db.select().from(products).where(eq(products.category, category));
+    return await db.select().from(products).where(eq(products.categoryId, categoryId));
   }
 
   async getProduct(id: string): Promise<Product | undefined> {
@@ -746,11 +746,11 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(clothingItems);
   }
 
-  async getClothingItemsByCategory(category: string): Promise<ClothingItem[]> {
-    if (category === "all") {
+  async getClothingItemsByCategory(categoryId: string): Promise<ClothingItem[]> {
+    if (categoryId === "all") {
       return this.getClothingItems();
     }
-    return await db.select().from(clothingItems).where(eq(clothingItems.category, category));
+    return await db.select().from(clothingItems).where(eq(clothingItems.categoryId, categoryId));
   }
 
   async getClothingItem(id: string): Promise<ClothingItem | undefined> {
@@ -780,11 +780,11 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(laundryServices);
   }
 
-  async getLaundryServicesByCategory(category: string): Promise<LaundryService[]> {
-    if (category === "all") {
+  async getLaundryServicesByCategory(categoryId: string): Promise<LaundryService[]> {
+    if (categoryId === "all") {
       return this.getLaundryServices();
     }
-    return await db.select().from(laundryServices).where(eq(laundryServices.category, category));
+    return await db.select().from(laundryServices).where(eq(laundryServices.categoryId, categoryId));
   }
 
   async getLaundryService(id: string): Promise<LaundryService | undefined> {

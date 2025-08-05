@@ -12,7 +12,7 @@ interface Product {
   name: string;
   nameAr?: string;
   description?: string;
-  category?: string;
+  categoryId?: string;
   price: string;
   stock: number;
   imageUrl?: string;
@@ -43,7 +43,7 @@ export function ProductGrid({ onAddToCart, cartItemCount, onToggleCart }: Produc
     queryKey: ["/api/products", selectedCategory, searchQuery],
     queryFn: async () => {
       const params = new URLSearchParams();
-      if (selectedCategory !== "all") params.append("category", selectedCategory);
+      if (selectedCategory !== "all") params.append("categoryId", selectedCategory);
       if (searchQuery) params.append("search", searchQuery);
 
       const response = await fetch(`/api/products?${params}`);
