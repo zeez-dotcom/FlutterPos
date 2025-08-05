@@ -17,8 +17,9 @@ test('generateCatalogTemplate returns template with headers and example row', ()
     'Urgent Iron',
     'Urgent Wash',
     'Urgent Wash & Iron',
+    'Picture Link',
   ];
-  const exampleRow = ['T-Shirt', 'تي شيرت', 5, 10, 15, 8, 12, 18];
+  const exampleRow = ['T-Shirt', 'تي شيرت', 5, 10, 15, 8, 12, 18, 'https://example.com/image.jpg'];
   assert.deepEqual(rows[0], headers);
   assert.deepEqual(rows[1], exampleRow);
 });
