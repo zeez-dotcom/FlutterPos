@@ -1192,4 +1192,14 @@ export class DatabaseStorage implements IStorage {
   }
 }
 
+export async function seedInitialCategories(): Promise<void> {
+  await db
+    .insert(categories)
+    .values([
+      { name: "pants", type: "clothing", description: "Pants", isActive: true },
+      { name: "shirts", type: "clothing", description: "Shirts", isActive: true },
+    ])
+    .onConflictDoNothing();
+}
+
 export const storage = new DatabaseStorage();

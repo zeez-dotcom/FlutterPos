@@ -360,10 +360,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/clothing-items", requireAdminOrSuperAdmin, async (req, res) => {
     try {
       const validatedData = insertClothingItemSchema.parse(req.body);
+      const category = await storage.getCategory(validatedData.categoryId);
+      if (!category) {
+        return res.status(400).json({ message: "Invalid category" });
+      }
       const newItem = await storage.createClothingItem(validatedData);
       res.json(newItem);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error creating clothing item:", error);
+      if (error?.code === "23503") {
+        return res.status(400).json({ message: "Invalid category" });
+      }
       res.status(500).json({ message: "Failed to create clothing item" });
     }
   });
