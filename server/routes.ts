@@ -153,9 +153,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/categories", requireAdminOrSuperAdmin, async (req, res) => {
     try {
       const type = req.query.type as string;
-      const categories = type 
-        ? await storage.getCategoriesByType(type)
-        : await storage.getCategories();
+      const userId = (req.user as UserWithBranch).id;
+      const categories = type
+        ? await storage.getCategoriesByType(type, userId)
+        : await storage.getCategories(userId);
       res.json(categories);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch categories" });
@@ -164,8 +165,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/categories", requireAdminOrSuperAdmin, async (req, res) => {
     try {
-      const { name, nameAr, type, description, isActive } = insertCategorySchema.parse(req.body);
-      const newCategory = await storage.createCategory({ name, nameAr, type, description, isActive });
+      const validatedData = insertCategorySchema.parse(req.body);
+      const userId = (req.user as UserWithBranch).id;
+      const newCategory = await storage.createCategory({ ...validatedData, userId });
       res.json(newCategory);
     } catch (error) {
       console.error("Error creating category:", error);
@@ -176,8 +178,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/categories/:id", requireAdminOrSuperAdmin, async (req, res) => {
     try {
       const { id } = req.params;
-      const { name, nameAr, type, description, isActive } = insertCategorySchema.parse(req.body);
-      const updatedCategory = await storage.updateCategory(id, { name, nameAr, type, description, isActive });
+      const validatedData = insertCategorySchema.parse(req.body);
+      const userId = (req.user as UserWithBranch).id;
+      const updatedCategory = await storage.updateCategory(id, validatedData, userId);
       if (!updatedCategory) {
         return res.status(404).json({ message: "Category not found" });
       }
@@ -191,7 +194,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete("/api/categories/:id", requireAdminOrSuperAdmin, async (req, res) => {
     try {
       const { id } = req.params;
-      const deleted = await storage.deleteCategory(id);
+      const userId = (req.user as UserWithBranch).id;
+      const deleted = await storage.deleteCategory(id, userId);
       if (!deleted) {
         return res.status(404).json({ message: "Category not found" });
       }
@@ -326,19 +330,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const categoryId = req.query.categoryId as string;
       const search = req.query.search as string;
+      const userId = (req.user as UserWithBranch).id;
 
       let items = categoryId
-        ? await storage.getClothingItemsByCategory(categoryId)
-        : await storage.getClothingItems();
-      
+        ? await storage.getClothingItemsByCategory(categoryId, userId)
+        : await storage.getClothingItems(userId);
+
       if (search) {
-        items = items.filter(item =>
+        items = items.filter((item) =>
           item.name.toLowerCase().includes(search.toLowerCase()) ||
           item.nameAr?.toLowerCase().includes(search.toLowerCase()) ||
-          item.description?.toLowerCase().includes(search.toLowerCase())
+          item.description?.toLowerCase().includes(search.toLowerCase()),
         );
       }
-      
+
       res.json(items);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch clothing items" });
@@ -347,7 +352,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/clothing-items/:id", requireAuth, async (req, res) => {
     try {
-      const item = await storage.getClothingItem(req.params.id);
+      const userId = (req.user as UserWithBranch).id;
+      const item = await storage.getClothingItem(req.params.id, userId);
       if (!item) {
         return res.status(404).json({ message: "Clothing item not found" });
       }
@@ -360,11 +366,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/clothing-items", requireAdminOrSuperAdmin, async (req, res) => {
     try {
       const validatedData = insertClothingItemSchema.parse(req.body);
-      const category = await storage.getCategory(validatedData.categoryId);
+      const userId = (req.user as UserWithBranch).id;
+      const category = await storage.getCategory(validatedData.categoryId, userId);
       if (!category) {
         return res.status(400).json({ message: "Invalid category" });
       }
-      const newItem = await storage.createClothingItem(validatedData);
+      const newItem = await storage.createClothingItem({ ...validatedData, userId });
       res.json(newItem);
     } catch (error: any) {
       console.error("Error creating clothing item:", error);
@@ -379,7 +386,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { id } = req.params;
       const validatedData = insertClothingItemSchema.partial().parse(req.body);
-      const updatedItem = await storage.updateClothingItem(id, validatedData);
+      const userId = (req.user as UserWithBranch).id;
+      const updatedItem = await storage.updateClothingItem(id, validatedData, userId);
       if (!updatedItem) {
         return res.status(404).json({ message: "Clothing item not found" });
       }
@@ -393,7 +401,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete("/api/clothing-items/:id", requireAdminOrSuperAdmin, async (req, res) => {
     try {
       const { id } = req.params;
-      const deleted = await storage.deleteClothingItem(id);
+      const userId = (req.user as UserWithBranch).id;
+      const deleted = await storage.deleteClothingItem(id, userId);
       if (!deleted) {
         return res.status(404).json({ message: "Clothing item not found" });
       }
@@ -409,19 +418,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const categoryId = req.query.categoryId as string;
       const search = req.query.search as string;
+      const userId = (req.user as UserWithBranch).id;
 
       let services = categoryId
-        ? await storage.getLaundryServicesByCategory(categoryId)
-        : await storage.getLaundryServices();
-      
+        ? await storage.getLaundryServicesByCategory(categoryId, userId)
+        : await storage.getLaundryServices(userId);
+
       if (search) {
-        services = services.filter(service =>
+        services = services.filter((service) =>
           service.name.toLowerCase().includes(search.toLowerCase()) ||
           service.nameAr?.toLowerCase().includes(search.toLowerCase()) ||
-          service.description?.toLowerCase().includes(search.toLowerCase())
+          service.description?.toLowerCase().includes(search.toLowerCase()),
         );
       }
-      
+
       res.json(services);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch laundry services" });
@@ -430,7 +440,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/laundry-services/:id", requireAuth, async (req, res) => {
     try {
-      const service = await storage.getLaundryService(req.params.id);
+      const userId = (req.user as UserWithBranch).id;
+      const service = await storage.getLaundryService(req.params.id, userId);
       if (!service) {
         return res.status(404).json({ message: "Laundry service not found" });
       }
@@ -443,7 +454,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/laundry-services", requireAdminOrSuperAdmin, async (req, res) => {
     try {
       const validatedData = insertLaundryServiceSchema.parse(req.body);
-      const newService = await storage.createLaundryService(validatedData);
+      const userId = (req.user as UserWithBranch).id;
+      const newService = await storage.createLaundryService({ ...validatedData, userId });
       res.json(newService);
     } catch (error) {
       console.error("Error creating laundry service:", error);
@@ -455,7 +467,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { id } = req.params;
       const validatedData = insertLaundryServiceSchema.partial().parse(req.body);
-      const updatedService = await storage.updateLaundryService(id, validatedData);
+      const userId = (req.user as UserWithBranch).id;
+      const updatedService = await storage.updateLaundryService(id, validatedData, userId);
       if (!updatedService) {
         return res.status(404).json({ message: "Laundry service not found" });
       }
@@ -469,7 +482,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete("/api/laundry-services/:id", requireAdminOrSuperAdmin, async (req, res) => {
     try {
       const { id } = req.params;
-      const deleted = await storage.deleteLaundryService(id);
+      const userId = (req.user as UserWithBranch).id;
+      const deleted = await storage.deleteLaundryService(id, userId);
       if (!deleted) {
         return res.status(404).json({ message: "Laundry service not found" });
       }

@@ -1,7 +1,6 @@
 import 'dotenv/config';
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
-import { seedInitialCategories } from "./storage";
 import { setupVite, serveStatic, log } from "./vite";
 
 // Set SESSION_SECRET if not present
@@ -45,7 +44,6 @@ app.use((req, res, next) => {
 });
 
 (async () => {
-  await seedInitialCategories();
   const server = await registerRoutes(app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
