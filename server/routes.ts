@@ -370,10 +370,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const categoryId = req.query.categoryId as string;
       const search = req.query.search as string;
+      const user = req.user as UserWithBranch;
 
       let items = categoryId
-        ? await storage.getProductsByCategory(categoryId)
-        : await storage.getProducts();
+        ? await storage.getProductsByCategory(categoryId, user.branchId || undefined)
+        : await storage.getProducts(user.branchId || undefined);
 
       if (search) {
         items = items.filter(product =>
@@ -391,8 +392,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/products", requireAdminOrSuperAdmin, async (req, res) => {
     try {
+      const user = req.user as UserWithBranch;
+      if (!user.branchId) {
+        return res.status(400).json({ message: "User is not assigned to a branch" });
+      }
       const validatedData = insertProductSchema.parse(req.body);
-      const newProduct = await storage.createProduct(validatedData);
+      const newProduct = await storage.createProduct({ ...validatedData, branchId: user.branchId });
       res.json(newProduct);
     } catch (error) {
       console.error("Error creating product:", error);
@@ -403,8 +408,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/products/:id", requireAdminOrSuperAdmin, async (req, res) => {
     try {
       const { id } = req.params;
+      const user = req.user as UserWithBranch;
+      if (!user.branchId) {
+        return res.status(400).json({ message: "User is not assigned to a branch" });
+      }
       const validatedData = insertProductSchema.partial().parse(req.body);
-      const updatedProduct = await storage.updateProduct(id, validatedData);
+      const updatedProduct = await storage.updateProduct(id, validatedData, user.branchId);
       if (!updatedProduct) {
         return res.status(404).json({ message: "Product not found" });
       }

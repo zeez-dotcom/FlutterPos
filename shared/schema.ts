@@ -32,6 +32,7 @@ export const products = pgTable("products", {
   price: decimal("price", { precision: 10, scale: 2 }).notNull(),
   stock: integer("stock").notNull().default(0),
   imageUrl: text("image_url"),
+  branchId: varchar("branch_id").references(() => branches.id).notNull(),
 });
 
 export const transactions = pgTable("transactions", {
@@ -183,6 +184,7 @@ export const insertLaundryServiceSchema = createInsertSchema(laundryServices).om
 
 export const insertProductSchema = createInsertSchema(products).omit({
   id: true,
+  branchId: true,
 });
 
 export const insertCustomerSchema = createInsertSchema(customers).omit({
