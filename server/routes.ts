@@ -563,10 +563,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const validatedData = insertLaundryServiceSchema.parse(req.body);
       const userId = (req.user as UserWithBranch).id;
+      const category = await storage.getCategory(validatedData.categoryId, userId);
+      if (!category || category.type !== "service") {
+        return res.status(400).json({ message: "Invalid category" });
+      }
       const newService = await storage.createLaundryService({ ...validatedData, userId });
       res.json(newService);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error creating laundry service:", error);
+      if (error?.code === "23503") {
+        return res.status(400).json({ message: "Invalid category" });
+      }
       res.status(500).json({ message: "Failed to create laundry service" });
     }
   });
