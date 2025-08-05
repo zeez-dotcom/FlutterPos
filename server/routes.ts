@@ -274,6 +274,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
               r["Urgent Wash & Iron"] !== undefined
                 ? Number(r["Urgent Wash & Iron"])
                 : undefined,
+            imageUrl: r["Picture Link"]
+              ? String(r["Picture Link"]).trim()
+              : undefined,
           }))
           .filter((r) => r.itemEn);
 

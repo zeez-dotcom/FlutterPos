@@ -10,6 +10,7 @@ export function generateCatalogTemplate(): Buffer {
     "Urgent Iron",
     "Urgent Wash",
     "Urgent Wash & Iron",
+    "Picture Link",
   ];
 
   const exampleRow = [
@@ -21,6 +22,7 @@ export function generateCatalogTemplate(): Buffer {
     8,
     12,
     18,
+    "https://example.com/image.jpg",
   ];
 
   const wb = XLSX.utils.book_new();

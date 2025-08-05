@@ -37,6 +37,7 @@ export interface ParsedRow {
   urgentIron?: number;
   urgentWash?: number;
   urgentWashIron?: number;
+  imageUrl?: string;
 }
 
 export interface IStorage {
@@ -1025,12 +1026,13 @@ export class DatabaseStorage implements IStorage {
           if (existingItem) {
             await tx
               .update(clothingItems)
-              .set({ nameAr: row.itemAr })
+              .set({ nameAr: row.itemAr, imageUrl: row.imageUrl })
               .where(eq(clothingItems.id, existingItem.id));
           } else {
             await tx.insert(clothingItems).values({
               name: row.itemEn,
               nameAr: row.itemAr,
+              imageUrl: row.imageUrl,
               categoryId: clothingCategoryId,
               userId: user.id,
             });
