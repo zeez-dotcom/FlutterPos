@@ -21,7 +21,11 @@ import { randomUUID } from "crypto";
 import { db } from "./db";
 import { eq, sql, and, inArray } from "drizzle-orm";
 import bcrypt from "bcryptjs";
-import { CATEGORY_SEEDS } from "./seed-data";
+import {
+  CATEGORY_SEEDS,
+  mapClothingItemSeeds,
+  mapLaundryServiceSeeds,
+} from "./seed-data";
 import { PRICE_MATRIX } from "./seed-prices";
 
 const PAY_LATER_AGGREGATE = `
@@ -669,8 +673,6 @@ export class DatabaseStorage implements IStorage {
   }
 
   private async initializeUserCatalog(userId: string): Promise<void> {
-    const clothingCategory = CATEGORY_SEEDS.find((c) => c.type === "clothing")!;
-
     await db.transaction(async (tx) => {
       const allCategories = CATEGORY_SEEDS.map((c) => ({ ...c, userId }));
       await tx.insert(categories).values(allCategories).onConflictDoNothing();
@@ -688,33 +690,21 @@ export class DatabaseStorage implements IStorage {
           ),
         );
       const categoryMap = Object.fromEntries(categoryRows.map((c) => [c.name, c.id]));
-      const clothingCategoryId = categoryMap[clothingCategory.name];
 
+      const clothingSeeds = mapClothingItemSeeds(categoryMap).map((i) => ({
+        ...i,
+        userId,
+      }));
       await tx
         .insert(clothingItems)
-        .values(
-          PRICE_MATRIX.map(
-            (i) => ({
-              name: i.name,
-              nameAr: i.nameAr,
-              categoryId: clothingCategoryId,
-              userId,
-            }),
-          ) as (InsertClothingItem & { userId: string })[],
-        )
+        .values(clothingSeeds as (InsertClothingItem & { userId: string })[])
         .onConflictDoNothing();
 
-      const serviceRows = CATEGORY_SEEDS.filter((c) => c.type === "service").map(
-        (s) => ({
-          name: s.name,
-          nameAr: s.nameAr,
-          price: "0.00",
-          categoryId: categoryMap[s.name],
-          userId,
-        }),
-      );
-
-      await tx.insert(laundryServices).values(serviceRows).onConflictDoNothing();
+      const serviceSeeds = mapLaundryServiceSeeds(categoryMap).map((s) => ({
+        ...s,
+        userId,
+      }));
+      await tx.insert(laundryServices).values(serviceSeeds).onConflictDoNothing();
 
       const clothingRows = await tx
         .select()
