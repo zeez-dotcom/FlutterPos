@@ -463,6 +463,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!category) {
         return res.status(400).json({ message: "Invalid category" });
       }
+      if (category.type !== 'item') {
+        return res.status(400).json({ message: "Invalid category type" });
+      }
       const newItem = await storage.createClothingItem({ ...validatedData, userId });
       res.json(newItem);
     } catch (error: any) {
