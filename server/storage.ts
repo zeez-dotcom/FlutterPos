@@ -18,6 +18,7 @@ import { randomUUID } from "crypto";
 import { db } from "./db";
 import { eq, sql, and, inArray } from "drizzle-orm";
 import bcrypt from "bcryptjs";
+import { CATEGORY_SEEDS, CLOTHING_ITEM_SEEDS } from "./seed-data";
 
 const PAY_LATER_AGGREGATE = `
   SELECT order_id, SUM(amount::numeric) AS amount
@@ -561,29 +562,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   private async initializeUserCatalog(userId: string): Promise<void> {
-    const serviceCategories: (InsertCategory & { userId: string })[] = [
-      { name: "Normal Iron", nameAr: "كي عادي", type: "service", isActive: true, userId },
-      { name: "Normal Wash", nameAr: "غسيل عادي", type: "service", isActive: true, userId },
-      { name: "Normal Wash & Iron", nameAr: "غسيل وكي عادي", type: "service", isActive: true, userId },
-      { name: "Urgent Iron", nameAr: "كي مستعجل", type: "service", isActive: true, userId },
-      { name: "Urgent Wash", nameAr: "غسيل مستعجل", type: "service", isActive: true, userId },
-      { name: "Urgent Wash & Iron", nameAr: "غسيل وكي مستعجل", type: "service", isActive: true, userId },
-    ];
-
-    const clothingCategory: InsertCategory & { userId: string } = {
-      name: "Clothing Items",
-      nameAr: "ملابس",
-      type: "clothing",
-      isActive: true,
-      userId,
-    };
-
-    const clothingItemsData = [
-      { name: "Thobe", nameAr: "ثوب" },
-      { name: "Shirt", nameAr: "قميص" },
-      { name: "T-Shirt", nameAr: "تيشيرت" },
-      { name: "Trouser", nameAr: "بنطال" },
-    ];
+    const clothingCategory = CATEGORY_SEEDS.find((c) => c.type === "clothing")!;
 
     const priceMatrix: Record<string, Record<string, number>> = {
       "Normal Iron": { Thobe: 4, Shirt: 2, "T-Shirt": 1.5, Trouser: 2.5 },
@@ -595,7 +574,7 @@ export class DatabaseStorage implements IStorage {
     };
 
     await db.transaction(async (tx) => {
-      const allCategories = [...serviceCategories, clothingCategory];
+      const allCategories = CATEGORY_SEEDS.map((c) => ({ ...c, userId }));
       await tx.insert(categories).values(allCategories).onConflictDoNothing();
 
       const categoryRows = await tx
@@ -604,7 +583,10 @@ export class DatabaseStorage implements IStorage {
         .where(
           and(
             eq(categories.userId, userId),
-            inArray(categories.name, allCategories.map((c) => c.name)),
+            inArray(
+              categories.name,
+              CATEGORY_SEEDS.map((c) => c.name),
+            ),
           ),
         );
       const categoryMap = Object.fromEntries(categoryRows.map((c) => [c.name, c.id]));
@@ -613,7 +595,7 @@ export class DatabaseStorage implements IStorage {
       await tx
         .insert(clothingItems)
         .values(
-          clothingItemsData.map(
+          CLOTHING_ITEM_SEEDS.map(
             (i) => ({ ...i, categoryId: clothingCategoryId, userId }),
           ) as (InsertClothingItem & { userId: string })[],
         )
@@ -623,7 +605,9 @@ export class DatabaseStorage implements IStorage {
       for (const [serviceName, items] of Object.entries(priceMatrix)) {
         const categoryId = categoryMap[serviceName];
         for (const [itemName, price] of Object.entries(items)) {
-          const itemAr = clothingItemsData.find((ci) => ci.name === itemName)?.nameAr;
+          const itemAr = CLOTHING_ITEM_SEEDS.find(
+            (ci) => ci.name === itemName,
+          )?.nameAr;
           laundryRows.push({
             name: itemName,
             nameAr: itemAr,
