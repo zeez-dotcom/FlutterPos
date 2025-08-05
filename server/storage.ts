@@ -667,17 +667,19 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createCategory(categoryData: InsertCategory): Promise<Category> {
+    const { name, nameAr, type, description, isActive } = categoryData;
     const [category] = await db
       .insert(categories)
-      .values(categoryData)
+      .values({ name, nameAr, type, description, isActive })
       .returning();
     return category;
   }
 
   async updateCategory(id: string, categoryData: Partial<InsertCategory>): Promise<Category | undefined> {
+    const { name, nameAr, type, description, isActive } = categoryData;
     const [updated] = await db
       .update(categories)
-      .set({ ...categoryData, updatedAt: new Date() })
+      .set({ name, nameAr, type, description, isActive, updatedAt: new Date() })
       .where(eq(categories.id, id))
       .returning();
     return updated || undefined;

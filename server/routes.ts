@@ -164,8 +164,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/categories", requireAdminOrSuperAdmin, async (req, res) => {
     try {
-      const validatedData = insertCategorySchema.parse(req.body);
-      const newCategory = await storage.createCategory(validatedData);
+      const { name, nameAr, type, description, isActive } = insertCategorySchema.parse(req.body);
+      const newCategory = await storage.createCategory({ name, nameAr, type, description, isActive });
       res.json(newCategory);
     } catch (error) {
       console.error("Error creating category:", error);
@@ -176,8 +176,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/categories/:id", requireAdminOrSuperAdmin, async (req, res) => {
     try {
       const { id } = req.params;
-      const validatedData = insertCategorySchema.parse(req.body);
-      const updatedCategory = await storage.updateCategory(id, validatedData);
+      const { name, nameAr, type, description, isActive } = insertCategorySchema.parse(req.body);
+      const updatedCategory = await storage.updateCategory(id, { name, nameAr, type, description, isActive });
       if (!updatedCategory) {
         return res.status(404).json({ message: "Category not found" });
       }

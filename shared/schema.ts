@@ -75,6 +75,7 @@ export const users = pgTable("users", {
 export const categories = pgTable("categories", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   name: text("name").notNull().unique(),
+  nameAr: text("name_ar"),
   type: text("type").notNull(), // 'clothing' or 'service'
   description: text("description"),
   isActive: boolean("is_active").default(true).notNull(),
