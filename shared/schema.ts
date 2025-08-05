@@ -8,7 +8,7 @@ export const clothingItems = pgTable("clothing_items", {
   name: text("name").notNull(),
   nameAr: text("name_ar"),
   description: text("description"),
-  category: text("category").notNull(),
+  categoryId: varchar("category_id").references(() => categories.id).notNull(),
   imageUrl: text("image_url"),
 });
 
@@ -18,7 +18,7 @@ export const laundryServices = pgTable("laundry_services", {
   nameAr: text("name_ar"),
   description: text("description"),
   price: decimal("price", { precision: 10, scale: 2 }).notNull(),
-  category: text("category").notNull(),
+  categoryId: varchar("category_id").references(() => categories.id).notNull(),
 });
 
 export const products = pgTable("products", {
@@ -26,7 +26,7 @@ export const products = pgTable("products", {
   name: text("name").notNull(),
   nameAr: text("name_ar"),
   description: text("description"),
-  category: text("category"),
+  categoryId: varchar("category_id").references(() => categories.id),
   price: decimal("price", { precision: 10, scale: 2 }).notNull(),
   stock: integer("stock").notNull().default(0),
   imageUrl: text("image_url"),

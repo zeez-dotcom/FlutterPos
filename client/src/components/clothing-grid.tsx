@@ -32,9 +32,9 @@ export function ClothingGrid({ onSelectClothing }: ClothingGridProps) {
     queryKey: ["/api/clothing-items", selectedCategory, searchQuery],
     queryFn: async () => {
       const params = new URLSearchParams();
-      if (selectedCategory !== "all") params.append("category", selectedCategory);
+      if (selectedCategory !== "all") params.append("categoryId", selectedCategory);
       if (searchQuery) params.append("search", searchQuery);
-      
+
       const response = await fetch(`/api/clothing-items?${params}`);
       if (!response.ok) throw new Error("Failed to fetch clothing items");
       return response.json();
@@ -110,7 +110,7 @@ export function ClothingGrid({ onSelectClothing }: ClothingGridProps) {
                   )}
                   <div className="text-center">
                     <span className="text-sm text-gray-500 capitalize">
-                      {item.category}
+                      {item.categoryId}
                     </span>
                   </div>
                 </CardContent>

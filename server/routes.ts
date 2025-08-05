@@ -275,11 +275,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Products route
   app.get("/api/products", async (req, res) => {
     try {
-      const category = req.query.category as string;
+      const categoryId = req.query.categoryId as string;
       const search = req.query.search as string;
 
-      let items = category
-        ? await storage.getProductsByCategory(category)
+      let items = categoryId
+        ? await storage.getProductsByCategory(categoryId)
         : await storage.getProducts();
 
       if (search) {
@@ -298,11 +298,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Clothing Items routes
   app.get("/api/clothing-items", async (req, res) => {
     try {
-      const category = req.query.category as string;
+      const categoryId = req.query.categoryId as string;
       const search = req.query.search as string;
-      
-      let items = category 
-        ? await storage.getClothingItemsByCategory(category)
+
+      let items = categoryId
+        ? await storage.getClothingItemsByCategory(categoryId)
         : await storage.getClothingItems();
       
       if (search) {
@@ -360,11 +360,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Laundry Services routes
   app.get("/api/laundry-services", async (req, res) => {
     try {
-      const category = req.query.category as string;
+      const categoryId = req.query.categoryId as string;
       const search = req.query.search as string;
-      
-      let services = category 
-        ? await storage.getLaundryServicesByCategory(category)
+
+      let services = categoryId
+        ? await storage.getLaundryServicesByCategory(categoryId)
         : await storage.getLaundryServices();
       
       if (search) {

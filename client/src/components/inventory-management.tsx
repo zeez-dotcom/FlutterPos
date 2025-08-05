@@ -52,7 +52,7 @@ export function InventoryManagement() {
       name: "",
       nameAr: "",
       description: "",
-      category: "",
+      categoryId: "",
       imageUrl: ""
     }
   });
@@ -64,7 +64,7 @@ export function InventoryManagement() {
       nameAr: "",
       description: "",
       price: "",
-      category: ""
+      categoryId: ""
     }
   });
 
@@ -146,7 +146,7 @@ export function InventoryManagement() {
       name: item.name,
       nameAr: item.nameAr || "",
       description: item.description || "",
-      category: item.category,
+      categoryId: item.categoryId,
       imageUrl: item.imageUrl || ""
     });
     setIsClothingModalOpen(true);
@@ -159,7 +159,7 @@ export function InventoryManagement() {
       nameAr: service.nameAr || "",
       description: service.description || "",
       price: service.price,
-      category: service.category
+      categoryId: service.categoryId
     });
     setIsServiceModalOpen(true);
   };
@@ -168,13 +168,13 @@ export function InventoryManagement() {
   const filteredClothing = clothingItems.filter(item =>
     item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     item.nameAr?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    item.category.toLowerCase().includes(searchQuery.toLowerCase())
+    item.categoryId.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const filteredServices = services.filter(service =>
     service.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     service.nameAr?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    service.category.toLowerCase().includes(searchQuery.toLowerCase())
+    service.categoryId.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
@@ -259,7 +259,7 @@ export function InventoryManagement() {
                       />
                       <FormField
                         control={clothingForm.control}
-                        name="category"
+                        name="categoryId"
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Category</FormLabel>
@@ -310,8 +310,8 @@ export function InventoryManagement() {
                       <div className="flex-1">
                         <h3 className="font-semibold text-gray-900 mb-1">{language === 'ar' && item.nameAr ? item.nameAr : item.name}</h3>
                         <p className="text-sm text-gray-600 mb-2">{item.description}</p>
-                        <span className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded capitalize">
-                          {item.category}
+                          <span className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded capitalize">
+                          {item.categoryId}
                         </span>
                       </div>
                       <div className="flex space-x-1">
@@ -398,7 +398,7 @@ export function InventoryManagement() {
                       />
                       <FormField
                         control={serviceForm.control}
-                        name="category"
+                        name="categoryId"
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Category</FormLabel>
@@ -440,7 +440,7 @@ export function InventoryManagement() {
                             ${parseFloat(service.price).toFixed(2)}
                           </span>
                           <span className="inline-block bg-green-100 text-green-800 text-xs px-2 py-1 rounded capitalize">
-                            {service.category}
+                            {service.categoryId}
                           </span>
                         </div>
                       </div>
