@@ -18,7 +18,8 @@ import { randomUUID } from "crypto";
 import { db } from "./db";
 import { eq, sql, and, inArray } from "drizzle-orm";
 import bcrypt from "bcryptjs";
-import { CATEGORY_SEEDS, CLOTHING_ITEM_SEEDS } from "./seed-data";
+import { CATEGORY_SEEDS } from "./seed-data";
+import { PRICE_MATRIX } from "./seed-prices";
 
 const PAY_LATER_AGGREGATE = `
   SELECT order_id, SUM(amount::numeric) AS amount
@@ -564,15 +565,6 @@ export class DatabaseStorage implements IStorage {
   private async initializeUserCatalog(userId: string): Promise<void> {
     const clothingCategory = CATEGORY_SEEDS.find((c) => c.type === "clothing")!;
 
-    const priceMatrix: Record<string, Record<string, number>> = {
-      "Normal Iron": { Thobe: 4, Shirt: 2, "T-Shirt": 1.5, Trouser: 2.5 },
-      "Normal Wash": { Thobe: 5, Shirt: 3, "T-Shirt": 2.5, Trouser: 3.5 },
-      "Normal Wash & Iron": { Thobe: 7, Shirt: 4, "T-Shirt": 3.5, Trouser: 4.5 },
-      "Urgent Iron": { Thobe: 6, Shirt: 3.5, "T-Shirt": 3, Trouser: 4 },
-      "Urgent Wash": { Thobe: 7, Shirt: 4.5, "T-Shirt": 4, Trouser: 5 },
-      "Urgent Wash & Iron": { Thobe: 9, Shirt: 5.5, "T-Shirt": 5, Trouser: 6 },
-    };
-
     await db.transaction(async (tx) => {
       const allCategories = CATEGORY_SEEDS.map((c) => ({ ...c, userId }));
       await tx.insert(categories).values(allCategories).onConflictDoNothing();
@@ -595,23 +587,25 @@ export class DatabaseStorage implements IStorage {
       await tx
         .insert(clothingItems)
         .values(
-          CLOTHING_ITEM_SEEDS.map(
-            (i) => ({ ...i, categoryId: clothingCategoryId, userId }),
+          PRICE_MATRIX.map(
+            (i) => ({
+              name: i.name,
+              nameAr: i.nameAr,
+              categoryId: clothingCategoryId,
+              userId,
+            }),
           ) as (InsertClothingItem & { userId: string })[],
         )
         .onConflictDoNothing();
 
       const laundryRows: (InsertLaundryService & { userId: string })[] = [];
-      for (const [serviceName, items] of Object.entries(priceMatrix)) {
-        const categoryId = categoryMap[serviceName];
-        for (const [itemName, price] of Object.entries(items)) {
-          const itemAr = CLOTHING_ITEM_SEEDS.find(
-            (ci) => ci.name === itemName,
-          )?.nameAr;
+      for (const item of PRICE_MATRIX) {
+        for (const [serviceName, price] of Object.entries(item.prices)) {
+          const categoryId = categoryMap[serviceName];
           laundryRows.push({
-            name: itemName,
-            nameAr: itemAr,
-            price: price.toString(),
+            name: item.name,
+            nameAr: item.nameAr,
+            price: price.toFixed(2),
             categoryId,
             userId,
           });
