@@ -598,19 +598,15 @@ export class DatabaseStorage implements IStorage {
         )
         .onConflictDoNothing();
 
-      const laundryRows: (InsertLaundryService & { userId: string })[] = [];
-      for (const item of PRICE_MATRIX) {
-        for (const [serviceName, price] of Object.entries(item.prices)) {
-          const categoryId = categoryMap[serviceName];
-          laundryRows.push({
-            name: item.name,
-            nameAr: item.nameAr,
-            price: price.toFixed(2),
-            categoryId,
-            userId,
-          });
-        }
-      }
+      const laundryRows = PRICE_MATRIX.flatMap((item) =>
+        Object.entries(item.prices).map(([serviceName, price]) => ({
+          name: item.name,
+          nameAr: item.nameAr,
+          price: price.toFixed(2),
+          categoryId: categoryMap[serviceName],
+          userId,
+        })),
+      );
 
       await tx.insert(laundryServices).values(laundryRows).onConflictDoNothing();
     });
