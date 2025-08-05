@@ -8,6 +8,7 @@ import type { UserWithBranch } from "@shared/schema";
 import nodemailer from "nodemailer";
 import multer from "multer";
 import * as XLSX from "xlsx";
+import { generateCatalogTemplate } from "./utils/excel";
 
 const upload = multer();
 
@@ -225,21 +226,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.get("/api/catalog/bulk-template", requireSuperAdmin, (_req, res) => {
-    const headers = [
-      "Item (English)",
-      "Item (Arabic)",
-      "Normal Iron",
-      "Normal Wash",
-      "Normal Wash & Iron",
-      "Urgent Iron",
-      "Urgent Wash",
-      "Urgent Wash & Iron",
-    ];
-    const wb = XLSX.utils.book_new();
-    const ws = XLSX.utils.aoa_to_sheet([headers]);
-    XLSX.utils.book_append_sheet(wb, ws, "Template");
-    const buf = XLSX.write(wb, { type: "buffer", bookType: "xlsx" });
-    res.setHeader("Content-Disposition", "attachment; filename=catalog_template.xlsx");
+    const buf = generateCatalogTemplate();
+    res.setHeader(
+      "Content-Disposition",
+      "attachment; filename=catalog_template.xlsx",
+    );
     res.setHeader(
       "Content-Type",
       "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
