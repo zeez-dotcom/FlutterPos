@@ -16,7 +16,7 @@ import {
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { db } from "./db";
-import { eq, sql, and } from "drizzle-orm";
+import { eq, sql, and, inArray } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 
 const PAY_LATER_AGGREGATE = `
@@ -557,6 +557,75 @@ export class DatabaseStorage implements IStorage {
     return { ...result.user, branch: result.branch };
   }
 
+  private async initializeUserCatalog(userId: string): Promise<void> {
+    const serviceCategories: InsertCategory[] = [
+      { name: "Normal Iron", nameAr: "كي عادي", type: "service", isActive: true },
+      { name: "Normal Wash", nameAr: "غسيل عادي", type: "service", isActive: true },
+      { name: "Normal Wash & Iron", nameAr: "غسيل وكي عادي", type: "service", isActive: true },
+      { name: "Urgent Iron", nameAr: "كي مستعجل", type: "service", isActive: true },
+      { name: "Urgent Wash", nameAr: "غسيل مستعجل", type: "service", isActive: true },
+      { name: "Urgent Wash & Iron", nameAr: "غسيل وكي مستعجل", type: "service", isActive: true },
+    ];
+
+    const clothingCategory: InsertCategory = {
+      name: "Clothing Items",
+      nameAr: "ملابس",
+      type: "clothing",
+      isActive: true,
+    };
+
+    const clothingItemsData = [
+      { name: "Thobe", nameAr: "ثوب" },
+      { name: "Shirt", nameAr: "قميص" },
+      { name: "T-Shirt", nameAr: "تيشيرت" },
+      { name: "Trouser", nameAr: "بنطال" },
+    ];
+
+    const priceMatrix: Record<string, Record<string, number>> = {
+      "Normal Iron": { Thobe: 4, Shirt: 2, "T-Shirt": 1.5, Trouser: 2.5 },
+      "Normal Wash": { Thobe: 5, Shirt: 3, "T-Shirt": 2.5, Trouser: 3.5 },
+      "Normal Wash & Iron": { Thobe: 7, Shirt: 4, "T-Shirt": 3.5, Trouser: 4.5 },
+      "Urgent Iron": { Thobe: 6, Shirt: 3.5, "T-Shirt": 3, Trouser: 4 },
+      "Urgent Wash": { Thobe: 7, Shirt: 4.5, "T-Shirt": 4, Trouser: 5 },
+      "Urgent Wash & Iron": { Thobe: 9, Shirt: 5.5, "T-Shirt": 5, Trouser: 6 },
+    };
+
+    await db.transaction(async (tx) => {
+      const allCategories = [...serviceCategories, clothingCategory];
+      await tx.insert(categories).values(allCategories).onConflictDoNothing();
+
+      const categoryRows = await tx
+        .select()
+        .from(categories)
+        .where(inArray(categories.name, allCategories.map((c) => c.name)));
+      const categoryMap = Object.fromEntries(categoryRows.map((c) => [c.name, c.id]));
+      const clothingCategoryId = categoryMap[clothingCategory.name];
+
+      await tx
+        .insert(clothingItems)
+        .values(
+          clothingItemsData.map((i) => ({ ...i, categoryId: clothingCategoryId })) as InsertClothingItem[],
+        )
+        .onConflictDoNothing();
+
+      const laundryRows: InsertLaundryService[] = [];
+      for (const [serviceName, items] of Object.entries(priceMatrix)) {
+        const categoryId = categoryMap[serviceName];
+        for (const [itemName, price] of Object.entries(items)) {
+          const itemAr = clothingItemsData.find((ci) => ci.name === itemName)?.nameAr;
+          laundryRows.push({
+            name: itemName,
+            nameAr: itemAr,
+            price: price.toString(),
+            categoryId,
+          });
+        }
+      }
+
+      await tx.insert(laundryServices).values(laundryRows).onConflictDoNothing();
+    });
+  }
+
   async createUser(userData: InsertUser): Promise<UserWithBranch> {
     const saltRounds = 10;
     const hashedPassword = await bcrypt.hash(userData.passwordHash, saltRounds);
@@ -568,6 +637,7 @@ export class DatabaseStorage implements IStorage {
         passwordHash: hashedPassword,
       })
       .returning();
+    await this.initializeUserCatalog(user.id);
     return (await this.getUser(user.id))!;
   }
 
