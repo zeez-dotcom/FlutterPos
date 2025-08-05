@@ -41,12 +41,12 @@ export interface IStorage {
   getUsers(): Promise<UserWithBranch[]>;
   
   // Category operations
-  getCategories(): Promise<Category[]>;
-  getCategoriesByType(type: string): Promise<Category[]>;
-  getCategory(id: string): Promise<Category | undefined>;
-  createCategory(category: InsertCategory): Promise<Category>;
-  updateCategory(id: string, category: Partial<InsertCategory>): Promise<Category | undefined>;
-  deleteCategory(id: string): Promise<boolean>;
+  getCategories(userId: string): Promise<Category[]>;
+  getCategoriesByType(type: string, userId: string): Promise<Category[]>;
+  getCategory(id: string, userId: string): Promise<Category | undefined>;
+  createCategory(category: InsertCategory & { userId: string }): Promise<Category>;
+  updateCategory(id: string, category: Partial<InsertCategory>, userId: string): Promise<Category | undefined>;
+  deleteCategory(id: string, userId: string): Promise<boolean>;
 
   // Branch operations
   getBranches(): Promise<Branch[]>;
@@ -63,20 +63,20 @@ export interface IStorage {
   updateProduct(id: string, product: Partial<InsertProduct>): Promise<Product | undefined>;
 
   // Clothing Items
-  getClothingItems(): Promise<ClothingItem[]>;
-  getClothingItemsByCategory(categoryId: string): Promise<ClothingItem[]>;
-  getClothingItem(id: string): Promise<ClothingItem | undefined>;
-  createClothingItem(item: InsertClothingItem): Promise<ClothingItem>;
-  updateClothingItem(id: string, item: Partial<InsertClothingItem>): Promise<ClothingItem | undefined>;
-  deleteClothingItem(id: string): Promise<boolean>;
+  getClothingItems(userId: string): Promise<ClothingItem[]>;
+  getClothingItemsByCategory(categoryId: string, userId: string): Promise<ClothingItem[]>;
+  getClothingItem(id: string, userId: string): Promise<ClothingItem | undefined>;
+  createClothingItem(item: InsertClothingItem & { userId: string }): Promise<ClothingItem>;
+  updateClothingItem(id: string, item: Partial<InsertClothingItem>, userId: string): Promise<ClothingItem | undefined>;
+  deleteClothingItem(id: string, userId: string): Promise<boolean>;
 
   // Laundry Services
-  getLaundryServices(): Promise<LaundryService[]>;
-  getLaundryServicesByCategory(categoryId: string): Promise<LaundryService[]>;
-  getLaundryService(id: string): Promise<LaundryService | undefined>;
-  createLaundryService(service: InsertLaundryService): Promise<LaundryService>;
-  updateLaundryService(id: string, service: Partial<InsertLaundryService>): Promise<LaundryService | undefined>;
-  deleteLaundryService(id: string): Promise<boolean>;
+  getLaundryServices(userId: string): Promise<LaundryService[]>;
+  getLaundryServicesByCategory(categoryId: string, userId: string): Promise<LaundryService[]>;
+  getLaundryService(id: string, userId: string): Promise<LaundryService | undefined>;
+  createLaundryService(service: InsertLaundryService & { userId: string }): Promise<LaundryService>;
+  updateLaundryService(id: string, service: Partial<InsertLaundryService>, userId: string): Promise<LaundryService | undefined>;
+  deleteLaundryService(id: string, userId: string): Promise<boolean>;
   
   // Transactions
   createTransaction(transaction: InsertTransaction & { branchId: string }): Promise<Transaction>;
@@ -289,12 +289,13 @@ export class MemStorage {
       }
     ];
 
+    const defaultUser = "mem-user";
     initialClothingItems.forEach(item => {
-      this.createClothingItem(item);
+      this.createClothingItem({ ...item, userId: defaultUser });
     });
 
     initialLaundryServices.forEach(service => {
-      this.createLaundryService(service);
+      this.createLaundryService({ ...service, userId: defaultUser });
     });
   }
 
@@ -364,7 +365,7 @@ export class MemStorage {
     return this.clothingItems.get(id);
   }
 
-  async createClothingItem(item: InsertClothingItem): Promise<ClothingItem> {
+  async createClothingItem(item: InsertClothingItem & { userId: string }): Promise<ClothingItem> {
     const id = randomUUID();
     const newItem: ClothingItem = {
       id,
@@ -372,7 +373,8 @@ export class MemStorage {
       nameAr: item.nameAr || null,
       description: item.description || null,
       categoryId: item.categoryId,
-      imageUrl: item.imageUrl || null
+      imageUrl: item.imageUrl || null,
+      userId: item.userId,
     };
     this.clothingItems.set(id, newItem);
     return newItem;
@@ -414,7 +416,7 @@ export class MemStorage {
     return this.laundryServices.get(id);
   }
 
-  async createLaundryService(service: InsertLaundryService): Promise<LaundryService> {
+  async createLaundryService(service: InsertLaundryService & { userId: string }): Promise<LaundryService> {
     const id = randomUUID();
     const newService: LaundryService = {
       id,
@@ -422,7 +424,8 @@ export class MemStorage {
       nameAr: service.nameAr || null,
       description: service.description || null,
       price: service.price,
-      categoryId: service.categoryId
+      categoryId: service.categoryId,
+      userId: service.userId,
     };
     this.laundryServices.set(id, newService);
     return newService;
@@ -558,20 +561,21 @@ export class DatabaseStorage implements IStorage {
   }
 
   private async initializeUserCatalog(userId: string): Promise<void> {
-    const serviceCategories: InsertCategory[] = [
-      { name: "Normal Iron", nameAr: "كي عادي", type: "service", isActive: true },
-      { name: "Normal Wash", nameAr: "غسيل عادي", type: "service", isActive: true },
-      { name: "Normal Wash & Iron", nameAr: "غسيل وكي عادي", type: "service", isActive: true },
-      { name: "Urgent Iron", nameAr: "كي مستعجل", type: "service", isActive: true },
-      { name: "Urgent Wash", nameAr: "غسيل مستعجل", type: "service", isActive: true },
-      { name: "Urgent Wash & Iron", nameAr: "غسيل وكي مستعجل", type: "service", isActive: true },
+    const serviceCategories: (InsertCategory & { userId: string })[] = [
+      { name: "Normal Iron", nameAr: "كي عادي", type: "service", isActive: true, userId },
+      { name: "Normal Wash", nameAr: "غسيل عادي", type: "service", isActive: true, userId },
+      { name: "Normal Wash & Iron", nameAr: "غسيل وكي عادي", type: "service", isActive: true, userId },
+      { name: "Urgent Iron", nameAr: "كي مستعجل", type: "service", isActive: true, userId },
+      { name: "Urgent Wash", nameAr: "غسيل مستعجل", type: "service", isActive: true, userId },
+      { name: "Urgent Wash & Iron", nameAr: "غسيل وكي مستعجل", type: "service", isActive: true, userId },
     ];
 
-    const clothingCategory: InsertCategory = {
+    const clothingCategory: InsertCategory & { userId: string } = {
       name: "Clothing Items",
       nameAr: "ملابس",
       type: "clothing",
       isActive: true,
+      userId,
     };
 
     const clothingItemsData = [
@@ -597,18 +601,25 @@ export class DatabaseStorage implements IStorage {
       const categoryRows = await tx
         .select()
         .from(categories)
-        .where(inArray(categories.name, allCategories.map((c) => c.name)));
+        .where(
+          and(
+            eq(categories.userId, userId),
+            inArray(categories.name, allCategories.map((c) => c.name)),
+          ),
+        );
       const categoryMap = Object.fromEntries(categoryRows.map((c) => [c.name, c.id]));
       const clothingCategoryId = categoryMap[clothingCategory.name];
 
       await tx
         .insert(clothingItems)
         .values(
-          clothingItemsData.map((i) => ({ ...i, categoryId: clothingCategoryId })) as InsertClothingItem[],
+          clothingItemsData.map(
+            (i) => ({ ...i, categoryId: clothingCategoryId, userId }),
+          ) as (InsertClothingItem & { userId: string })[],
         )
         .onConflictDoNothing();
 
-      const laundryRows: InsertLaundryService[] = [];
+      const laundryRows: (InsertLaundryService & { userId: string })[] = [];
       for (const [serviceName, items] of Object.entries(priceMatrix)) {
         const categoryId = categoryMap[serviceName];
         for (const [itemName, price] of Object.entries(items)) {
@@ -618,6 +629,7 @@ export class DatabaseStorage implements IStorage {
             nameAr: itemAr,
             price: price.toString(),
             categoryId,
+            userId,
           });
         }
       }
@@ -723,40 +735,52 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Category methods
-  async getCategories(): Promise<Category[]> {
-    return await db.select().from(categories);
+  async getCategories(userId: string): Promise<Category[]> {
+    return await db.select().from(categories).where(eq(categories.userId, userId));
   }
 
-  async getCategoriesByType(type: string): Promise<Category[]> {
-    return await db.select().from(categories).where(eq(categories.type, type));
+  async getCategoriesByType(type: string, userId: string): Promise<Category[]> {
+    return await db
+      .select()
+      .from(categories)
+      .where(and(eq(categories.type, type), eq(categories.userId, userId)));
   }
 
-  async getCategory(id: string): Promise<Category | undefined> {
-    const [category] = await db.select().from(categories).where(eq(categories.id, id));
+  async getCategory(id: string, userId: string): Promise<Category | undefined> {
+    const [category] = await db
+      .select()
+      .from(categories)
+      .where(and(eq(categories.id, id), eq(categories.userId, userId)));
     return category || undefined;
   }
 
-  async createCategory(categoryData: InsertCategory): Promise<Category> {
-    const { name, nameAr, type, description, isActive } = categoryData;
+  async createCategory(categoryData: InsertCategory & { userId: string }): Promise<Category> {
+    const { name, nameAr, type, description, isActive, userId } = categoryData;
     const [category] = await db
       .insert(categories)
-      .values({ name, nameAr, type, description, isActive })
+      .values({ name, nameAr, type, description, isActive, userId })
       .returning();
     return category;
   }
 
-  async updateCategory(id: string, categoryData: Partial<InsertCategory>): Promise<Category | undefined> {
+  async updateCategory(
+    id: string,
+    categoryData: Partial<InsertCategory>,
+    userId: string,
+  ): Promise<Category | undefined> {
     const { name, nameAr, type, description, isActive } = categoryData;
     const [updated] = await db
       .update(categories)
       .set({ name, nameAr, type, description, isActive, updatedAt: new Date() })
-      .where(eq(categories.id, id))
+      .where(and(eq(categories.id, id), eq(categories.userId, userId)))
       .returning();
     return updated || undefined;
   }
 
-  async deleteCategory(id: string): Promise<boolean> {
-    const result = await db.delete(categories).where(eq(categories.id, id));
+  async deleteCategory(id: string, userId: string): Promise<boolean> {
+    const result = await db
+      .delete(categories)
+      .where(and(eq(categories.id, id), eq(categories.userId, userId)));
     return result.rowCount ? result.rowCount > 0 : false;
   }
 
@@ -824,80 +848,98 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Clothing Items methods
-  async getClothingItems(): Promise<ClothingItem[]> {
-    return await db.select().from(clothingItems);
+  async getClothingItems(userId: string): Promise<ClothingItem[]> {
+    return await db.select().from(clothingItems).where(eq(clothingItems.userId, userId));
   }
 
-  async getClothingItemsByCategory(categoryId: string): Promise<ClothingItem[]> {
+  async getClothingItemsByCategory(categoryId: string, userId: string): Promise<ClothingItem[]> {
     if (categoryId === "all") {
-      return this.getClothingItems();
+      return this.getClothingItems(userId);
     }
-    return await db.select().from(clothingItems).where(eq(clothingItems.categoryId, categoryId));
+    return await db
+      .select()
+      .from(clothingItems)
+      .where(and(eq(clothingItems.categoryId, categoryId), eq(clothingItems.userId, userId)));
   }
 
-  async getClothingItem(id: string): Promise<ClothingItem | undefined> {
-    const [item] = await db.select().from(clothingItems).where(eq(clothingItems.id, id));
+  async getClothingItem(id: string, userId: string): Promise<ClothingItem | undefined> {
+    const [item] = await db
+      .select()
+      .from(clothingItems)
+      .where(and(eq(clothingItems.id, id), eq(clothingItems.userId, userId)));
     return item || undefined;
   }
 
-  async createClothingItem(item: InsertClothingItem): Promise<ClothingItem> {
-    const [newItem] = await db
-      .insert(clothingItems)
-      .values(item)
-      .returning();
+  async createClothingItem(item: InsertClothingItem & { userId: string }): Promise<ClothingItem> {
+    const [newItem] = await db.insert(clothingItems).values(item).returning();
     return newItem;
   }
 
-  async updateClothingItem(id: string, item: Partial<InsertClothingItem>): Promise<ClothingItem | undefined> {
+  async updateClothingItem(
+    id: string,
+    item: Partial<InsertClothingItem>,
+    userId: string,
+  ): Promise<ClothingItem | undefined> {
     const [updated] = await db
       .update(clothingItems)
       .set(item)
-      .where(eq(clothingItems.id, id))
+      .where(and(eq(clothingItems.id, id), eq(clothingItems.userId, userId)))
       .returning();
     return updated || undefined;
   }
 
-  async deleteClothingItem(id: string): Promise<boolean> {
-    const result = await db.delete(clothingItems).where(eq(clothingItems.id, id));
+  async deleteClothingItem(id: string, userId: string): Promise<boolean> {
+    const result = await db
+      .delete(clothingItems)
+      .where(and(eq(clothingItems.id, id), eq(clothingItems.userId, userId)));
     return result.rowCount ? result.rowCount > 0 : false;
   }
 
   // Laundry Services methods
-  async getLaundryServices(): Promise<LaundryService[]> {
-    return await db.select().from(laundryServices);
+  async getLaundryServices(userId: string): Promise<LaundryService[]> {
+    return await db.select().from(laundryServices).where(eq(laundryServices.userId, userId));
   }
 
-  async getLaundryServicesByCategory(categoryId: string): Promise<LaundryService[]> {
+  async getLaundryServicesByCategory(categoryId: string, userId: string): Promise<LaundryService[]> {
     if (categoryId === "all") {
-      return this.getLaundryServices();
+      return this.getLaundryServices(userId);
     }
-    return await db.select().from(laundryServices).where(eq(laundryServices.categoryId, categoryId));
+    return await db
+      .select()
+      .from(laundryServices)
+      .where(and(eq(laundryServices.categoryId, categoryId), eq(laundryServices.userId, userId)));
   }
 
-  async getLaundryService(id: string): Promise<LaundryService | undefined> {
-    const [service] = await db.select().from(laundryServices).where(eq(laundryServices.id, id));
+  async getLaundryService(id: string, userId: string): Promise<LaundryService | undefined> {
+    const [service] = await db
+      .select()
+      .from(laundryServices)
+      .where(and(eq(laundryServices.id, id), eq(laundryServices.userId, userId)));
     return service || undefined;
   }
 
-  async createLaundryService(service: InsertLaundryService): Promise<LaundryService> {
-    const [newService] = await db
-      .insert(laundryServices)
-      .values(service)
-      .returning();
+  async createLaundryService(service: InsertLaundryService & { userId: string }): Promise<LaundryService> {
+    const [newService] = await db.insert(laundryServices).values(service).returning();
     return newService;
   }
 
-  async updateLaundryService(id: string, service: Partial<InsertLaundryService>): Promise<LaundryService | undefined> {
+  async updateLaundryService(
+    id: string,
+    service: Partial<InsertLaundryService>,
+    userId: string,
+  ): Promise<LaundryService | undefined> {
     const [updated] = await db
       .update(laundryServices)
       .set(service)
-      .where(eq(laundryServices.id, id))
+      .where(and(eq(laundryServices.id, id), eq(laundryServices.userId, userId)))
       .returning();
     return updated || undefined;
   }
 
-  async deleteLaundryService(id: string): Promise<boolean> {
-    const result = await db.delete(laundryServices).where(eq(laundryServices.id, id));
+  async deleteLaundryService(id: string, userId: string): Promise<boolean> {
+    const result = await db
+      .delete(laundryServices)
+      .where(and(eq(laundryServices.id, id), eq(laundryServices.userId, userId)));
     return result.rowCount ? result.rowCount > 0 : false;
   }
 
@@ -1260,16 +1302,6 @@ export class DatabaseStorage implements IStorage {
     const totalRevenue = stats.reduce((acc, r) => acc + r.revenue, 0);
     return { totalOrders, totalRevenue, stats };
   }
-}
-
-export async function seedInitialCategories(): Promise<void> {
-  await db
-    .insert(categories)
-    .values([
-      { name: "pants", type: "clothing", description: "Pants", isActive: true },
-      { name: "shirts", type: "clothing", description: "Shirts", isActive: true },
-    ])
-    .onConflictDoNothing();
 }
 
 export const storage = new DatabaseStorage();

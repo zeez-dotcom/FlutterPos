@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, decimal, integer, timestamp, jsonb, boolean, index } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, decimal, integer, timestamp, jsonb, boolean, index, unique } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -10,6 +10,7 @@ export const clothingItems = pgTable("clothing_items", {
   description: text("description"),
   categoryId: varchar("category_id").references(() => categories.id).notNull(),
   imageUrl: text("image_url"),
+  userId: varchar("user_id").references(() => users.id).notNull(),
 });
 
 export const laundryServices = pgTable("laundry_services", {
@@ -19,6 +20,7 @@ export const laundryServices = pgTable("laundry_services", {
   description: text("description"),
   price: decimal("price", { precision: 10, scale: 2 }).notNull(),
   categoryId: varchar("category_id").references(() => categories.id).notNull(),
+  userId: varchar("user_id").references(() => users.id).notNull(),
 });
 
 export const products = pgTable("products", {
@@ -74,14 +76,17 @@ export const users = pgTable("users", {
 // Categories table for organizing clothing items and services
 export const categories = pgTable("categories", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  name: text("name").notNull().unique(),
+  name: text("name").notNull(),
   nameAr: text("name_ar"),
   type: text("type").notNull(), // 'clothing' or 'service'
   description: text("description"),
   isActive: boolean("is_active").default(true).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
+  userId: varchar("user_id").references(() => users.id).notNull(),
+}, (table) => ({
+  userNameUnique: unique("categories_user_id_name_unique").on(table.userId, table.name),
+}));
 
 // Branches table for store locations
 export const branches = pgTable("branches", {
@@ -168,10 +173,12 @@ export const loyaltyHistory = pgTable("loyalty_history", {
 
 export const insertClothingItemSchema = createInsertSchema(clothingItems).omit({
   id: true,
+  userId: true,
 });
 
 export const insertLaundryServiceSchema = createInsertSchema(laundryServices).omit({
   id: true,
+  userId: true,
 });
 
 export const insertProductSchema = createInsertSchema(products).omit({
@@ -231,6 +238,7 @@ export const insertCategorySchema = createInsertSchema(categories).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
+  userId: true,
 });
 
 export const insertBranchSchema = createInsertSchema(branches).omit({
