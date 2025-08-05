@@ -4,6 +4,10 @@
 
 This is a modern laundry management system built with React/TypeScript frontend and Express.js backend, using Drizzle ORM with PostgreSQL for data persistence. The application features a responsive design optimized for laundry service environments, with support for clothing item selection, service management, cart functionality, and transaction processing. Customers can select clothing items (pants, dishdashas, shirts, etc.) and choose from various laundry services (wash & fold, dry cleaning, express service, etc.).
 
+## Onboarding
+
+When a new user account is created, the system seeds default service categories and clothing items. Review the default catalog and price matrix in [docs/catalog.md](docs/catalog.md) and adjust them later through **Admin → Categories**.
+
 ## User Preferences
 
 Preferred communication style: Simple, everyday language.
