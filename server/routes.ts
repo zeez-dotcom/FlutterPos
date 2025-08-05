@@ -331,7 +331,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/clothing-items", async (req, res) => {
+  app.post("/api/clothing-items", requireAdminOrSuperAdmin, async (req, res) => {
     try {
       const validatedData = insertClothingItemSchema.parse(req.body);
       const newItem = await storage.createClothingItem(validatedData);
@@ -342,7 +342,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/clothing-items/:id", async (req, res) => {
+  app.put("/api/clothing-items/:id", requireAdminOrSuperAdmin, async (req, res) => {
     try {
       const { id } = req.params;
       const validatedData = insertClothingItemSchema.partial().parse(req.body);
@@ -393,7 +393,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/laundry-services", async (req, res) => {
+  app.post("/api/laundry-services", requireAdminOrSuperAdmin, async (req, res) => {
     try {
       const validatedData = insertLaundryServiceSchema.parse(req.body);
       const newService = await storage.createLaundryService(validatedData);
@@ -404,7 +404,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/laundry-services/:id", async (req, res) => {
+  app.put("/api/laundry-services/:id", requireAdminOrSuperAdmin, async (req, res) => {
     try {
       const { id } = req.params;
       const validatedData = insertLaundryServiceSchema.partial().parse(req.body);
