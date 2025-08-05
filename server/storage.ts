@@ -58,8 +58,15 @@ export interface IStorage {
   getCategories(userId: string): Promise<Category[]>;
   getCategoriesByType(type: string, userId: string): Promise<Category[]>;
   getCategory(id: string, userId: string): Promise<Category | undefined>;
-  createCategory(category: InsertCategory & { userId: string }): Promise<Category>;
-  updateCategory(id: string, category: Partial<InsertCategory>, userId: string): Promise<Category | undefined>;
+  createCategory(
+    category: Omit<InsertCategory, "userId">,
+    userId: string,
+  ): Promise<Category>;
+  updateCategory(
+    id: string,
+    category: Partial<Omit<InsertCategory, "userId">>,
+    userId: string,
+  ): Promise<Category | undefined>;
   deleteCategory(id: string, userId: string): Promise<boolean>;
 
   // Branch operations
@@ -540,12 +547,23 @@ export class MemStorage {
   async getUsers(): Promise<UserWithBranch[]> { return []; }
 
   // Category methods (stub for MemStorage - not used in production)
-  async getCategories(): Promise<Category[]> { return []; }
-  async getCategoriesByType(type: string): Promise<Category[]> { return []; }
-  async getCategory(id: string): Promise<Category | undefined> { return undefined; }
-  async createCategory(category: InsertCategory): Promise<Category> { throw new Error("Not implemented in MemStorage"); }
-  async updateCategory(id: string, category: Partial<InsertCategory>): Promise<Category | undefined> { return undefined; }
-  async deleteCategory(id: string): Promise<boolean> { return false; }
+  async getCategories(_userId: string): Promise<Category[]> { return []; }
+  async getCategoriesByType(_type: string, _userId: string): Promise<Category[]> { return []; }
+  async getCategory(_id: string, _userId: string): Promise<Category | undefined> { return undefined; }
+  async createCategory(
+    _category: Omit<InsertCategory, "userId">,
+    _userId: string,
+  ): Promise<Category> {
+    throw new Error("Not implemented in MemStorage");
+  }
+  async updateCategory(
+    _id: string,
+    _category: Partial<Omit<InsertCategory, "userId">>,
+    _userId: string,
+  ): Promise<Category | undefined> {
+    return undefined;
+  }
+  async deleteCategory(_id: string, _userId: string): Promise<boolean> { return false; }
 
   // Branch methods (stub for MemStorage - not used in production)
   async getBranches(): Promise<Branch[]> { return []; }
@@ -743,8 +761,11 @@ export class DatabaseStorage implements IStorage {
     return category || undefined;
   }
 
-  async createCategory(categoryData: InsertCategory & { userId: string }): Promise<Category> {
-    const { name, nameAr, type, description, isActive, userId } = categoryData;
+  async createCategory(
+    categoryData: Omit<InsertCategory, "userId">,
+    userId: string,
+  ): Promise<Category> {
+    const { name, nameAr, type, description, isActive } = categoryData;
     const [category] = await db
       .insert(categories)
       .values({ name, nameAr, type, description, isActive, userId })
@@ -754,7 +775,7 @@ export class DatabaseStorage implements IStorage {
 
   async updateCategory(
     id: string,
-    categoryData: Partial<InsertCategory>,
+    categoryData: Partial<Omit<InsertCategory, "userId">>,
     userId: string,
   ): Promise<Category | undefined> {
     const { name, nameAr, type, description, isActive } = categoryData;

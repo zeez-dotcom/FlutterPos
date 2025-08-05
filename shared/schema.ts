@@ -234,12 +234,16 @@ export const insertUserSchema = createInsertSchema(users).omit({
 // Schema for updating users where all fields are optional
 export const updateUserSchema = insertUserSchema.partial();
 
-export const insertCategorySchema = createInsertSchema(categories).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-  userId: true,
-});
+export const insertCategorySchema = createInsertSchema(categories)
+  .omit({
+    id: true,
+    createdAt: true,
+    updatedAt: true,
+    userId: true,
+  })
+  .extend({
+    userId: z.string().optional(),
+  });
 
 export const insertBranchSchema = createInsertSchema(branches).omit({
   id: true,
