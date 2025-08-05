@@ -1,7 +1,5 @@
-import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -9,7 +7,8 @@ import { apiRequest } from "@/lib/queryClient";
 import { CategoryManager } from "@/components/admin/CategoryManager";
 import { UserManager } from "@/components/admin/UserManager";
 import { BranchManager } from "@/components/admin/BranchManager";
-import { LogOut, Users, Tags, MapPin, ArrowLeft } from "lucide-react";
+import { BulkUploadManager } from "@/components/admin/BulkUploadManager";
+import { LogOut, Users, Tags, MapPin, ArrowLeft, Upload } from "lucide-react";
 import { Link } from "wouter";
 import logoUrl from "@/assets/logo.png";
 
@@ -87,7 +86,7 @@ export default function AdminDashboard() {
         </div>
 
         <Tabs defaultValue="categories" className="space-y-6">
-          <TabsList className={`grid w-full ${isSuperAdmin ? "grid-cols-3" : "grid-cols-1"}`}>
+          <TabsList className={`grid w-full ${isSuperAdmin ? "grid-cols-4" : "grid-cols-1"}`}>
             <TabsTrigger value="categories" className="flex items-center gap-2">
               <Tags className="w-4 h-4" />
               Categories
@@ -101,6 +100,10 @@ export default function AdminDashboard() {
                 <TabsTrigger value="users" className="flex items-center gap-2">
                   <Users className="w-4 h-4" />
                   Users
+                </TabsTrigger>
+                <TabsTrigger value="bulk-upload" className="flex items-center gap-2">
+                  <Upload className="w-4 h-4" />
+                  Bulk Upload
                 </TabsTrigger>
               </>
             )}
@@ -119,6 +122,12 @@ export default function AdminDashboard() {
           {isSuperAdmin && (
             <TabsContent value="users" className="space-y-6">
               <UserManager />
+            </TabsContent>
+          )}
+
+          {isSuperAdmin && (
+            <TabsContent value="bulk-upload" className="space-y-6">
+              <BulkUploadManager />
             </TabsContent>
           )}
         </Tabs>
