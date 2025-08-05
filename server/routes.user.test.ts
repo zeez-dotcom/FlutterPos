@@ -97,7 +97,7 @@ test('user creation seeds categories and services independently', async () => {
     assert.ok(cats1.some((c) => c.name === 'Normal Iron'));
     const ironId1 = cats1.find((c) => c.name === 'Normal Iron')!.id;
     const services1 = insertedLaundry[user1Id];
-    assert.ok(services1.some((s) => s.name === 'Thobe' && s.categoryId === ironId1));
+    assert.ok(services1.some((s) => s.name === 'Normal Iron' && s.categoryId === ironId1));
 
     const r2 = await request(app)
       .post('/api/users')
@@ -108,7 +108,7 @@ test('user creation seeds categories and services independently', async () => {
     assert.ok(cats2.some((c) => c.name === 'Normal Iron'));
     const ironId2 = cats2.find((c) => c.name === 'Normal Iron')!.id;
     const services2 = insertedLaundry[user2Id];
-    assert.ok(services2.some((s) => s.name === 'Thobe' && s.categoryId === ironId2));
+    assert.ok(services2.some((s) => s.name === 'Normal Iron' && s.categoryId === ironId2));
 
     const catIds1 = new Set(cats1.map((c) => c.id));
     const catIds2 = new Set(cats2.map((c) => c.id));

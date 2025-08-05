@@ -80,7 +80,7 @@ test('new users are seeded with Arabic names', async () => {
       insertedClothing.some((i) => i.name === 'Thobe' && i.nameAr === 'ثوب')
     );
     assert.ok(
-      insertedLaundry.some((s) => s.name === 'Thobe' && s.nameAr === 'ثوب')
+      insertedLaundry.some((s) => s.name === 'Normal Iron' && s.nameAr === 'كي عادي')
     );
   } finally {
     (db as any).insert = originalInsert;

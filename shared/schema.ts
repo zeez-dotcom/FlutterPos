@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, decimal, integer, timestamp, jsonb, boolean, index, unique } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, decimal, integer, timestamp, jsonb, boolean, index, unique, primaryKey } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -22,6 +22,22 @@ export const laundryServices = pgTable("laundry_services", {
   categoryId: varchar("category_id").references(() => categories.id).notNull(),
   userId: varchar("user_id").references(() => users.id).notNull(),
 });
+
+export const itemServicePrices = pgTable(
+  "item_service_prices",
+  {
+    clothingItemId: varchar("clothing_item_id")
+      .references(() => clothingItems.id)
+      .notNull(),
+    serviceId: varchar("service_id")
+      .references(() => laundryServices.id)
+      .notNull(),
+    price: decimal("price", { precision: 10, scale: 2 }).notNull(),
+  },
+  (table) => ({
+    pk: primaryKey({ columns: [table.clothingItemId, table.serviceId] }),
+  }),
+);
 
 export const products = pgTable("products", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -182,6 +198,8 @@ export const insertLaundryServiceSchema = createInsertSchema(laundryServices).om
   userId: true,
 });
 
+export const insertItemServicePriceSchema = createInsertSchema(itemServicePrices);
+
 export const insertProductSchema = createInsertSchema(products).omit({
   id: true,
   branchId: true,
@@ -259,6 +277,8 @@ export type ClothingItem = typeof clothingItems.$inferSelect;
 export type InsertClothingItem = z.infer<typeof insertClothingItemSchema>;
 export type LaundryService = typeof laundryServices.$inferSelect;
 export type InsertLaundryService = z.infer<typeof insertLaundryServiceSchema>;
+export type ItemServicePrice = typeof itemServicePrices.$inferSelect;
+export type InsertItemServicePrice = z.infer<typeof insertItemServicePriceSchema>;
 export type Product = typeof products.$inferSelect;
 export type InsertProduct = z.infer<typeof insertProductSchema>;
 export type Transaction = typeof transactions.$inferSelect;

@@ -36,19 +36,22 @@ export function ServiceSelectionModal({
   const { language } = useTranslation();
 
   const { data: services = [] } = useQuery({
-    queryKey: ["/api/laundry-services", selectedCategory],
+    queryKey: ["/api/clothing-items", clothingItem?.id, "services", selectedCategory],
     queryFn: async () => {
+      if (!clothingItem) return [];
       const params = new URLSearchParams();
       if (selectedCategory !== "all") params.append("categoryId", selectedCategory);
-
-      const response = await fetch(`/api/laundry-services?${params}`, {
-        credentials: "include",
-      });
+      const response = await fetch(
+        `/api/clothing-items/${clothingItem.id}/services?${params}`,
+        {
+          credentials: "include",
+        },
+      );
       if (!response.ok) throw new Error("Failed to fetch laundry services");
       return response.json();
     },
-    enabled: isOpen
-  }) as { data: LaundryService[] };
+    enabled: isOpen && !!clothingItem,
+  }) as { data: (LaundryService & { itemPrice: string })[] };
 
   const getQuantity = (serviceId: string) => quantities[serviceId] || 1;
 
@@ -59,11 +62,11 @@ export function ServiceSelectionModal({
     }));
   };
 
-  const handleAddToCart = (service: LaundryService) => {
+  const handleAddToCart = (service: LaundryService & { itemPrice: string }) => {
     if (!clothingItem) return;
-    
+
     const quantity = getQuantity(service.id);
-    onAddToCart(clothingItem, service, quantity);
+    onAddToCart(clothingItem, service as unknown as LaundryService, quantity);
     
     // Reset quantity for this service
     setQuantities(prev => ({
@@ -119,7 +122,7 @@ export function ServiceSelectionModal({
                     )}
                     <div className="flex items-center justify-between">
                       <span className="text-lg font-bold text-pos-primary">
-                        {formatCurrency(service.price)}
+                        {formatCurrency(service.itemPrice)}
                       </span>
                       <span className="text-xs text-gray-500 capitalize bg-gray-100 px-2 py-1 rounded">
                         {service.categoryId}
@@ -167,7 +170,7 @@ export function ServiceSelectionModal({
                 {/* Total for this service */}
                 <div className="mt-2 text-right">
                   <span className="text-sm text-gray-600">
-                    Total: {formatCurrency(parseFloat(service.price) * getQuantity(service.id))}
+                    Total: {formatCurrency(parseFloat(service.itemPrice) * getQuantity(service.id))}
                   </span>
                 </div>
               </CardContent>

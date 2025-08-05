@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage, type ParsedRow } from "./storage";
-import { insertTransactionSchema, insertClothingItemSchema, insertLaundryServiceSchema, insertProductSchema, insertUserSchema, updateUserSchema, insertCategorySchema, insertBranchSchema, insertCustomerSchema, insertOrderSchema, insertPaymentSchema, insertSecuritySettingsSchema } from "@shared/schema";
+import { insertTransactionSchema, insertClothingItemSchema, insertLaundryServiceSchema, insertProductSchema, insertUserSchema, updateUserSchema, insertCategorySchema, insertBranchSchema, insertCustomerSchema, insertOrderSchema, insertPaymentSchema, insertSecuritySettingsSchema, insertItemServicePriceSchema } from "@shared/schema";
 import { setupAuth, requireAuth, requireSuperAdmin, requireAdminOrSuperAdmin } from "./auth";
 import passport from "passport";
 import type { UserWithBranch } from "@shared/schema";
@@ -505,6 +505,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/clothing-items/:id/services", requireAuth, async (req, res) => {
+    try {
+      const userId = (req.user as UserWithBranch).id;
+      const categoryId = req.query.categoryId as string | undefined;
+      const services = await storage.getServicesForClothingItem(
+        req.params.id,
+        userId,
+        categoryId,
+      );
+      res.json(services);
+    } catch (error) {
+      console.error("Error fetching item services:", error);
+      res.status(500).json({ message: "Failed to fetch services" });
+    }
+  });
+
   // Laundry Services routes
   app.get("/api/laundry-services", requireAuth, async (req, res) => {
     try {
@@ -583,6 +599,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error deleting laundry service:", error);
       res.status(500).json({ message: "Failed to delete laundry service" });
+    }
+  });
+
+  // Item-service price management
+  app.post("/api/item-service-prices", requireAdminOrSuperAdmin, async (req, res) => {
+    try {
+      const data = insertItemServicePriceSchema.parse(req.body);
+      const record = await storage.createItemServicePrice(data);
+      res.json(record);
+    } catch (error) {
+      console.error("Error creating item service price:", error);
+      res.status(500).json({ message: "Failed to create item service price" });
+    }
+  });
+
+  app.put("/api/item-service-prices", requireAdminOrSuperAdmin, async (req, res) => {
+    try {
+      const data = insertItemServicePriceSchema.parse(req.body);
+      const updated = await storage.updateItemServicePrice(
+        data.clothingItemId,
+        data.serviceId,
+        data.price,
+      );
+      if (!updated) {
+        return res.status(404).json({ message: "Item service price not found" });
+      }
+      res.json(updated);
+    } catch (error) {
+      console.error("Error updating item service price:", error);
+      res.status(500).json({ message: "Failed to update item service price" });
+    }
+  });
+
+  app.delete("/api/item-service-prices", requireAdminOrSuperAdmin, async (req, res) => {
+    try {
+      const { clothingItemId, serviceId } = req.body as {
+        clothingItemId: string;
+        serviceId: string;
+      };
+      const deleted = await storage.deleteItemServicePrice(clothingItemId, serviceId);
+      res.json({ success: deleted });
+    } catch (error) {
+      console.error("Error deleting item service price:", error);
+      res.status(500).json({ message: "Failed to delete item service price" });
     }
   });
 
