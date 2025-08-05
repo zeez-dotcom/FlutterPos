@@ -35,7 +35,9 @@ export function ClothingGrid({ onSelectClothing }: ClothingGridProps) {
       if (selectedCategory !== "all") params.append("categoryId", selectedCategory);
       if (searchQuery) params.append("search", searchQuery);
 
-      const response = await fetch(`/api/clothing-items?${params}`);
+      const response = await fetch(`/api/clothing-items?${params}`, {
+        credentials: "include",
+      });
       if (!response.ok) throw new Error("Failed to fetch clothing items");
       return response.json();
     }

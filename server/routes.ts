@@ -273,7 +273,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Products route
-  app.get("/api/products", async (req, res) => {
+  app.get("/api/products", requireAuth, async (req, res) => {
     try {
       const categoryId = req.query.categoryId as string;
       const search = req.query.search as string;
@@ -322,7 +322,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   // Clothing Items routes
-  app.get("/api/clothing-items", async (req, res) => {
+  app.get("/api/clothing-items", requireAuth, async (req, res) => {
     try {
       const categoryId = req.query.categoryId as string;
       const search = req.query.search as string;
@@ -345,7 +345,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/clothing-items/:id", async (req, res) => {
+  app.get("/api/clothing-items/:id", requireAuth, async (req, res) => {
     try {
       const item = await storage.getClothingItem(req.params.id);
       if (!item) {
@@ -398,7 +398,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Laundry Services routes
-  app.get("/api/laundry-services", async (req, res) => {
+  app.get("/api/laundry-services", requireAuth, async (req, res) => {
     try {
       const categoryId = req.query.categoryId as string;
       const search = req.query.search as string;
@@ -421,7 +421,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/laundry-services/:id", async (req, res) => {
+  app.get("/api/laundry-services/:id", requireAuth, async (req, res) => {
     try {
       const service = await storage.getLaundryService(req.params.id);
       if (!service) {
@@ -775,7 +775,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/receipts/email", async (req, res) => {
+  app.post("/api/receipts/email", requireAuth, async (req, res) => {
     try {
       const { email, html } = req.body as { email?: string; html?: string };
       if (!email || !html) {

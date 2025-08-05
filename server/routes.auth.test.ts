@@ -6,7 +6,7 @@ import request from 'supertest';
 // Ensure DATABASE_URL is set to allow importing auth module without DB
 process.env.DATABASE_URL = process.env.DATABASE_URL || 'postgres://user:pass@localhost/db';
 
-const { requireAdminOrSuperAdmin } = await import('./auth');
+const { requireAdminOrSuperAdmin, requireAuth } = await import('./auth');
 
 function createApp(user?: { role: string }) {
   const app = express();
@@ -19,6 +19,10 @@ function createApp(user?: { role: string }) {
     next();
   });
   // Routes under test
+  app.get('/api/products', requireAuth, (_req, res) => res.json({ ok: true }));
+  app.get('/api/clothing-items', requireAuth, (_req, res) => res.json({ ok: true }));
+  app.get('/api/laundry-services', requireAuth, (_req, res) => res.json({ ok: true }));
+  app.post('/api/receipts/email', requireAuth, (_req, res) => res.json({ ok: true }));
   app.post('/api/clothing-items', requireAdminOrSuperAdmin, (_req, res) => res.json({ ok: true }));
   app.put('/api/clothing-items/:id', requireAdminOrSuperAdmin, (_req, res) => res.json({ ok: true }));
   app.post('/api/laundry-services', requireAdminOrSuperAdmin, (_req, res) => res.json({ ok: true }));
@@ -27,6 +31,26 @@ function createApp(user?: { role: string }) {
   app.delete('/api/laundry-services/:id', requireAdminOrSuperAdmin, (_req, res) => res.json({ ok: true }));
   return app;
 }
+
+test('unauthenticated requests receive 401 for protected routes', async () => {
+  const app = createApp();
+  await request(app).get('/api/products').expect(401);
+  await request(app).get('/api/clothing-items').expect(401);
+  await request(app).get('/api/laundry-services').expect(401);
+  await request(app).post('/api/receipts/email').send({}).expect(401);
+});
+
+test('authenticated requests can access protected routes', async () => {
+  const app = createApp({ role: 'user' });
+  const r1 = await request(app).get('/api/products');
+  assert.equal(r1.status, 200);
+  const r2 = await request(app).get('/api/clothing-items');
+  assert.equal(r2.status, 200);
+  const r3 = await request(app).get('/api/laundry-services');
+  assert.equal(r3.status, 200);
+  const r4 = await request(app).post('/api/receipts/email').send({});
+  assert.equal(r4.status, 200);
+});
 
 test('non-admin requests receive 403', async () => {
   const app = createApp();

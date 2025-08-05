@@ -31,7 +31,9 @@ export function InventoryManagement() {
   const { data: clothingItems = [] } = useQuery({
     queryKey: ["/api/clothing-items"],
     queryFn: async () => {
-      const response = await fetch("/api/clothing-items");
+      const response = await fetch("/api/clothing-items", {
+        credentials: "include",
+      });
       return response.json();
     }
   }) as { data: ClothingItem[] };
@@ -40,7 +42,9 @@ export function InventoryManagement() {
   const { data: services = [] } = useQuery({
     queryKey: ["/api/laundry-services"],
     queryFn: async () => {
-      const response = await fetch("/api/laundry-services");
+      const response = await fetch("/api/laundry-services", {
+        credentials: "include",
+      });
       return response.json();
     }
   }) as { data: LaundryService[] };

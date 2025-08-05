@@ -41,7 +41,9 @@ export function ServiceSelectionModal({
       const params = new URLSearchParams();
       if (selectedCategory !== "all") params.append("categoryId", selectedCategory);
 
-      const response = await fetch(`/api/laundry-services?${params}`);
+      const response = await fetch(`/api/laundry-services?${params}`, {
+        credentials: "include",
+      });
       if (!response.ok) throw new Error("Failed to fetch laundry services");
       return response.json();
     },
