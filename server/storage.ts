@@ -77,11 +77,11 @@ export interface IStorage {
   deleteBranch(id: string): Promise<boolean>;
 
   // Products
-  getProducts(): Promise<Product[]>;
-  getProductsByCategory(categoryId: string): Promise<Product[]>;
+  getProducts(branchId?: string): Promise<Product[]>;
+  getProductsByCategory(categoryId: string, branchId?: string): Promise<Product[]>;
   getProduct(id: string): Promise<Product | undefined>;
-  createProduct(product: InsertProduct): Promise<Product>;
-  updateProduct(id: string, product: Partial<InsertProduct>): Promise<Product | undefined>;
+  createProduct(product: InsertProduct & { branchId: string }): Promise<Product>;
+  updateProduct(id: string, product: Partial<InsertProduct>, branchId: string): Promise<Product | undefined>;
 
   // Clothing Items
   getClothingItems(userId: string): Promise<ClothingItem[]>;
@@ -230,7 +230,7 @@ export class MemStorage {
     ];
 
     initialProducts.forEach(product => {
-      this.createProduct(product);
+      this.createProduct({ ...product, branchId: "default" });
     });
 
     // Initialize clothing items
@@ -324,22 +324,23 @@ export class MemStorage {
   }
 
   // Product methods
-  async getProducts(): Promise<Product[]> {
-    return Array.from(this.products.values());
+  async getProducts(branchId?: string): Promise<Product[]> {
+    return Array.from(this.products.values()).filter(p => !branchId || p.branchId === branchId);
   }
 
-  async getProductsByCategory(categoryId: string): Promise<Product[]> {
-    if (categoryId === "all") {
-      return this.getProducts();
-    }
-    return Array.from(this.products.values()).filter(product => product.categoryId === categoryId);
+  async getProductsByCategory(categoryId: string, branchId?: string): Promise<Product[]> {
+    return Array.from(this.products.values()).filter(product => {
+      if (categoryId !== "all" && product.categoryId !== categoryId) return false;
+      if (branchId && product.branchId !== branchId) return false;
+      return true;
+    });
   }
 
   async getProduct(id: string): Promise<Product | undefined> {
     return this.products.get(id);
   }
 
-  async createProduct(product: InsertProduct): Promise<Product> {
+  async createProduct(product: InsertProduct & { branchId: string }): Promise<Product> {
     const id = randomUUID();
     const newProduct: Product = {
       id,
@@ -350,14 +351,19 @@ export class MemStorage {
       price: product.price,
       stock: product.stock ?? 0,
       imageUrl: product.imageUrl || null,
+      branchId: product.branchId,
     };
     this.products.set(id, newProduct);
     return newProduct;
   }
 
-  async updateProduct(id: string, product: Partial<InsertProduct>): Promise<Product | undefined> {
+  async updateProduct(
+    id: string,
+    product: Partial<InsertProduct>,
+    branchId: string,
+  ): Promise<Product | undefined> {
     const existing = this.products.get(id);
-    if (!existing) return undefined;
+    if (!existing || existing.branchId !== branchId) return undefined;
 
     const updated: Product = {
       ...existing,
@@ -368,6 +374,7 @@ export class MemStorage {
       price: product.price ?? existing.price,
       stock: product.stock ?? existing.stock,
       imageUrl: product.imageUrl ?? existing.imageUrl,
+      branchId: existing.branchId,
     };
     this.products.set(id, updated);
     return updated;
@@ -824,15 +831,20 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Product methods
-  async getProducts(): Promise<Product[]> {
+  async getProducts(branchId?: string): Promise<Product[]> {
+    if (branchId) {
+      return await db.select().from(products).where(eq(products.branchId, branchId));
+    }
     return await db.select().from(products);
   }
 
-  async getProductsByCategory(categoryId: string): Promise<Product[]> {
+  async getProductsByCategory(categoryId: string, branchId?: string): Promise<Product[]> {
     if (categoryId === "all") {
-      return this.getProducts();
+      return this.getProducts(branchId);
     }
-    return await db.select().from(products).where(eq(products.categoryId, categoryId));
+    const conditions = [eq(products.categoryId, categoryId)];
+    if (branchId) conditions.push(eq(products.branchId, branchId));
+    return await db.select().from(products).where(and(...conditions));
   }
 
   async getProduct(id: string): Promise<Product | undefined> {
@@ -840,7 +852,7 @@ export class DatabaseStorage implements IStorage {
     return product || undefined;
   }
 
-  async createProduct(productData: InsertProduct): Promise<Product> {
+  async createProduct(productData: InsertProduct & { branchId: string }): Promise<Product> {
     const [product] = await db
       .insert(products)
       .values(productData)
@@ -848,11 +860,15 @@ export class DatabaseStorage implements IStorage {
     return product;
   }
 
-  async updateProduct(id: string, productData: Partial<InsertProduct>): Promise<Product | undefined> {
+  async updateProduct(
+    id: string,
+    productData: Partial<InsertProduct>,
+    branchId: string,
+  ): Promise<Product | undefined> {
     const [updated] = await db
       .update(products)
       .set(productData)
-      .where(eq(products.id, id))
+      .where(and(eq(products.id, id), eq(products.branchId, branchId)))
       .returning();
     return updated || undefined;
   }
