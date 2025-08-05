@@ -112,6 +112,7 @@ Preferred communication style: Simple, everyday language.
 - **Path Aliases**: Configured for clean imports (`@/`, `@shared/`)
 - **Build Scripts**: Separate development and production build processes
 - **Database Setup**: Drizzle migrations handle schema deployment
+- **Initial Categories**: Seed categories (e.g., pants, shirts) before adding clothing items
 
 ## Recent Changes (July 2025)
 
