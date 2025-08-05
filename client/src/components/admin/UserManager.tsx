@@ -271,16 +271,19 @@ export function UserManager() {
                     Branch
                   </Label>
                   <Select
-                    value={formData.branchId || ""}
+                    value={formData.branchId ?? "unassigned"}
                     onValueChange={(value) =>
-                      setFormData({ ...formData, branchId: value === "" ? null : value })
+                      setFormData({
+                        ...formData,
+                        branchId: value === "unassigned" ? undefined : value,
+                      })
                     }
                   >
                     <SelectTrigger className="col-span-3">
                       <SelectValue placeholder="Select branch" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Unassigned</SelectItem>
+                      <SelectItem value="unassigned">Unassigned</SelectItem>
                       {branches.map((branch) => (
                         <SelectItem key={branch.id} value={branch.id}>
                           {branch.name}
