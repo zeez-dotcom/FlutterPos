@@ -151,6 +151,9 @@ export function ServiceSelectionModal({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {services.map((service) => {
             const isSelected = selectedServiceId === service.id;
+            const category = serviceCategories.find(
+              (c) => c.id === service.categoryId,
+            );
             return (
               <Card
                 key={service.id}
@@ -175,7 +178,9 @@ export function ServiceSelectionModal({
                       {formatCurrency(service.itemPrice)}
                     </span>
                     <span className="text-xs text-gray-500 capitalize bg-gray-100 px-2 py-1 rounded">
-                      {service.categoryId}
+                      {language === "ar" && category?.nameAr
+                        ? category.nameAr
+                        : category?.name || service.categoryId}
                     </span>
                   </div>
 
