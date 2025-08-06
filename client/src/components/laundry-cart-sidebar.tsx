@@ -58,6 +58,7 @@ export function LaundryCartSidebar({
     name: "",
     email: "",
     address: "",
+    nickname: "",
   });
   const [redeemPoints, setRedeemPoints] = useState(0);
 
@@ -87,7 +88,7 @@ export function LaundryCartSidebar({
       queryClient.invalidateQueries({ queryKey: ["/api/customers"] });
       onSelectCustomer(customer);
       setIsCustomerDialogOpen(false);
-      setNewCustomer({ phoneNumber: "", name: "", email: "", address: "" });
+      setNewCustomer({ phoneNumber: "", name: "", email: "", address: "", nickname: "" });
     },
     onError: () => {
       toast({
@@ -100,6 +101,7 @@ export function LaundryCartSidebar({
 
   const filteredCustomers = customers.filter(customer =>
     customer.name.toLowerCase().includes(customerSearch.toLowerCase()) ||
+    customer.nickname?.toLowerCase().includes(customerSearch.toLowerCase()) ||
     customer.phoneNumber.includes(customerSearch)
   );
 
@@ -112,7 +114,8 @@ export function LaundryCartSidebar({
       });
       return;
     }
-    addCustomerMutation.mutate(newCustomer);
+    const data = { ...newCustomer, nickname: newCustomer.nickname || undefined };
+    addCustomerMutation.mutate(data);
   };
 
   return (
@@ -143,7 +146,14 @@ export function LaundryCartSidebar({
               <div className="flex items-center gap-2">
                 <User className="w-4 h-4 text-gray-500" />
                 <div>
-                  <p className="font-medium">{selectedCustomer.name}</p>
+                  <p className="font-medium">
+                    {selectedCustomer.name}
+                    {selectedCustomer.nickname && (
+                      <span className="text-sm text-gray-500 ml-1">
+                        ({selectedCustomer.nickname})
+                      </span>
+                    )}
+                  </p>
                   <p className="text-sm text-gray-500">{selectedCustomer.phoneNumber}</p>
                   {parseFloat(selectedCustomer.balanceDue) > 0 && (
                     <Badge variant="destructive" className="text-xs">
@@ -178,7 +188,7 @@ export function LaundryCartSidebar({
                 
                 <div className="space-y-4">
                   <Input
-                    placeholder="Search customers by name or phone..."
+                    placeholder="Search customers by name, nickname, or phone..."
                     value={customerSearch}
                     onChange={(e) => setCustomerSearch(e.target.value)}
                   />
@@ -194,7 +204,14 @@ export function LaundryCartSidebar({
                         }}
                       >
                         <div>
-                          <p className="font-medium">{customer.name}</p>
+                          <p className="font-medium">
+                            {customer.name}
+                            {customer.nickname && (
+                              <span className="text-sm text-gray-500 ml-1">
+                                ({customer.nickname})
+                              </span>
+                            )}
+                          </p>
                           <p className="text-sm text-gray-500">{customer.phoneNumber}</p>
                         </div>
                         {parseFloat(customer.balanceDue) > 0 && (
@@ -227,6 +244,15 @@ export function LaundryCartSidebar({
                           value={newCustomer.name}
                           onChange={(e) => setNewCustomer({ ...newCustomer, name: e.target.value })}
                           placeholder="Customer name"
+                        />
+                      </div>
+                      <div className="col-span-2">
+                        <Label htmlFor="nickname">Nickname</Label>
+                        <Input
+                          id="nickname"
+                          value={newCustomer.nickname || ""}
+                          onChange={(e) => setNewCustomer({ ...newCustomer, nickname: e.target.value })}
+                          placeholder="Nickname"
                         />
                       </div>
                     </div>

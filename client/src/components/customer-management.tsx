@@ -31,6 +31,7 @@ export function CustomerManagement({ onCustomerSelect }: CustomerManagementProps
     name: "",
     email: "",
     address: "",
+    nickname: "",
   });
   const [paymentAmount, setPaymentAmount] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("cash");
@@ -78,7 +79,7 @@ export function CustomerManagement({ onCustomerSelect }: CustomerManagementProps
       });
       queryClient.invalidateQueries({ queryKey: ["/api/customers"] });
       setIsAddDialogOpen(false);
-      setNewCustomer({ phoneNumber: "", name: "", email: "", address: "" });
+      setNewCustomer({ phoneNumber: "", name: "", email: "", address: "", nickname: "" });
     },
     onError: () => {
       toast({
@@ -116,6 +117,7 @@ export function CustomerManagement({ onCustomerSelect }: CustomerManagementProps
 
   const filteredCustomers = customers.filter(customer =>
     customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    customer.nickname?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     customer.phoneNumber.includes(searchTerm) ||
     customer.email?.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -129,7 +131,8 @@ export function CustomerManagement({ onCustomerSelect }: CustomerManagementProps
       });
       return;
     }
-    addCustomerMutation.mutate(newCustomer);
+    const data = { ...newCustomer, nickname: newCustomer.nickname || undefined };
+    addCustomerMutation.mutate(data);
   };
 
   const handleRecordPayment = () => {
@@ -225,6 +228,15 @@ export function CustomerManagement({ onCustomerSelect }: CustomerManagementProps
                 />
               </div>
               <div>
+                <Label htmlFor="nickname">Nickname</Label>
+                <Input
+                  id="nickname"
+                  value={newCustomer.nickname || ""}
+                  onChange={(e) => setNewCustomer({ ...newCustomer, nickname: e.target.value })}
+                  placeholder="Enter nickname"
+                />
+              </div>
+              <div>
                 <Label htmlFor="email">Email</Label>
                 <Input
                   id="email"
@@ -259,7 +271,7 @@ export function CustomerManagement({ onCustomerSelect }: CustomerManagementProps
       <div className="relative">
         <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
         <Input
-          placeholder="Search customers by name, phone, or email..."
+          placeholder="Search customers by name, nickname, phone, or email..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="pl-10"
@@ -272,7 +284,14 @@ export function CustomerManagement({ onCustomerSelect }: CustomerManagementProps
             <CardHeader className="pb-3">
               <div className="flex justify-between items-start">
                 <div>
-                  <CardTitle className="text-lg">{customer.name}</CardTitle>
+                  <CardTitle className="text-lg">
+                    {customer.name}
+                    {customer.nickname && (
+                      <span className="text-sm text-gray-500 ml-2">
+                        ({customer.nickname})
+                      </span>
+                    )}
+                  </CardTitle>
                   <CardDescription className="flex items-center mt-1">
                     <Phone className="w-3 h-3 mr-1" />
                     {customer.phoneNumber}

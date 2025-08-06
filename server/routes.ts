@@ -793,6 +793,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/customers/nickname/:nickname", requireAuth, async (req, res) => {
+    try {
+      const customer = await storage.getCustomerByNickname(req.params.nickname);
+      if (!customer) {
+        return res.status(404).json({ message: "Customer not found" });
+      }
+      res.json(customer);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch customer" });
+    }
+  });
+
   app.post("/api/customers", requireAuth, async (req, res) => {
     try {
       const customerData = insertCustomerSchema.parse(req.body);
@@ -805,7 +817,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.patch("/api/customers/:id", requireAuth, async (req, res) => {
     try {
-      const customer = await storage.updateCustomer(req.params.id, req.body);
+      const data = insertCustomerSchema.partial().parse(req.body);
+      const customer = await storage.updateCustomer(req.params.id, data);
       if (!customer) {
         return res.status(404).json({ message: "Customer not found" });
       }

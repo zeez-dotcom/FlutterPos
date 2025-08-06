@@ -118,6 +118,7 @@ export const customers = pgTable("customers", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   phoneNumber: varchar("phone_number", { length: 20 }).unique().notNull(),
   name: text("name").notNull(),
+  nickname: text("nickname").unique(),
   email: varchar("email", { length: 255 }),
   address: text("address"),
   balanceDue: decimal("balance_due", { precision: 10, scale: 2 }).default("0.00").notNull(),
