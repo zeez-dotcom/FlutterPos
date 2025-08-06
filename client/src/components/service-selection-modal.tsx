@@ -101,13 +101,7 @@ export function ServiceSelectionModal({
     const quantity = getQuantity(service.id);
     onAddToCart(clothingItem, service as unknown as LaundryService, quantity);
 
-    // Reset quantity for this service
-    setQuantities((prev) => ({
-      ...prev,
-      [service.id]: 1,
-    }));
-
-    // Hide controls after adding
+    setQuantities(prev => ({ ...prev, [service.id]: 1 }));
     setSelectedServiceId(null);
   };
 
