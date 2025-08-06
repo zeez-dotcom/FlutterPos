@@ -119,7 +119,7 @@ export function ClothingGrid({ onSelectClothing }: ClothingGridProps) {
                   )}
                   <div className="text-center">
                     <span className="text-sm text-gray-500 capitalize">
-                      {item.categoryId}
+                      {language === 'ar' && item.nameAr ? item.nameAr : item.name}
                     </span>
                   </div>
                   <TooltipProvider>
