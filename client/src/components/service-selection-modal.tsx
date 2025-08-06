@@ -16,24 +16,39 @@ interface ServiceSelectionModalProps {
   onAddToCart: (clothingItem: ClothingItem, service: LaundryService, quantity: number) => void;
 }
 
-const serviceCategories = [
-  { id: "all", label: "All Services" },
-  { id: "basic", label: "Basic" },
-  { id: "premium", label: "Premium" },
-  { id: "specialty", label: "Specialty" },
-  { id: "express", label: "Express" }
-];
+interface ServiceCategory {
+  id: string;
+  name: string;
+  nameAr?: string | null;
+}
 
-export function ServiceSelectionModal({ 
-  isOpen, 
-  onClose, 
-  clothingItem, 
-  onAddToCart 
+export function ServiceSelectionModal({
+  isOpen,
+  onClose,
+  clothingItem,
+  onAddToCart
 }: ServiceSelectionModalProps) {
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [quantities, setQuantities] = useState<Record<string, number>>({});
   const { formatCurrency } = useCurrency();
   const { language } = useTranslation();
+
+  const { data: fetchedCategories = [] } = useQuery<ServiceCategory[]>({
+    queryKey: ["/api/categories", "service"],
+    queryFn: async () => {
+      const response = await fetch("/api/categories?type=service", {
+        credentials: "include",
+      });
+      if (!response.ok) throw new Error("Failed to fetch service categories");
+      return response.json();
+    },
+    enabled: isOpen,
+  });
+
+  const serviceCategories: ServiceCategory[] = [
+    { id: "all", name: "All Services" },
+    ...fetchedCategories,
+  ];
 
   const { data: services = [] } = useQuery({
     queryKey: ["/api/clothing-items", clothingItem?.id, "services", selectedCategory],
@@ -104,7 +119,7 @@ export function ServiceSelectionModal({
               }`}
               onClick={() => setSelectedCategory(category.id)}
             >
-              {category.label}
+              {language === 'ar' && category.nameAr ? category.nameAr : category.name}
             </Button>
           ))}
         </div>
