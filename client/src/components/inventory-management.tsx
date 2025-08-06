@@ -110,6 +110,17 @@ export function InventoryManagement() {
     }
   });
 
+  const deleteClothingMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await apiRequest("DELETE", `/api/clothing-items/${id}`);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/clothing-items"] });
+      toast({ title: "Clothing item deleted successfully" });
+    }
+  });
+
   // Mutations for services
   const createServiceMutation = useMutation({
     mutationFn: async (data: any) => {
@@ -135,6 +146,17 @@ export function InventoryManagement() {
       setEditingService(null);
       serviceForm.reset();
       toast({ title: "Service updated successfully" });
+    }
+  });
+
+  const deleteServiceMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await apiRequest("DELETE", `/api/laundry-services/${id}`);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/laundry-services"] });
+      toast({ title: "Service deleted successfully" });
     }
   });
 
@@ -192,6 +214,18 @@ export function InventoryManagement() {
       categoryId: service.categoryId
     });
     setIsServiceModalOpen(true);
+  };
+
+  const handleDeleteClothing = (id: string) => {
+    if (confirm("Are you sure you want to delete this clothing item?")) {
+      deleteClothingMutation.mutate(id);
+    }
+  };
+
+  const handleDeleteService = (id: string) => {
+    if (confirm("Are you sure you want to delete this service?")) {
+      deleteServiceMutation.mutate(id);
+    }
   };
 
   // Filter items based on search
@@ -432,6 +466,13 @@ export function InventoryManagement() {
                         >
                           <Edit className="h-4 w-4" />
                         </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDeleteClothing(item.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       </div>
                     </div>
                   </CardContent>
@@ -561,6 +602,13 @@ export function InventoryManagement() {
                           onClick={() => handleEditService(service)}
                         >
                           <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDeleteService(service.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
                     </div>
