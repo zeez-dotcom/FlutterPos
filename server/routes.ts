@@ -227,7 +227,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/catalog/bulk-template", requireSuperAdmin, (_req, res) => {
+  app.get("/api/catalog/bulk-template", requireAuth, (_req, res) => {
     const buf = generateCatalogTemplate();
     res.setHeader(
       "Content-Disposition",
@@ -242,13 +242,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post(
     "/api/catalog/bulk-upload",
-    requireSuperAdmin,
+    requireAuth,
     upload.single("file"),
     async (req, res) => {
       try {
-        const branchId = req.body.branchId as string;
-        if (!branchId || !req.file) {
-          return res.status(400).json({ message: "branchId and file are required" });
+        const currentUser = req.user as UserWithBranch;
+        const branchId = req.body.branchId as string | undefined;
+        if (!req.file) {
+          return res.status(400).json({ message: "file is required" });
+        }
+        if (branchId && currentUser.role !== "super_admin") {
+          return res
+            .status(403)
+            .json({ message: "Only super admin can specify branchId" });
         }
 
         const workbook = XLSX.read(req.file.buffer, { type: "buffer" });
@@ -261,20 +267,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
               ? String(r["Item (Arabic)"]).trim()
               : undefined,
             normalIron:
-              r["Normal Iron"] !== undefined ? Number(r["Normal Iron"]) : undefined,
+              r["Normal Iron Price"] !== undefined
+                ? Number(r["Normal Iron Price"])
+                : undefined,
             normalWash:
-              r["Normal Wash"] !== undefined ? Number(r["Normal Wash"]) : undefined,
+              r["Normal Wash Price"] !== undefined
+                ? Number(r["Normal Wash Price"])
+                : undefined,
             normalWashIron:
-              r["Normal Wash & Iron"] !== undefined
-                ? Number(r["Normal Wash & Iron"])
+              r["Normal Wash & Iron Price"] !== undefined
+                ? Number(r["Normal Wash & Iron Price"])
                 : undefined,
             urgentIron:
-              r["Urgent Iron"] !== undefined ? Number(r["Urgent Iron"]) : undefined,
+              r["Urgent Iron Price"] !== undefined
+                ? Number(r["Urgent Iron Price"])
+                : undefined,
             urgentWash:
-              r["Urgent Wash"] !== undefined ? Number(r["Urgent Wash"]) : undefined,
+              r["Urgent Wash Price"] !== undefined
+                ? Number(r["Urgent Wash Price"])
+                : undefined,
             urgentWashIron:
-              r["Urgent Wash & Iron"] !== undefined
-                ? Number(r["Urgent Wash & Iron"])
+              r["Urgent Wash & Iron Price"] !== undefined
+                ? Number(r["Urgent Wash & Iron Price"])
                 : undefined,
             imageUrl: r["Picture Link"]
               ? String(r["Picture Link"]).trim()
@@ -282,7 +296,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }))
           .filter((r) => r.itemEn);
 
-        const result = await storage.bulkUpsertBranchCatalog(branchId, rows);
+        let result;
+        if (branchId && currentUser.role === "super_admin") {
+          result = await storage.bulkUpsertBranchCatalog(branchId, rows);
+        } else {
+          result = await storage.bulkUpsertUserCatalog(currentUser.id, rows);
+        }
         res.json(result);
       } catch (error) {
         console.error("Bulk upload failed:", error);

@@ -11,12 +11,12 @@ test('generateCatalogTemplate returns template with headers and example row', ()
   const headers = [
     'Item (English)',
     'Item (Arabic)',
-    'Normal Iron',
-    'Normal Wash',
-    'Normal Wash & Iron',
-    'Urgent Iron',
-    'Urgent Wash',
-    'Urgent Wash & Iron',
+    'Normal Iron Price',
+    'Normal Wash Price',
+    'Normal Wash & Iron Price',
+    'Urgent Iron Price',
+    'Urgent Wash Price',
+    'Urgent Wash & Iron Price',
     'Picture Link',
   ];
   const exampleRow = ['T-Shirt', 'تي شيرت', 5, 10, 15, 8, 12, 18, 'https://example.com/image.jpg'];
