@@ -5,7 +5,7 @@ process.env.DATABASE_URL = 'postgres://user:pass@localhost/db';
 
 const { DatabaseStorage } = await import('./storage');
 const { db } = await import('./db');
-const { users } = await import('../shared/schema');
+const { users, clothingItems, laundryServices, itemServicePrices } = await import('../shared/schema');
 
 const baseUser = {
   id: '1',
@@ -197,4 +197,49 @@ test('deleteLaundryService returns boolean based on deletion result', async () =
   (db as any).delete = () => ({ where: () => ({ rowCount: 0 }) });
   assert.strictEqual(await storage.deleteLaundryService('1'), false);
   (db as any).delete = originalDelete;
+});
+
+test('createClothingItem seeds default prices for existing services', async () => {
+  const storage = new DatabaseStorage();
+  const originalTransaction = db.transaction;
+  const inserted: any[] = [];
+
+  (db as any).transaction = async (fn: any) => {
+    await fn({
+      insert: (table: any) => ({
+        values: (data: any) => {
+          if (table === clothingItems) {
+            return { returning: () => [{ id: 'item1', ...data }] };
+          }
+          if (table === itemServicePrices) {
+            inserted.push(data);
+            return { onConflictDoNothing: () => ({}) };
+          }
+          return { returning: () => [] };
+        },
+      }),
+      select: () => ({
+        from: (table: any) => ({
+          where: () => {
+            if (table === laundryServices) {
+              return [
+                { id: 's1', price: '5.00', userId: 'u1', name: 'Wash', nameAr: null, description: null, categoryId: 'c1' },
+                { id: 's2', price: '3.00', userId: 'u1', name: 'Iron', nameAr: null, description: null, categoryId: 'c2' },
+              ];
+            }
+            return [];
+          },
+        }),
+      }),
+    });
+  };
+
+  await storage.createClothingItem({ name: 'Shirt', categoryId: 'cItem', userId: 'u1', nameAr: undefined, description: undefined, imageUrl: undefined });
+
+  (db as any).transaction = originalTransaction;
+
+  assert.deepEqual(inserted[0], [
+    { clothingItemId: 'item1', serviceId: 's1', price: '0.00' },
+    { clothingItemId: 'item1', serviceId: 's2', price: '0.00' },
+  ]);
 });
