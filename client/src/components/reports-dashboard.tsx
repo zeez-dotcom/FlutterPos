@@ -43,7 +43,10 @@ export function ReportsDashboard() {
   const serviceBreakdown = filteredTransactions.reduce((acc, transaction) => {
     const items = transaction.items as any[];
     items.forEach(item => {
-      const serviceName = item.service || "Unknown Service";
+      const serviceName =
+        typeof item.service === "string"
+          ? item.service
+          : item.service?.name || "Unknown Service";
       if (!acc[serviceName]) {
         acc[serviceName] = { count: 0, revenue: 0 };
       }

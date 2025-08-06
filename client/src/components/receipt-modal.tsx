@@ -289,28 +289,34 @@ export function ReceiptModal({ transaction, order, customer, isOpen, onClose }: 
 
           {/* Items */}
           <div className="space-y-2">
-            {items.map((item, index) => (
-              <div key={index} className="space-y-1">
-                <div className="flex">
-                  <div className="flex-1 flex justify-between">
-                    <span className="flex-1">{item.name || item.clothingItem}</span>
-                    <span>{formatCurrency(item.total)}</span>
+            {items.map((item, index) => {
+              const serviceName =
+                typeof item.service === "string"
+                  ? item.service
+                  : item.service?.name || "";
+              return (
+                <div key={index} className="space-y-1">
+                  <div className="flex">
+                    <div className="flex-1 flex justify-between">
+                      <span className="flex-1">{item.name || item.clothingItem}</span>
+                      <span>{formatCurrency(item.total)}</span>
+                    </div>
+                    <div className="flex-1 flex justify-between text-right" dir="rtl">
+                      <span className="flex-1">{item.name || item.clothingItem}</span>
+                      <span>{formatCurrency(item.total)}</span>
+                    </div>
                   </div>
-                  <div className="flex-1 flex justify-between text-right" dir="rtl">
-                    <span className="flex-1">{item.name || item.clothingItem}</span>
-                    <span>{formatCurrency(item.total)}</span>
+                  <div className="flex">
+                    <span className="text-xs text-gray-600 flex-1 pl-2">
+                      {serviceName} × {item.quantity}
+                    </span>
+                    <span className="text-xs text-gray-600 flex-1 text-right" dir="rtl">
+                      {serviceName} × {item.quantity}
+                    </span>
                   </div>
                 </div>
-                <div className="flex">
-                  <span className="text-xs text-gray-600 flex-1 pl-2">
-                    {item.service} × {item.quantity}
-                  </span>
-                  <span className="text-xs text-gray-600 flex-1 text-right" dir="rtl">
-                    {item.service} × {item.quantity}
-                  </span>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           <div className="border-t border-gray-400 pt-3 space-y-1">
