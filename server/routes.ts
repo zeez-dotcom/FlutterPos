@@ -9,7 +9,7 @@ import type { UserWithBranch } from "@shared/schema";
 import nodemailer from "nodemailer";
 import multer from "multer";
 import * as XLSX from "xlsx";
-import { generateCatalogTemplate } from "./utils/excel";
+import { generateCatalogTemplate, parsePrice } from "./utils/excel";
 
 const upload = multer();
 
@@ -260,41 +260,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const workbook = XLSX.read(req.file.buffer, { type: "buffer" });
         const sheet = workbook.Sheets[workbook.SheetNames[0]];
         const data = XLSX.utils.sheet_to_json<any>(sheet);
+        const errors: string[] = [];
         const rows: ParsedRow[] = data
-          .map((r: any) => ({
-            itemEn: String(r["Item (English)"] ?? "").trim(),
-            itemAr: r["Item (Arabic)"]
-              ? String(r["Item (Arabic)"]).trim()
-              : undefined,
-            normalIron:
-              r["Normal Iron Price"] !== undefined
-                ? Number(r["Normal Iron Price"])
-                : undefined,
-            normalWash:
-              r["Normal Wash Price"] !== undefined
-                ? Number(r["Normal Wash Price"])
-                : undefined,
-            normalWashIron:
-              r["Normal Wash & Iron Price"] !== undefined
-                ? Number(r["Normal Wash & Iron Price"])
-                : undefined,
-            urgentIron:
-              r["Urgent Iron Price"] !== undefined
-                ? Number(r["Urgent Iron Price"])
-                : undefined,
-            urgentWash:
-              r["Urgent Wash Price"] !== undefined
-                ? Number(r["Urgent Wash Price"])
-                : undefined,
-            urgentWashIron:
-              r["Urgent Wash & Iron Price"] !== undefined
-                ? Number(r["Urgent Wash & Iron Price"])
-                : undefined,
-            imageUrl: r["Picture Link"]
-              ? String(r["Picture Link"]).trim()
-              : undefined,
-          }))
+          .map((r: any, index: number) => {
+            const parseField = (field: string) => {
+              const raw = r[field];
+              const parsed = parsePrice(raw);
+              if (raw !== undefined && raw !== null && raw !== "" && parsed === undefined) {
+                errors.push(`Row ${index + 2}: Invalid ${field}`);
+              }
+              return parsed;
+            };
+
+            return {
+              itemEn: String(r["Item (English)"] ?? "").trim(),
+              itemAr: r["Item (Arabic)"] ? String(r["Item (Arabic)"]).trim() : undefined,
+              normalIron: parseField("Normal Iron Price"),
+              normalWash: parseField("Normal Wash Price"),
+              normalWashIron: parseField("Normal Wash & Iron Price"),
+              urgentIron: parseField("Urgent Iron Price"),
+              urgentWash: parseField("Urgent Wash Price"),
+              urgentWashIron: parseField("Urgent Wash & Iron Price"),
+              imageUrl: r["Picture Link"] ? String(r["Picture Link"]).trim() : undefined,
+            };
+          })
           .filter((r) => r.itemEn);
+
+        if (errors.length > 0) {
+          return res.status(400).json({ errors });
+        }
 
         let result;
         if (branchId && currentUser.role === "super_admin") {

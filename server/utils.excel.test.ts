@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as XLSX from 'xlsx';
-import { generateCatalogTemplate } from './utils/excel';
+import { generateCatalogTemplate, parsePrice } from './utils/excel';
 
 test('generateCatalogTemplate returns template with headers and example row', () => {
   const buf = generateCatalogTemplate();
@@ -22,4 +22,13 @@ test('generateCatalogTemplate returns template with headers and example row', ()
   const exampleRow = ['T-Shirt', 'تي شيرت', 5, 10, 15, 8, 12, 18, 'https://example.com/image.jpg'];
   assert.deepEqual(rows[0], headers);
   assert.deepEqual(rows[1], exampleRow);
+});
+
+test('parsePrice handles comma decimals', () => {
+  assert.equal(parsePrice('3,50'), 3.5);
+});
+
+test('parsePrice strips currency symbols', () => {
+  assert.equal(parsePrice('$3.50'), 3.5);
+  assert.equal(parsePrice('€3,50'), 3.5);
 });

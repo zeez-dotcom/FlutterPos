@@ -30,3 +30,15 @@ export function generateCatalogTemplate(): Buffer {
   XLSX.utils.book_append_sheet(wb, ws, "Template");
   return XLSX.write(wb, { type: "buffer", bookType: "xlsx" });
 }
+
+export function parsePrice(value: unknown): number | undefined {
+  if (value === undefined || value === null || value === "") return undefined;
+  if (typeof value === "number") {
+    return isNaN(value) ? undefined : value;
+  }
+  const normalized = String(value)
+    .replace(/[^0-9,.-]/g, "")
+    .replace(/,/g, ".");
+  const parsed = parseFloat(normalized);
+  return isNaN(parsed) ? undefined : parsed;
+}
