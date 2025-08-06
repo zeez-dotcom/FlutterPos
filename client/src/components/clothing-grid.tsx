@@ -1,9 +1,15 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Search, ShoppingCart } from "lucide-react";
+import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { ClothingItem } from "@shared/schema";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useTranslation } from "@/lib/i18n";
@@ -93,10 +99,9 @@ export function ClothingGrid({ onSelectClothing }: ClothingGridProps) {
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
             {clothingItems.map((item) => (
-              <Card 
+              <Card
                 key={item.id}
-                className="hover:shadow-material-lg transition-shadow cursor-pointer"
-                onClick={() => onSelectClothing(item)}
+                className="hover:shadow-material-lg transition-shadow"
               >
                 {item.imageUrl && (
                   <img
@@ -106,7 +111,9 @@ export function ClothingGrid({ onSelectClothing }: ClothingGridProps) {
                   />
                 )}
                 <CardContent className="p-3">
-                  <h3 className="font-medium text-gray-900 mb-1">{language === 'ar' && item.nameAr ? item.nameAr : item.name}</h3>
+                  <h3 className="font-medium text-gray-900 mb-1">
+                    {language === 'ar' && item.nameAr ? item.nameAr : item.name}
+                  </h3>
                   {item.description && (
                     <p className="text-sm text-gray-600 mb-2">{item.description}</p>
                   )}
@@ -115,6 +122,21 @@ export function ClothingGrid({ onSelectClothing }: ClothingGridProps) {
                       {item.categoryId}
                     </span>
                   </div>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          className="mt-3 w-full bg-pos-secondary hover:bg-green-600 text-white"
+                          onClick={() => onSelectClothing(item)}
+                        >
+                          Select Service
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        Service prices will be shown in the next step
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                 </CardContent>
               </Card>
             ))}
