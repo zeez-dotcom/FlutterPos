@@ -121,6 +121,10 @@ export interface IStorage {
   deleteItemServicePrice(clothingItemId: string, serviceId: string): Promise<boolean>;
 
   // Bulk catalog
+  bulkUpsertUserCatalog(
+    userId: string,
+    rows: ParsedRow[],
+  ): Promise<BulkUploadResult>;
   bulkUpsertBranchCatalog(branchId: string, rows: ParsedRow[]): Promise<BulkUploadResult>;
   
   // Transactions
@@ -1114,117 +1118,135 @@ export class DatabaseStorage implements IStorage {
     return result.rowCount ? result.rowCount > 0 : false;
   }
 
-  async bulkUpsertBranchCatalog(branchId: string, rows: ParsedRow[]): Promise<BulkUploadResult> {
-    const branchUsers = await db.select().from(users).where(eq(users.branchId, branchId));
+  async bulkUpsertUserCatalog(
+    userId: string,
+    rows: ParsedRow[],
+  ): Promise<BulkUploadResult> {
+    let created = 0;
+    let updated = 0;
+
+    await db.transaction(async (tx) => {
+      const existingCategories = await tx
+        .select()
+        .from(categories)
+        .where(eq(categories.userId, userId));
+      const catMap = new Map(existingCategories.map((c) => [c.name, c.id]));
+
+      const requiredCategories = [
+        { name: "Normal Iron", type: "service" },
+        { name: "Normal Wash", type: "service" },
+        { name: "Normal Wash & Iron", type: "service" },
+        { name: "Urgent Iron", type: "service" },
+        { name: "Urgent Wash", type: "service" },
+        { name: "Urgent Wash & Iron", type: "service" },
+        { name: "Clothing Items", type: "clothing" },
+      ];
+
+      for (const cat of requiredCategories) {
+        if (!catMap.has(cat.name)) {
+          const [inserted] = await tx
+            .insert(categories)
+            .values({
+              name: cat.name,
+              type: cat.type,
+              isActive: true,
+              userId,
+            })
+            .returning();
+          catMap.set(cat.name, inserted.id);
+        }
+      }
+
+      for (const row of rows) {
+        const clothingCategoryId = catMap.get("Clothing Items")!;
+        const [existingItem] = await tx
+          .select()
+          .from(clothingItems)
+          .where(
+            and(
+              eq(clothingItems.userId, userId),
+              eq(clothingItems.name, row.itemEn),
+            ),
+          );
+        if (existingItem) {
+          await tx
+            .update(clothingItems)
+            .set({ nameAr: row.itemAr, imageUrl: row.imageUrl })
+            .where(eq(clothingItems.id, existingItem.id));
+        } else {
+          await tx.insert(clothingItems).values({
+            name: row.itemEn,
+            nameAr: row.itemAr,
+            imageUrl: row.imageUrl,
+            categoryId: clothingCategoryId,
+            userId,
+          });
+        }
+
+        const services: Record<string, number | undefined> = {
+          "Normal Iron": row.normalIron,
+          "Normal Wash": row.normalWash,
+          "Normal Wash & Iron": row.normalWashIron,
+          "Urgent Iron": row.urgentIron,
+          "Urgent Wash": row.urgentWash,
+          "Urgent Wash & Iron": row.urgentWashIron,
+        };
+
+        for (const [serviceName, price] of Object.entries(services)) {
+          if (price == null || isNaN(price)) continue;
+          const categoryId = catMap.get(serviceName)!;
+          const [existing] = await tx
+            .select()
+            .from(laundryServices)
+            .where(
+              and(
+                eq(laundryServices.userId, userId),
+                eq(laundryServices.categoryId, categoryId),
+                eq(laundryServices.name, row.itemEn),
+              ),
+            );
+          if (existing) {
+            await tx
+              .update(laundryServices)
+              .set({ price: price.toFixed(2), nameAr: row.itemAr })
+              .where(eq(laundryServices.id, existing.id));
+            updated++;
+          } else {
+            await tx.insert(laundryServices).values({
+              name: row.itemEn,
+              nameAr: row.itemAr,
+              price: price.toFixed(2),
+              categoryId,
+              userId,
+            });
+            created++;
+          }
+        }
+      }
+    });
+
+    return { processed: rows.length, created, updated };
+  }
+
+  async bulkUpsertBranchCatalog(
+    branchId: string,
+    rows: ParsedRow[],
+  ): Promise<BulkUploadResult> {
+    const branchUsers = await db
+      .select()
+      .from(users)
+      .where(eq(users.branchId, branchId));
     if (branchUsers.length === 0) {
       return { processed: 0, created: 0, updated: 0 };
     }
 
     let created = 0;
     let updated = 0;
-
-    await db.transaction(async (tx) => {
-      for (const user of branchUsers) {
-        const existingCategories = await tx
-          .select()
-          .from(categories)
-          .where(eq(categories.userId, user.id));
-        const catMap = new Map(existingCategories.map((c) => [c.name, c.id]));
-
-        const requiredCategories = [
-          { name: "Normal Iron", type: "service" },
-          { name: "Normal Wash", type: "service" },
-          { name: "Normal Wash & Iron", type: "service" },
-          { name: "Urgent Iron", type: "service" },
-          { name: "Urgent Wash", type: "service" },
-          { name: "Urgent Wash & Iron", type: "service" },
-          { name: "Clothing Items", type: "clothing" },
-        ];
-
-        for (const cat of requiredCategories) {
-          if (!catMap.has(cat.name)) {
-            const [inserted] = await tx
-              .insert(categories)
-              .values({
-                name: cat.name,
-                type: cat.type,
-                isActive: true,
-                userId: user.id,
-              })
-              .returning();
-            catMap.set(cat.name, inserted.id);
-          }
-        }
-
-        for (const row of rows) {
-          const clothingCategoryId = catMap.get("Clothing Items")!;
-          const [existingItem] = await tx
-            .select()
-            .from(clothingItems)
-            .where(
-              and(
-                eq(clothingItems.userId, user.id),
-                eq(clothingItems.name, row.itemEn),
-              ),
-            );
-          if (existingItem) {
-            await tx
-              .update(clothingItems)
-              .set({ nameAr: row.itemAr, imageUrl: row.imageUrl })
-              .where(eq(clothingItems.id, existingItem.id));
-          } else {
-            await tx.insert(clothingItems).values({
-              name: row.itemEn,
-              nameAr: row.itemAr,
-              imageUrl: row.imageUrl,
-              categoryId: clothingCategoryId,
-              userId: user.id,
-            });
-          }
-
-          const services: Record<string, number | undefined> = {
-            "Normal Iron": row.normalIron,
-            "Normal Wash": row.normalWash,
-            "Normal Wash & Iron": row.normalWashIron,
-            "Urgent Iron": row.urgentIron,
-            "Urgent Wash": row.urgentWash,
-            "Urgent Wash & Iron": row.urgentWashIron,
-          };
-
-          for (const [serviceName, price] of Object.entries(services)) {
-            if (price == null || isNaN(price)) continue;
-            const categoryId = catMap.get(serviceName)!;
-            const [existing] = await tx
-              .select()
-              .from(laundryServices)
-              .where(
-                and(
-                  eq(laundryServices.userId, user.id),
-                  eq(laundryServices.categoryId, categoryId),
-                  eq(laundryServices.name, row.itemEn),
-                ),
-              );
-            if (existing) {
-              await tx
-                .update(laundryServices)
-                .set({ price: price.toFixed(2), nameAr: row.itemAr })
-                .where(eq(laundryServices.id, existing.id));
-              updated++;
-            } else {
-              await tx.insert(laundryServices).values({
-                name: row.itemEn,
-                nameAr: row.itemAr,
-                price: price.toFixed(2),
-                categoryId,
-                userId: user.id,
-              });
-              created++;
-            }
-          }
-        }
-      }
-    });
-
+    for (const user of branchUsers) {
+      const result = await this.bulkUpsertUserCatalog(user.id, rows);
+      created += result.created;
+      updated += result.updated;
+    }
     return { processed: rows.length, created, updated };
   }
 
