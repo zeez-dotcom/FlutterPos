@@ -39,16 +39,43 @@ export function InventoryManagement() {
     }
   }) as { data: ClothingItem[] };
 
-  // Fetch laundry services
+  // Fetch laundry services with any item-specific prices
   const { data: services = [] } = useQuery({
-    queryKey: ["/api/laundry-services"],
+    queryKey: ["/api/laundry-services", clothingItems.map((i) => i.id)],
     queryFn: async () => {
-      const response = await fetch("/api/laundry-services", {
+      const baseRes = await fetch("/api/laundry-services", {
         credentials: "include",
       });
-      return response.json();
-    }
-  }) as { data: LaundryService[] };
+      const baseServices: LaundryService[] = await baseRes.json();
+
+      // Fetch item-level prices for all clothing items
+      const itemServiceLists = await Promise.all(
+        clothingItems.map(async (item) => {
+          const res = await fetch(`/api/clothing-items/${item.id}/services`, {
+            credentials: "include",
+          });
+          return res.json();
+        })
+      );
+
+      const serviceMap = new Map<string, LaundryService & { itemPrice?: string }>(
+        baseServices.map((s) => [s.id, { ...s }])
+      );
+
+      for (const list of itemServiceLists) {
+        for (const svc of list as (LaundryService & { itemPrice: string })[]) {
+          if (svc.itemPrice && svc.itemPrice !== serviceMap.get(svc.id)?.price) {
+            serviceMap.set(svc.id, {
+              ...serviceMap.get(svc.id)!,
+              itemPrice: svc.itemPrice,
+            });
+          }
+        }
+      }
+
+      return Array.from(serviceMap.values());
+    },
+  }) as { data: (LaundryService & { itemPrice?: string })[] };
 
   // Forms
   const clothingForm = useForm({
@@ -587,9 +614,14 @@ export function InventoryManagement() {
                         <h3 className="font-semibold text-gray-900 mb-1">{language === 'ar' && service.nameAr ? service.nameAr : service.name}</h3>
                         <p className="text-sm text-gray-600 mb-2">{service.description}</p>
                         <div className="flex items-center justify-between">
-                          <span className="text-lg font-bold text-pos-primary">
-                            ${parseFloat(service.price).toFixed(2)}
-                          </span>
+                          <div className="flex flex-col">
+                            <span className="text-lg font-bold text-pos-primary">
+                              ${parseFloat(service.itemPrice ?? service.price).toFixed(2)}
+                            </span>
+                            <span className="text-xs text-gray-500">
+                              {service.itemPrice ? "Item price" : "Base price"}
+                            </span>
+                          </div>
                           <span className="inline-block bg-green-100 text-green-800 text-xs px-2 py-1 rounded capitalize">
                             {service.categoryId}
                           </span>
