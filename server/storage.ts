@@ -435,6 +435,20 @@ export class MemStorage {
       userId: item.userId,
     };
     this.clothingItems.set(id, newItem);
+
+    // Initialize item-service prices with default values for all existing services
+    const map = new Map<string, ItemServicePrice>();
+    for (const service of this.laundryServices.values()) {
+      map.set(service.id, {
+        clothingItemId: id,
+        serviceId: service.id,
+        price: "0.00",
+      });
+    }
+    if (map.size > 0) {
+      this.itemServicePrices.set(id, map);
+    }
+
     return newItem;
   }
 
@@ -515,13 +529,11 @@ export class MemStorage {
     categoryId?: string,
   ): Promise<(LaundryService & { itemPrice: string })[]> {
     const serviceMap = this.itemServicePrices.get(clothingItemId);
-    if (!serviceMap) return [];
     const services: (LaundryService & { itemPrice: string })[] = [];
-    for (const [serviceId, isp] of Array.from(serviceMap.entries())) {
-      const service = this.laundryServices.get(serviceId);
-      if (!service) continue;
+    for (const service of this.laundryServices.values()) {
       if (categoryId && service.categoryId !== categoryId) continue;
-      services.push({ ...service, itemPrice: isp.price });
+      const itemPrice = serviceMap?.get(service.id)?.price ?? service.price;
+      services.push({ ...service, itemPrice });
     }
     return services;
   }
@@ -978,8 +990,22 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createClothingItem(item: InsertClothingItem & { userId: string }): Promise<ClothingItem> {
-    const [newItem] = await db.insert(clothingItems).values(item).returning();
-    return newItem;
+    return await db.transaction(async (tx) => {
+      const [newItem] = await tx.insert(clothingItems).values(item).returning();
+      const services = await tx
+        .select()
+        .from(laundryServices)
+        .where(eq(laundryServices.userId, item.userId));
+      if (services.length > 0) {
+        const priceRows = services.map((s) => ({
+          clothingItemId: newItem.id,
+          serviceId: s.id,
+          price: "0.00",
+        }));
+        await tx.insert(itemServicePrices).values(priceRows).onConflictDoNothing();
+      }
+      return newItem;
+    });
   }
 
   async updateClothingItem(
@@ -1056,9 +1082,8 @@ export class DatabaseStorage implements IStorage {
     categoryId?: string,
   ): Promise<(LaundryService & { itemPrice: string })[]> {
     const conditions: any[] = [
-      eq(itemServicePrices.clothingItemId, clothingItemId),
-      eq(clothingItems.userId, userId),
       eq(laundryServices.userId, userId),
+      eq(clothingItems.userId, userId),
     ];
     if (categoryId && categoryId !== "all") {
       conditions.push(eq(laundryServices.categoryId, categoryId));
@@ -1073,11 +1098,17 @@ export class DatabaseStorage implements IStorage {
         categoryId: laundryServices.categoryId,
         price: laundryServices.price,
         userId: laundryServices.userId,
-        itemPrice: itemServicePrices.price,
+        itemPrice: sql`COALESCE(${itemServicePrices.price}, ${laundryServices.price})`,
       })
-      .from(itemServicePrices)
-      .innerJoin(laundryServices, eq(itemServicePrices.serviceId, laundryServices.id))
-      .innerJoin(clothingItems, eq(itemServicePrices.clothingItemId, clothingItems.id))
+      .from(laundryServices)
+      .leftJoin(
+        itemServicePrices,
+        and(
+          eq(itemServicePrices.serviceId, laundryServices.id),
+          eq(itemServicePrices.clothingItemId, clothingItemId),
+        ),
+      )
+      .innerJoin(clothingItems, eq(clothingItems.id, clothingItemId))
       .where(and(...conditions));
 
     return rows;
@@ -1236,10 +1267,10 @@ export class DatabaseStorage implements IStorage {
           "Urgent Wash & Iron": row.urgentWashIron,
         };
 
-        for (const [serviceName, price] of Object.entries(services)) {
-          if (price == null || isNaN(price)) continue;
-          const serviceId = serviceIdMap.get(serviceName)!;
-          const priceStr = price.toFixed(2);
+        for (const [serviceName, serviceId] of serviceIdMap.entries()) {
+          const price = services[serviceName];
+          const priceStr =
+            price != null && !isNaN(price) ? price.toFixed(2) : "0.00";
           const [existingPrice] = await tx
             .select()
             .from(itemServicePrices)
@@ -1250,16 +1281,18 @@ export class DatabaseStorage implements IStorage {
               ),
             );
           if (existingPrice) {
-            await tx
-              .update(itemServicePrices)
-              .set({ price: priceStr })
-              .where(
-                and(
-                  eq(itemServicePrices.clothingItemId, clothingItemId),
-                  eq(itemServicePrices.serviceId, serviceId),
-                ),
-              );
-            updated++;
+            if (price != null && !isNaN(price)) {
+              await tx
+                .update(itemServicePrices)
+                .set({ price: priceStr })
+                .where(
+                  and(
+                    eq(itemServicePrices.clothingItemId, clothingItemId),
+                    eq(itemServicePrices.serviceId, serviceId),
+                  ),
+                );
+              updated++;
+            }
           } else {
             await tx
               .insert(itemServicePrices)
