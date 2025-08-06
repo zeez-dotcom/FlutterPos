@@ -5,6 +5,7 @@ process.env.DATABASE_URL = 'postgres://user:pass@localhost/db';
 
 const { DatabaseStorage } = await import('./storage');
 const { db } = await import('./db');
+const { users } = await import('../shared/schema');
 
 const baseUser = {
   id: '1',
@@ -18,6 +19,57 @@ const baseUser = {
   createdAt: new Date(),
   updatedAt: new Date(),
 };
+
+test('upsertUser updates existing row when username exists', async () => {
+  const storage = new DatabaseStorage();
+  const originalInsert = db.insert;
+  const originalSelect = db.select;
+  let existing: any = null;
+  let conflictTarget: any = null;
+
+  (db as any).insert = () => ({
+    values: (data: any) => ({
+      onConflictDoUpdate: (conflict: any) => {
+        conflictTarget = conflict.target;
+        if (existing && existing.username === data.username) {
+          const hasUsername = Array.isArray(conflict.target)
+            ? conflict.target.includes(users.username)
+            : conflict.target === users.username;
+          if (!hasUsername) {
+            throw new Error('unique constraint');
+          }
+          existing = { ...existing, ...conflict.set };
+        } else {
+          existing = { ...data };
+        }
+        return { returning: () => [existing] };
+      },
+    }),
+  });
+
+  (db as any).select = () => ({
+    from: () => ({
+      leftJoin: () => ({
+        where: () => [{ user: existing, branch: null }],
+      }),
+    }),
+  });
+
+  const first = { id: '1', username: 'user', passwordHash: 'hash', role: 'user' };
+  await storage.upsertUser(first);
+
+  const second = { id: '2', username: 'user', passwordHash: 'hash2', role: 'user', firstName: 'New' };
+  const updated = await storage.upsertUser(second);
+
+  assert.strictEqual(updated.firstName, 'New');
+  const hasUsername = Array.isArray(conflictTarget)
+    ? conflictTarget.includes(users.username)
+    : conflictTarget === users.username;
+  assert.strictEqual(hasUsername, true);
+
+  (db as any).insert = originalInsert;
+  (db as any).select = originalSelect;
+});
 
 test('updateUser without password leaves existing hash untouched', async () => {
   const user = { ...baseUser };
