@@ -7,6 +7,7 @@ import {
   type Branch, type InsertBranch,
   type Customer, type InsertCustomer,
   type Order, type InsertOrder,
+  type OrderPrint,
   type Payment, type InsertPayment,
   type Product, type InsertProduct,
   type LoyaltyHistory, type InsertLoyaltyHistory,
@@ -15,11 +16,11 @@ import {
   type ItemServicePrice, type InsertItemServicePrice,
   type BulkUploadResult,
   clothingItems, laundryServices, itemServicePrices,
-  transactions, users, categories, branches, customers, orders, payments, products, loyaltyHistory, notifications, securitySettings
+  transactions, users, categories, branches, customers, orders, orderPrints, payments, products, loyaltyHistory, notifications, securitySettings
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { db } from "./db";
-import { eq, sql, and, inArray } from "drizzle-orm";
+import { eq, sql, and, inArray, desc } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import {
   CATEGORY_SEEDS,
@@ -148,7 +149,11 @@ export interface IStorage {
   createOrder(order: InsertOrder & { branchId: string }): Promise<Order>;
   updateOrder(id: string, order: Partial<Omit<Order, 'id' | 'orderNumber' | 'createdAt'>>): Promise<Order | undefined>;
   updateOrderStatus(id: string, status: string): Promise<Order | undefined>;
-  
+
+  // Order print history
+  recordOrderPrint(orderId: string, printedBy: string): Promise<OrderPrint>;
+  getOrderPrintHistory(orderId: string): Promise<OrderPrint[]>;
+
   // Payments
   getPayments(branchId?: string): Promise<Payment[]>;
   getPayment(id: string): Promise<Payment | undefined>;
@@ -188,6 +193,7 @@ export class MemStorage {
    private branches: Map<string, Branch>;
   private loyaltyHistory: LoyaltyHistory[];
   private notifications: Notification[];
+  private orderPrints: OrderPrint[];
   private securitySettings: SecuritySettings;
 
   constructor() {
@@ -201,6 +207,7 @@ export class MemStorage {
     this.branches = new Map();
     this.loyaltyHistory = [];
     this.notifications = [];
+    this.orderPrints = [];
     this.securitySettings = {
       id: "default",
       sessionTimeout: 15,
@@ -588,6 +595,22 @@ export class MemStorage {
     if (!tx) return undefined;
     if (branchId && tx.branchId !== branchId) return undefined;
     return tx;
+  }
+
+  async recordOrderPrint(orderId: string, printedBy: string): Promise<OrderPrint> {
+    const next = this.orderPrints.filter(p => p.orderId === orderId).length + 1;
+    const record: OrderPrint = {
+      orderId,
+      printedAt: new Date(),
+      printedBy,
+      printNumber: next,
+    };
+    this.orderPrints.push(record);
+    return record;
+  }
+
+  async getOrderPrintHistory(orderId: string): Promise<OrderPrint[]> {
+    return this.orderPrints.filter(p => p.orderId === orderId);
   }
 
   async getLoyaltyHistory(customerId: string): Promise<LoyaltyHistory[]> {
@@ -1447,6 +1470,29 @@ export class DatabaseStorage implements IStorage {
 
   async updateOrderStatus(id: string, status: string): Promise<Order | undefined> {
     return await this.updateOrder(id, { status });
+  }
+
+  async recordOrderPrint(orderId: string, printedBy: string): Promise<OrderPrint> {
+    const [last] = await db
+      .select({ printNumber: orderPrints.printNumber })
+      .from(orderPrints)
+      .where(eq(orderPrints.orderId, orderId))
+      .orderBy(desc(orderPrints.printNumber))
+      .limit(1);
+    const next = last ? last.printNumber + 1 : 1;
+    const [record] = await db
+      .insert(orderPrints)
+      .values({ orderId, printedBy, printNumber: next })
+      .returning();
+    return record;
+  }
+
+  async getOrderPrintHistory(orderId: string): Promise<OrderPrint[]> {
+    return await db
+      .select()
+      .from(orderPrints)
+      .where(eq(orderPrints.orderId, orderId))
+      .orderBy(orderPrints.printNumber);
   }
 
   // Payment methods

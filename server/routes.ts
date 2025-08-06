@@ -951,6 +951,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post("/api/orders/:id/print", requireAuth, async (req, res) => {
+    try {
+      const user = req.user as UserWithBranch;
+      const record = await storage.recordOrderPrint(req.params.id, user.id);
+      res.status(201).json(record);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to record order print" });
+    }
+  });
+
+  app.get("/api/orders/:id/prints", requireAuth, async (req, res) => {
+    try {
+      const history = await storage.getOrderPrintHistory(req.params.id);
+      res.json(history);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch order print history" });
+    }
+  });
+
   // Payment Management Routes
   app.get("/api/payments", requireAuth, async (req, res) => {
     try {

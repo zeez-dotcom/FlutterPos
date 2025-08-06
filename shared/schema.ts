@@ -150,6 +150,23 @@ export const orders = pgTable("orders", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+export const orderPrints = pgTable(
+  "order_prints",
+  {
+    orderId: varchar("order_id")
+      .references(() => orders.id)
+      .notNull(),
+    printedAt: timestamp("printed_at").defaultNow().notNull(),
+    printedBy: varchar("printed_by")
+      .references(() => users.id)
+      .notNull(),
+    printNumber: integer("print_number").notNull(),
+  },
+  (table) => ({
+    pk: primaryKey({ columns: [table.orderId, table.printNumber] }),
+  }),
+);
+
 // Payment history for tracking customer payments
 export const payments = pgTable("payments", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -225,6 +242,10 @@ export const insertOrderSchema = createInsertSchema(orders).omit({
   branchId: true,
 });
 
+export const insertOrderPrintSchema = createInsertSchema(orderPrints).omit({
+  printedAt: true,
+});
+
 export const insertPaymentSchema = createInsertSchema(payments).omit({
   id: true,
   createdAt: true,
@@ -297,6 +318,8 @@ export type Customer = typeof customers.$inferSelect;
 export type InsertCustomer = z.infer<typeof insertCustomerSchema>;
 export type Order = typeof orders.$inferSelect;
 export type InsertOrder = z.infer<typeof insertOrderSchema>;
+export type OrderPrint = typeof orderPrints.$inferSelect;
+export type InsertOrderPrint = z.infer<typeof insertOrderPrintSchema>;
 export type Payment = typeof payments.$inferSelect;
 export type InsertPayment = z.infer<typeof insertPaymentSchema>;
 export type Notification = typeof notifications.$inferSelect;
