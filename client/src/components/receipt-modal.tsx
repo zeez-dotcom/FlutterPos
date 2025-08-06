@@ -9,6 +9,7 @@ import logoImage from "@/assets/logo.png";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { getTaxRate } from "@/lib/tax";
+import { format } from "date-fns";
 
 interface ReceiptModalProps {
   transaction?: Transaction | null;
@@ -16,9 +17,11 @@ interface ReceiptModalProps {
   customer?: Customer | null;
   isOpen: boolean;
   onClose: () => void;
+  printNumber?: number;
+  printedAt?: string;
 }
 
-export function ReceiptModal({ transaction, order, customer, isOpen, onClose }: ReceiptModalProps) {
+export function ReceiptModal({ transaction, order, customer, isOpen, onClose, printNumber, printedAt }: ReceiptModalProps) {
   const receiptData = transaction || order;
   const { t } = useTranslation();
   const { formatCurrency } = useCurrency();
@@ -242,10 +245,16 @@ export function ReceiptModal({ transaction, order, customer, isOpen, onClose }: 
               <p className="flex-1 text-gray-600 text-right" dir="rtl">
                 <span dir="ltr">{branchPhone}</span>
               </p>
-            </div>
           </div>
+        </div>
 
-          <div className="border-t border-b border-gray-400 py-3 space-y-1">
+        {printNumber && printedAt && (
+          <div className="text-center text-xs text-gray-500">
+            {`Print #${printNumber} – ${format(new Date(printedAt), "MMM dd, HH:mm")}`}
+          </div>
+        )}
+
+        <div className="border-t border-b border-gray-400 py-3 space-y-1">
             {renderBilingualRow(
               tEn.date,
               date.toLocaleDateString(),

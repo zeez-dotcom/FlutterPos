@@ -8,10 +8,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { Switch } from "@/components/ui/switch";
 import { apiRequest } from "@/lib/queryClient";
-import { Order } from "@shared/schema";
-import { Search, Package, Clock, CheckCircle, AlertCircle } from "lucide-react";
+import { Order, OrderPrint } from "@shared/schema";
+import { Search, Package, Clock, CheckCircle, AlertCircle, Printer } from "lucide-react";
 import { format } from "date-fns";
 import { useCurrency } from "@/lib/currency";
+import { ReceiptModal } from "./receipt-modal";
 
 const statusColors = {
   received: "bg-blue-100 text-blue-800",
@@ -35,6 +36,9 @@ export function OrderTracking() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [notifyCustomer, setNotifyCustomer] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [printInfo, setPrintInfo] = useState<OrderPrint | null>(null);
+  const [isReceiptOpen, setReceiptOpen] = useState(false);
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -80,6 +84,23 @@ export function OrderTracking() {
     updateStatusMutation.mutate({ orderId, status: newStatus, notify: notifyCustomer });
   };
 
+  const handlePrintReceipt = async (order: Order) => {
+    try {
+      await apiRequest("GET", `/api/orders/${order.id}/prints`);
+      const res = await apiRequest("POST", `/api/orders/${order.id}/print`);
+      const record: OrderPrint = await res.json();
+      setSelectedOrder(order);
+      setPrintInfo(record);
+      setReceiptOpen(true);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to record print",
+        variant: "destructive",
+      });
+    }
+  };
+
   const getItemsSummary = (items: any[]) => {
     return items.map(item => {
       const clothingName = typeof item.clothingItem === 'string'
@@ -97,6 +118,7 @@ export function OrderTracking() {
   }
 
   return (
+    <>
     <div className="h-full flex flex-col">
       <div className="p-6 flex-shrink-0 space-y-6">
       <div className="flex justify-between items-center">
@@ -235,9 +257,16 @@ export function OrderTracking() {
                   </div>
                   
                   <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handlePrintReceipt(order)}
+                    >
+                      <Printer className="w-4 h-4 mr-1" /> Print Receipt
+                    </Button>
                     {order.status === 'received' && (
-                      <Button 
-                        size="sm" 
+                      <Button
+                        size="sm"
                         onClick={() => handleStatusUpdate(order.id, 'processing')}
                         disabled={updateStatusMutation.isPending}
                       >
@@ -303,5 +332,19 @@ export function OrderTracking() {
         </div>
       </div>
     </div>
+      {selectedOrder && printInfo && (
+        <ReceiptModal
+          order={selectedOrder}
+          isOpen={isReceiptOpen}
+          onClose={() => {
+            setReceiptOpen(false);
+            setSelectedOrder(null);
+            setPrintInfo(null);
+          }}
+          printNumber={printInfo.printNumber}
+          printedAt={printInfo.printedAt}
+        />
+      )}
+    </>
   );
 }
