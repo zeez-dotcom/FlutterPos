@@ -1157,6 +1157,44 @@ export class DatabaseStorage implements IStorage {
         }
       }
 
+      // Ensure base laundry services exist and capture their IDs
+      const serviceNames = [
+        "Normal Iron",
+        "Normal Wash",
+        "Normal Wash & Iron",
+        "Urgent Iron",
+        "Urgent Wash",
+        "Urgent Wash & Iron",
+      ];
+      const serviceIdMap = new Map<string, string>();
+      for (const name of serviceNames) {
+        const categoryId = catMap.get(name)!;
+        const [existing] = await tx
+          .select()
+          .from(laundryServices)
+          .where(
+            and(
+              eq(laundryServices.userId, userId),
+              eq(laundryServices.categoryId, categoryId),
+              eq(laundryServices.name, name),
+            ),
+          );
+        if (existing) {
+          serviceIdMap.set(name, existing.id);
+        } else {
+          const [inserted] = await tx
+            .insert(laundryServices)
+            .values({
+              name,
+              price: "0.00",
+              categoryId,
+              userId,
+            })
+            .returning();
+          serviceIdMap.set(name, inserted.id);
+        }
+      }
+
       for (const row of rows) {
         const clothingCategoryId = catMap.get("Clothing Items")!;
         const [existingItem] = await tx
@@ -1168,19 +1206,25 @@ export class DatabaseStorage implements IStorage {
               eq(clothingItems.name, row.itemEn),
             ),
           );
+        let clothingItemId: string;
         if (existingItem) {
+          clothingItemId = existingItem.id;
           await tx
             .update(clothingItems)
             .set({ nameAr: row.itemAr, imageUrl: row.imageUrl })
             .where(eq(clothingItems.id, existingItem.id));
         } else {
-          await tx.insert(clothingItems).values({
-            name: row.itemEn,
-            nameAr: row.itemAr,
-            imageUrl: row.imageUrl,
-            categoryId: clothingCategoryId,
-            userId,
-          });
+          const [insertedItem] = await tx
+            .insert(clothingItems)
+            .values({
+              name: row.itemEn,
+              nameAr: row.itemAr,
+              imageUrl: row.imageUrl,
+              categoryId: clothingCategoryId,
+              userId,
+            })
+            .returning();
+          clothingItemId = insertedItem.id;
         }
 
         const services: Record<string, number | undefined> = {
@@ -1194,31 +1238,36 @@ export class DatabaseStorage implements IStorage {
 
         for (const [serviceName, price] of Object.entries(services)) {
           if (price == null || isNaN(price)) continue;
-          const categoryId = catMap.get(serviceName)!;
-          const [existing] = await tx
+          const serviceId = serviceIdMap.get(serviceName)!;
+          const priceStr = price.toFixed(2);
+          const [existingPrice] = await tx
             .select()
-            .from(laundryServices)
+            .from(itemServicePrices)
             .where(
               and(
-                eq(laundryServices.userId, userId),
-                eq(laundryServices.categoryId, categoryId),
-                eq(laundryServices.name, row.itemEn),
+                eq(itemServicePrices.clothingItemId, clothingItemId),
+                eq(itemServicePrices.serviceId, serviceId),
               ),
             );
-          if (existing) {
+          if (existingPrice) {
             await tx
-              .update(laundryServices)
-              .set({ price: price.toFixed(2), nameAr: row.itemAr })
-              .where(eq(laundryServices.id, existing.id));
+              .update(itemServicePrices)
+              .set({ price: priceStr })
+              .where(
+                and(
+                  eq(itemServicePrices.clothingItemId, clothingItemId),
+                  eq(itemServicePrices.serviceId, serviceId),
+                ),
+              );
             updated++;
           } else {
-            await tx.insert(laundryServices).values({
-              name: row.itemEn,
-              nameAr: row.itemAr,
-              price: price.toFixed(2),
-              categoryId,
-              userId,
-            });
+            await tx
+              .insert(itemServicePrices)
+              .values({
+                clothingItemId,
+                serviceId,
+                price: priceStr,
+              });
             created++;
           }
         }
