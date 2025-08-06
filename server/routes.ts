@@ -9,7 +9,11 @@ import type { UserWithBranch } from "@shared/schema";
 import nodemailer from "nodemailer";
 import multer from "multer";
 import * as XLSX from "xlsx";
-import { generateCatalogTemplate, parsePrice } from "./utils/excel";
+import {
+  generateCatalogTemplate,
+  parsePrice,
+  SERVICE_HEADERS,
+} from "./utils/excel";
 
 const upload = multer();
 
@@ -263,25 +267,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const errors: string[] = [];
         const rows: ParsedRow[] = data
           .map((r: any, index: number) => {
-            const parseField = (field: string) => {
-              const raw = r[field];
+            const getFieldValue = (fields: string[]) => {
+              for (const f of fields) {
+                if (r[f] !== undefined) return r[f];
+              }
+              return undefined;
+            };
+
+            const parseField = (fields: string[]) => {
+              const raw = getFieldValue(fields);
               const parsed = parsePrice(raw);
-              if (raw !== undefined && raw !== null && raw !== "" && parsed === undefined) {
-                errors.push(`Row ${index + 2}: Invalid ${field}`);
+              if (
+                raw !== undefined &&
+                raw !== null &&
+                raw !== "" &&
+                parsed === undefined
+              ) {
+                errors.push(`Row ${index + 2}: Invalid ${fields[0]}`);
               }
               return parsed;
             };
 
             return {
               itemEn: String(r["Item (English)"] ?? "").trim(),
-              itemAr: r["Item (Arabic)"] ? String(r["Item (Arabic)"]).trim() : undefined,
-              normalIron: parseField("Normal Iron Price"),
-              normalWash: parseField("Normal Wash Price"),
-              normalWashIron: parseField("Normal Wash & Iron Price"),
-              urgentIron: parseField("Urgent Iron Price"),
-              urgentWash: parseField("Urgent Wash Price"),
-              urgentWashIron: parseField("Urgent Wash & Iron Price"),
-              imageUrl: r["Picture Link"] ? String(r["Picture Link"]).trim() : undefined,
+              itemAr: r["Item (Arabic)"]
+                ? String(r["Item (Arabic)"]).trim()
+                : undefined,
+              normalIron: parseField(SERVICE_HEADERS.normalIron),
+              normalWash: parseField(SERVICE_HEADERS.normalWash),
+              normalWashIron: parseField(SERVICE_HEADERS.normalWashIron),
+              urgentIron: parseField(SERVICE_HEADERS.urgentIron),
+              urgentWash: parseField(SERVICE_HEADERS.urgentWash),
+              urgentWashIron: parseField(SERVICE_HEADERS.urgentWashIron),
+              imageUrl: r["Picture Link"]
+                ? String(r["Picture Link"]).trim()
+                : undefined,
             };
           })
           .filter((r) => r.itemEn);

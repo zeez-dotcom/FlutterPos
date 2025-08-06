@@ -1,15 +1,33 @@
 import * as XLSX from "xlsx";
 
+// Map of laundry service fields to their supported column headers.
+// The first entry in each array is used when generating templates, but
+// the parser will accept any of the listed headers.
+export const SERVICE_HEADERS = {
+  normalIron: ["Normal Iron Price", "Normal Iron"],
+  normalWash: ["Normal Wash Price", "Normal Wash"],
+  normalWashIron: [
+    "Normal Wash & Iron Price",
+    "Normal Wash & Iron",
+  ],
+  urgentIron: ["Urgent Iron Price", "Urgent Iron"],
+  urgentWash: ["Urgent Wash Price", "Urgent Wash"],
+  urgentWashIron: [
+    "Urgent Wash & Iron Price",
+    "Urgent Wash & Iron",
+  ],
+} as const;
+
 export function generateCatalogTemplate(): Buffer {
   const headers = [
     "Item (English)",
     "Item (Arabic)",
-    "Normal Iron Price",
-    "Normal Wash Price",
-    "Normal Wash & Iron Price",
-    "Urgent Iron Price",
-    "Urgent Wash Price",
-    "Urgent Wash & Iron Price",
+    SERVICE_HEADERS.normalIron[0],
+    SERVICE_HEADERS.normalWash[0],
+    SERVICE_HEADERS.normalWashIron[0],
+    SERVICE_HEADERS.urgentIron[0],
+    SERVICE_HEADERS.urgentWash[0],
+    SERVICE_HEADERS.urgentWashIron[0],
     "Picture Link",
   ];
 
