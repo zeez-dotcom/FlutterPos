@@ -1,7 +1,12 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Plus, Minus } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -13,7 +18,11 @@ interface ServiceSelectionModalProps {
   isOpen: boolean;
   onClose: () => void;
   clothingItem: ClothingItem | null;
-  onAddToCart: (clothingItem: ClothingItem, service: LaundryService, quantity: number) => void;
+  onAddToCart: (
+    clothingItem: ClothingItem,
+    service: LaundryService,
+    quantity: number,
+  ) => void;
 }
 
 interface ServiceCategory {
@@ -26,10 +35,13 @@ export function ServiceSelectionModal({
   isOpen,
   onClose,
   clothingItem,
-  onAddToCart
+  onAddToCart,
 }: ServiceSelectionModalProps) {
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [quantities, setQuantities] = useState<Record<string, number>>({});
+  const [selectedServiceId, setSelectedServiceId] = useState<string | null>(
+    null,
+  );
   const { formatCurrency } = useCurrency();
   const { language } = useTranslation();
 
@@ -51,11 +63,17 @@ export function ServiceSelectionModal({
   ];
 
   const { data: services = [] } = useQuery({
-    queryKey: ["/api/clothing-items", clothingItem?.id, "services", selectedCategory],
+    queryKey: [
+      "/api/clothing-items",
+      clothingItem?.id,
+      "services",
+      selectedCategory,
+    ],
     queryFn: async () => {
       if (!clothingItem) return [];
       const params = new URLSearchParams();
-      if (selectedCategory !== "all") params.append("categoryId", selectedCategory);
+      if (selectedCategory !== "all")
+        params.append("categoryId", selectedCategory);
       const response = await fetch(
         `/api/clothing-items/${clothingItem.id}/services?${params}`,
         {
@@ -71,9 +89,9 @@ export function ServiceSelectionModal({
   const getQuantity = (serviceId: string) => quantities[serviceId] || 1;
 
   const updateQuantity = (serviceId: string, quantity: number) => {
-    setQuantities(prev => ({
+    setQuantities((prev) => ({
       ...prev,
-      [serviceId]: Math.max(1, quantity)
+      [serviceId]: Math.max(1, quantity),
     }));
   };
 
@@ -82,12 +100,15 @@ export function ServiceSelectionModal({
 
     const quantity = getQuantity(service.id);
     onAddToCart(clothingItem, service as unknown as LaundryService, quantity);
-    
+
     // Reset quantity for this service
-    setQuantities(prev => ({
+    setQuantities((prev) => ({
       ...prev,
-      [service.id]: 1
+      [service.id]: 1,
     }));
+
+    // Hide controls after adding
+    setSelectedServiceId(null);
   };
 
   const handleClose = () => {
@@ -101,7 +122,11 @@ export function ServiceSelectionModal({
         <DialogHeader>
           <DialogTitle className="flex items-center space-x-2">
             <span>Select Service for</span>
-            <span className="text-pos-primary">{language === 'ar' && clothingItem?.nameAr ? clothingItem.nameAr : clothingItem?.name}</span>
+            <span className="text-pos-primary">
+              {language === "ar" && clothingItem?.nameAr
+                ? clothingItem.nameAr
+                : clothingItem?.name}
+            </span>
           </DialogTitle>
         </DialogHeader>
 
@@ -110,7 +135,9 @@ export function ServiceSelectionModal({
           {serviceCategories.map((category) => (
             <Button
               key={category.id}
-              variant={selectedCategory === category.id ? "default" : "secondary"}
+              variant={
+                selectedCategory === category.id ? "default" : "secondary"
+              }
               size="sm"
               className={`whitespace-nowrap ${
                 selectedCategory === category.id
@@ -119,78 +146,116 @@ export function ServiceSelectionModal({
               }`}
               onClick={() => setSelectedCategory(category.id)}
             >
-              {language === 'ar' && category.nameAr ? category.nameAr : category.name}
+              {language === "ar" && category.nameAr
+                ? category.nameAr
+                : category.name}
             </Button>
           ))}
         </div>
 
         {/* Services Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {services.map((service) => (
-            <Card key={service.id} className="hover:shadow-md transition-shadow">
-              <CardContent className="p-4">
-                <div className="flex justify-between items-start mb-3">
-                  <div className="flex-1">
-                    <h3 className="font-medium text-gray-900 mb-1">{language === 'ar' && service.nameAr ? service.nameAr : service.name}</h3>
-                    {service.description && (
-                      <p className="text-sm text-gray-600 mb-2">{service.description}</p>
-                    )}
-                    <div className="flex items-center justify-between">
-                      <span className="text-lg font-bold text-pos-primary">
-                        {formatCurrency(service.itemPrice)}
-                      </span>
-                      <span className="text-xs text-gray-500 capitalize bg-gray-100 px-2 py-1 rounded">
-                        {service.categoryId}
-                      </span>
+          {services.map((service) => {
+            const isSelected = selectedServiceId === service.id;
+            return (
+              <Card
+                key={service.id}
+                className={`hover:shadow-md transition-shadow cursor-pointer ${
+                  isSelected ? "ring-2 ring-pos-primary" : ""
+                }`}
+                onClick={() => setSelectedServiceId(service.id)}
+              >
+                <CardContent className="p-4">
+                  <h3 className="font-medium text-gray-900 mb-1">
+                    {language === "ar" && service.nameAr
+                      ? service.nameAr
+                      : service.name}
+                  </h3>
+                  {service.description && (
+                    <p className="text-sm text-gray-600 mb-2">
+                      {service.description}
+                    </p>
+                  )}
+                  <div className="flex items-center justify-between">
+                    <span className="text-lg font-bold text-pos-primary">
+                      {formatCurrency(service.itemPrice)}
+                    </span>
+                    <span className="text-xs text-gray-500 capitalize bg-gray-100 px-2 py-1 rounded">
+                      {service.categoryId}
+                    </span>
+                  </div>
+
+                  {isSelected && (
+                    <div className="mt-4 space-y-3">
+                      <div className="flex items-center space-x-2 justify-center">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-8 h-8 p-0"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            updateQuantity(
+                              service.id,
+                              getQuantity(service.id) - 1,
+                            );
+                          }}
+                        >
+                          <Minus className="h-3 w-3" />
+                        </Button>
+                        <Input
+                          type="number"
+                          min="1"
+                          value={getQuantity(service.id)}
+                          onClick={(e) => e.stopPropagation()}
+                          onChange={(e) =>
+                            updateQuantity(
+                              service.id,
+                              parseInt(e.target.value) || 1,
+                            )
+                          }
+                          className="w-16 text-center"
+                        />
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-8 h-8 p-0"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            updateQuantity(
+                              service.id,
+                              getQuantity(service.id) + 1,
+                            );
+                          }}
+                        >
+                          <Plus className="h-3 w-3" />
+                        </Button>
+                      </div>
+
+                      <Button
+                        className="bg-pos-secondary hover:bg-green-600 text-white w-full"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleAddToCart(service);
+                        }}
+                      >
+                        Add to Cart
+                      </Button>
+
+                      <div className="text-right">
+                        <span className="text-sm text-gray-600">
+                          Total:{" "}
+                          {formatCurrency(
+                            parseFloat(service.itemPrice) *
+                              getQuantity(service.id),
+                          )}
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                </div>
-
-                {/* Quantity Controls */}
-                <div className="flex items-center justify-between mt-4">
-                  <div className="flex items-center space-x-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="w-8 h-8 p-0"
-                      onClick={() => updateQuantity(service.id, getQuantity(service.id) - 1)}
-                    >
-                      <Minus className="h-3 w-3" />
-                    </Button>
-                    <Input
-                      type="number"
-                      min="1"
-                      value={getQuantity(service.id)}
-                      onChange={(e) => updateQuantity(service.id, parseInt(e.target.value) || 1)}
-                      className="w-16 text-center"
-                    />
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="w-8 h-8 p-0"
-                      onClick={() => updateQuantity(service.id, getQuantity(service.id) + 1)}
-                    >
-                      <Plus className="h-3 w-3" />
-                    </Button>
-                  </div>
-                  
-                  <Button
-                    className="bg-pos-secondary hover:bg-green-600 text-white"
-                    onClick={() => handleAddToCart(service)}
-                  >
-                    Add to Cart
-                  </Button>
-                </div>
-
-                {/* Total for this service */}
-                <div className="mt-2 text-right">
-                  <span className="text-sm text-gray-600">
-                    Total: {formatCurrency(parseFloat(service.itemPrice) * getQuantity(service.id))}
-                  </span>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                  )}
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
       </DialogContent>
     </Dialog>
