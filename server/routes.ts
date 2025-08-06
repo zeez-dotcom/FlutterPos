@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import { storage, type ParsedRow } from "./storage";
 import { insertTransactionSchema, insertClothingItemSchema, insertLaundryServiceSchema, insertProductSchema, insertUserSchema, updateUserSchema, insertCategorySchema, insertBranchSchema, insertCustomerSchema, insertOrderSchema, insertPaymentSchema, insertSecuritySettingsSchema, insertItemServicePriceSchema } from "@shared/schema";
 import { setupAuth, requireAuth, requireSuperAdmin, requireAdminOrSuperAdmin } from "./auth";
+import { seedSuperAdmin } from "./seed-superadmin";
 import passport from "passport";
 import type { UserWithBranch } from "@shared/schema";
 import nodemailer from "nodemailer";
@@ -15,6 +16,7 @@ const upload = multer();
 export async function registerRoutes(app: Express): Promise<Server> {
   // Setup authentication
   await setupAuth(app);
+  await seedSuperAdmin();
 
   // Authentication routes
   app.post("/api/login", (req, res, next) => {
