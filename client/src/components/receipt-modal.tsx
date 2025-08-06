@@ -293,16 +293,22 @@ export function ReceiptModal({ transaction, order, customer, isOpen, onClose }: 
               const serviceName =
                 typeof item.service === "string"
                   ? item.service
-                  : item.service?.name || "";
+                  : item.service?.name;
+              const clothingItem =
+                typeof item.name === "string"
+                  ? item.name
+                  : typeof item.clothingItem === "string"
+                    ? item.clothingItem
+                    : item.clothingItem?.name;
               return (
                 <div key={index} className="space-y-1">
                   <div className="flex">
                     <div className="flex-1 flex justify-between">
-                      <span className="flex-1">{item.name || item.clothingItem}</span>
+                      <span className="flex-1">{clothingItem}</span>
                       <span>{formatCurrency(item.total)}</span>
                     </div>
                     <div className="flex-1 flex justify-between text-right" dir="rtl">
-                      <span className="flex-1">{item.name || item.clothingItem}</span>
+                      <span className="flex-1">{clothingItem}</span>
                       <span>{formatCurrency(item.total)}</span>
                     </div>
                   </div>
