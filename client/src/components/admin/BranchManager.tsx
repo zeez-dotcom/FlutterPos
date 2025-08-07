@@ -27,6 +27,7 @@ export function BranchManager() {
     phone: "",
     code: "",
   });
+  const [codeError, setCodeError] = useState("");
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -95,6 +96,7 @@ export function BranchManager() {
     setFormData({ name: "", address: "", phone: "", code: "" });
     setEditingBranch(null);
     setIsDialogOpen(false);
+    setCodeError("");
   };
 
   const handleEdit = (branch: Branch) => {
@@ -105,6 +107,7 @@ export function BranchManager() {
       phone: branch.phone || "",
       code: branch.code,
     });
+    setCodeError("");
     setIsDialogOpen(true);
   };
 
@@ -156,16 +159,26 @@ export function BranchManager() {
                   <Label htmlFor="code" className="text-right">
                     Code
                   </Label>
-                  <Input
-                    id="code"
-                    value={formData.code}
-                    onChange={(e) =>
-                      setFormData({ ...formData, code: e.target.value.toUpperCase() })
-                    }
-                    className="col-span-3"
-                    maxLength={3}
-                    required
-                  />
+                  <div className="col-span-3 space-y-1">
+                    <Input
+                      id="code"
+                      value={formData.code}
+                      onChange={(e) => {
+                        const value = e.target.value.toUpperCase();
+                        setFormData({ ...formData, code: value });
+                        const regex = /^[A-Za-z]{2,3}$/;
+                        setCodeError(value === "" || regex.test(value) ? "" : "Code must be 2-3 letters.");
+                      }}
+                      pattern="[A-Za-z]{2,3}"
+                      title="Use 2-3 letters only"
+                      className="w-full"
+                      maxLength={3}
+                      required
+                    />
+                    {codeError && (
+                      <p className="text-sm text-red-500">{codeError}</p>
+                    )}
+                  </div>
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="address" className="text-right">
