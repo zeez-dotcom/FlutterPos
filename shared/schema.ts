@@ -299,7 +299,7 @@ export const insertBranchSchema = createInsertSchema(branches).omit({
   id: true,
   nextOrderNumber: true,
 }).extend({
-  code: z.string().regex(/^[A-Za-z]{2,3}$/),
+  code: z.string().regex(/^[A-Za-z]{2,3}$/, "Code must be 2–3 letters"),
 });
 
 export type User = typeof users.$inferSelect;
