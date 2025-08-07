@@ -26,6 +26,7 @@ export function BranchManager() {
     address: "",
     phone: "",
     code: "",
+    logoUrl: "",
   });
   const [codeError, setCodeError] = useState("");
 
@@ -93,7 +94,7 @@ export function BranchManager() {
   });
 
   const resetForm = () => {
-    setFormData({ name: "", address: "", phone: "", code: "" });
+    setFormData({ name: "", address: "", phone: "", code: "", logoUrl: "" });
     setEditingBranch(null);
     setIsDialogOpen(false);
     setCodeError("");
@@ -106,6 +107,7 @@ export function BranchManager() {
       address: branch.address || "",
       phone: branch.phone || "",
       code: branch.code,
+      logoUrl: branch.logoUrl || "",
     });
     setCodeError("");
     setIsDialogOpen(true);
@@ -202,6 +204,21 @@ export function BranchManager() {
                     className="col-span-3"
                   />
                 </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="logoUrl" className="text-right">
+                    Logo URL
+                  </Label>
+                  <Input
+                    id="logoUrl"
+                    type="url"
+                    value={formData.logoUrl || ""}
+                    onChange={(e) =>
+                      setFormData({ ...formData, logoUrl: e.target.value })
+                    }
+                    className="col-span-3"
+                    placeholder="https://example.com/logo.png"
+                  />
+                </div>
               </div>
               <DialogFooter>
                 <Button type="button" variant="outline" onClick={resetForm}>
@@ -231,14 +248,23 @@ export function BranchManager() {
                 key={branch.id}
                 className="flex items-center justify-between p-3 border rounded-lg"
               >
-                <div className="flex flex-col">
-                  <span className="font-medium">{branch.name} ({branch.code})</span>
-                  {branch.address && (
-                    <span className="text-sm text-gray-500">{branch.address}</span>
+                <div className="flex items-center gap-3">
+                  {branch.logoUrl && (
+                    <img
+                      src={branch.logoUrl}
+                      alt={`${branch.name} logo`}
+                      className="w-10 h-10 object-cover rounded"
+                    />
                   )}
-                  {branch.phone && (
-                    <span className="text-sm text-gray-500">{branch.phone}</span>
-                  )}
+                  <div className="flex flex-col">
+                    <span className="font-medium">{branch.name} ({branch.code})</span>
+                    {branch.address && (
+                      <span className="text-sm text-gray-500">{branch.address}</span>
+                    )}
+                    {branch.phone && (
+                      <span className="text-sm text-gray-500">{branch.phone}</span>
+                    )}
+                  </div>
                 </div>
                 <div className="flex items-center gap-2">
                   <Button
