@@ -25,6 +25,7 @@ export function BranchManager() {
     name: "",
     address: "",
     phone: "",
+    code: "",
   });
 
   const { toast } = useToast();
@@ -91,7 +92,7 @@ export function BranchManager() {
   });
 
   const resetForm = () => {
-    setFormData({ name: "", address: "", phone: "" });
+    setFormData({ name: "", address: "", phone: "", code: "" });
     setEditingBranch(null);
     setIsDialogOpen(false);
   };
@@ -102,6 +103,7 @@ export function BranchManager() {
       name: branch.name,
       address: branch.address || "",
       phone: branch.phone || "",
+      code: branch.code,
     });
     setIsDialogOpen(true);
   };
@@ -147,6 +149,21 @@ export function BranchManager() {
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     className="col-span-3"
+                    required
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="code" className="text-right">
+                    Code
+                  </Label>
+                  <Input
+                    id="code"
+                    value={formData.code}
+                    onChange={(e) =>
+                      setFormData({ ...formData, code: e.target.value.toUpperCase() })
+                    }
+                    className="col-span-3"
+                    maxLength={3}
                     required
                   />
                 </div>
@@ -202,7 +219,7 @@ export function BranchManager() {
                 className="flex items-center justify-between p-3 border rounded-lg"
               >
                 <div className="flex flex-col">
-                  <span className="font-medium">{branch.name}</span>
+                  <span className="font-medium">{branch.name} ({branch.code})</span>
                   {branch.address && (
                     <span className="text-sm text-gray-500">{branch.address}</span>
                   )}
