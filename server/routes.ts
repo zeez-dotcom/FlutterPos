@@ -9,6 +9,7 @@ import type { UserWithBranch } from "@shared/schema";
 import nodemailer from "nodemailer";
 import multer from "multer";
 import * as XLSX from "xlsx";
+import { z } from "zod";
 import {
   generateCatalogTemplate,
   parsePrice,
@@ -341,6 +342,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(branch);
     } catch (error) {
       console.error("Error creating branch:", error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: error.message });
+      }
       res.status(500).json({ message: "Failed to create branch" });
     }
   });
