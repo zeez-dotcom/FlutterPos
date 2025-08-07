@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import type { User, Branch } from "@shared/schema";
 
-type AuthUser = User & { branch?: Branch | null };
+type AuthUser = User & { branch?: (Branch & { logoUrl?: string | null }) | null };
 
 export function useAuth() {
   const { data: user, isLoading, error } = useQuery<AuthUser>({
@@ -13,7 +13,7 @@ export function useAuth() {
 
   return {
     user,
-    branch: user?.branch,
+    branch: user?.branch || null,
     isLoading,
     isAuthenticated: !!user && !error,
     isAdmin: user?.role === 'admin' || user?.role === 'super_admin',

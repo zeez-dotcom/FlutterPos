@@ -337,7 +337,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/branches", requireSuperAdmin, async (req, res) => {
     try {
-      const validatedData = insertBranchSchema.parse(req.body);
+      const validatedData = insertBranchSchema.parse({
+        ...req.body,
+        logoUrl: req.body.logoUrl || null,
+      });
       const branch = await storage.createBranch(validatedData);
       res.json(branch);
     } catch (error) {
@@ -352,7 +355,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/branches/:id", requireSuperAdmin, async (req, res) => {
     try {
       const { id } = req.params;
-      const validatedData = insertBranchSchema.parse(req.body);
+      const validatedData = insertBranchSchema.parse({
+        ...req.body,
+        logoUrl: req.body.logoUrl || null,
+      });
       const branch = await storage.updateBranch(id, validatedData);
       if (!branch) {
         return res.status(404).json({ message: "Branch not found" });

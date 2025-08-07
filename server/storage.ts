@@ -929,14 +929,17 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createBranch(branchData: InsertBranch): Promise<Branch> {
-    const [branch] = await db.insert(branches).values(branchData).returning();
+    const [branch] = await db
+      .insert(branches)
+      .values({ ...branchData, logoUrl: branchData.logoUrl ?? null })
+      .returning();
     return branch;
   }
 
   async updateBranch(id: string, branchData: Partial<InsertBranch>): Promise<Branch | undefined> {
     const [updated] = await db
       .update(branches)
-      .set(branchData)
+      .set({ ...branchData, logoUrl: branchData.logoUrl ?? null })
       .where(eq(branches.id, id))
       .returning();
     return updated || undefined;

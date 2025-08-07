@@ -2,6 +2,7 @@ import { Shirt, Store, User, LogOut, ShoppingCart, Settings } from "lucide-react
 import { Button } from "@/components/ui/button";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
+import defaultLogo from "@/assets/logo.png";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { LanguageSelector } from "@/components/language-selector";
@@ -13,7 +14,7 @@ interface POSHeaderProps {
 }
 
 export function POSHeader({ cartItemCount = 0, onToggleCart }: POSHeaderProps) {
-  const { user } = useAuth();
+  const { user, branch } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -44,17 +45,17 @@ export function POSHeader({ cartItemCount = 0, onToggleCart }: POSHeaderProps) {
       <div className="px-6 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
-            <img 
-              src="https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Ftse1.mm.bing.net%2Fth%2Fid%2FOIP.J1FnT7YsQoJUjS4LBElT7wHaHa%3Fpid%3DApi&f=1&ipt=5545e86aaec86b0fec9027bbad0987fd75958cd64b12cb0b558f87bdc7217f1a&ipo=images" 
-              alt="Laundry Logo" 
-              className="w-8 h-8 object-cover rounded" 
+            <img
+              src={branch?.logoUrl || defaultLogo}
+              alt="Laundry Logo"
+              className="w-8 h-8 object-cover rounded"
             />
             <h1 className="text-xl font-medium">Laundry Management System</h1>
           </div>
           <div className="flex items-center space-x-6">
             <div className="hidden md:flex items-center space-x-2 text-sm">
               <Store className="h-4 w-4" />
-              <span>Main Store</span>
+              <span>{branch?.name || "Main Store"}</span>
             </div>
             
             {/* Cart Button */}
