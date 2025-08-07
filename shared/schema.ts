@@ -111,6 +111,8 @@ export const branches = pgTable("branches", {
   name: text("name").notNull(),
   address: text("address"),
   phone: text("phone"),
+  code: varchar("code", { length: 3 }).unique().notNull(),
+  nextOrderNumber: integer("next_order_number").notNull().default(1),
 });
 
 // Customers table for customer management and pay-later tracking
@@ -295,6 +297,9 @@ export const insertCategorySchema = createInsertSchema(categories)
 
 export const insertBranchSchema = createInsertSchema(branches).omit({
   id: true,
+  nextOrderNumber: true,
+}).extend({
+  code: z.string().regex(/^[A-Za-z]{2,3}$/),
 });
 
 export type User = typeof users.$inferSelect;

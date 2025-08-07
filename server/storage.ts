@@ -1452,17 +1452,31 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createOrder(orderData: InsertOrder & { branchId: string }): Promise<Order> {
-    // Generate unique order number
-    const orderNumber = `ORD-${Date.now().toString().slice(-6)}`;
+    return await db.transaction(async (tx) => {
+      const [branch] = await tx
+        .select({ code: branches.code, next: branches.nextOrderNumber })
+        .from(branches)
+        .where(eq(branches.id, orderData.branchId))
+        .for("update");
 
-    const [order] = await db
-      .insert(orders)
-      .values({
-        ...orderData,
-        orderNumber,
-      })
-      .returning();
-    return order;
+      if (!branch) throw new Error("Branch not found");
+
+      const orderNumber = `${branch.code}-${String(branch.next).padStart(4, "0")}`;
+
+      await tx
+        .update(branches)
+        .set({ nextOrderNumber: branch.next + 1 })
+        .where(eq(branches.id, orderData.branchId));
+
+      const [order] = await tx
+        .insert(orders)
+        .values({
+          ...orderData,
+          orderNumber,
+        })
+        .returning();
+      return order;
+    });
   }
 
   async updateOrder(id: string, orderData: Partial<Omit<Order, 'id' | 'orderNumber' | 'createdAt'>>): Promise<Order | undefined> {

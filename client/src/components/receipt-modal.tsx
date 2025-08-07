@@ -196,6 +196,9 @@ export function ReceiptModal({ transaction, order, customer, isOpen, onClose, pr
   const items = receiptData.items as any[];
   const date = new Date(receiptData.createdAt);
   const isPayLater = receiptData.paymentMethod === 'pay_later';
+  const identifier = isPayLater && receiptData.orderNumber
+    ? receiptData.orderNumber
+    : receiptData.id.slice(-6).toUpperCase();
   
   // Company logo - using imported asset
   const logoUrl = logoImage;
@@ -269,9 +272,9 @@ export function ReceiptModal({ transaction, order, customer, isOpen, onClose, pr
             )}
             {renderBilingualRow(
               isPayLater ? tEn.orderNumber : tEn.receiptNumber,
-              receiptData.id.slice(-6).toUpperCase(),
+              identifier,
               isPayLater ? tAr.orderNumber : tAr.receiptNumber,
-              receiptData.id.slice(-6).toUpperCase()
+              identifier
             )}
             {sellerName &&
               renderBilingualRow(
