@@ -787,6 +787,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Customer Management Routes
   app.get("/api/customers", requireAuth, async (req, res) => {
     try {
+      const q = (req.query.q as string | undefined)?.trim();
+      if (q) {
+        const byPhone = await storage.getCustomerByPhone(q);
+        if (byPhone) return res.json([byPhone]);
+        const byNickname = await storage.getCustomerByNickname(q);
+        if (byNickname) return res.json([byNickname]);
+        const customers = await storage.getCustomers(q);
+        return res.json(customers);
+      }
       const customers = await storage.getCustomers();
       res.json(customers);
     } catch (error) {
