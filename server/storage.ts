@@ -146,7 +146,10 @@ export interface IStorage {
   // Orders
   getOrders(branchId?: string): Promise<Order[]>;
   getOrder(id: string, branchId?: string): Promise<Order | undefined>;
-  getOrdersByCustomer(customerId: string, branchId?: string): Promise<Order[]>;
+  getOrdersByCustomer(
+    customerId: string,
+    branchId?: string,
+  ): Promise<(Order & { paid: string; remaining: string })[]>;
   getOrdersByStatus(status: string, branchId?: string): Promise<Order[]>;
   createOrder(order: InsertOrder & { branchId: string }): Promise<Order>;
   updateOrder(id: string, order: Partial<Omit<Order, 'id' | 'orderNumber' | 'createdAt'>>): Promise<Order | undefined>;
@@ -1493,10 +1496,29 @@ export class DatabaseStorage implements IStorage {
     return order || undefined;
   }
 
-  async getOrdersByCustomer(customerId: string, branchId?: string): Promise<Order[]> {
+  async getOrdersByCustomer(
+    customerId: string,
+    branchId?: string,
+  ): Promise<(Order & { paid: string; remaining: string })[]> {
     const conditions = [eq(orders.customerId, customerId)];
     if (branchId) conditions.push(eq(orders.branchId, branchId));
-    return await db.select().from(orders).where(and(...conditions));
+
+    const results = await db
+      .select({
+        order: orders,
+        paid: sql<string>`COALESCE(SUM(${payments.amount}::numeric), 0)`,
+      })
+      .from(orders)
+      .leftJoin(payments, eq(orders.id, payments.orderId))
+      .where(and(...conditions))
+      .groupBy(orders.id);
+
+    return results.map(({ order, paid }) => {
+      const paidNum = Number(paid);
+      const total = Number(order.total);
+      const remaining = (total - paidNum).toFixed(2);
+      return { ...order, paid: paidNum.toFixed(2), remaining };
+    });
   }
 
   async getOrdersByStatus(status: string, branchId?: string): Promise<Order[]> {
