@@ -21,7 +21,6 @@ import { setupAuth, requireAuth, requireSuperAdmin, requireAdminOrSuperAdmin } f
 import { seedSuperAdmin } from "./seed-superadmin";
 import passport from "passport";
 import type { UserWithBranch } from "@shared/schema";
-import nodemailer from "nodemailer";
 import multer from "multer";
 import * as XLSX from "xlsx";
 import { z } from "zod";
@@ -30,10 +29,15 @@ import {
   parsePrice,
   SERVICE_HEADERS,
 } from "./utils/excel";
+import logger from "./logger";
+import { NotificationService } from "./services/notification";
 
 const upload = multer();
 
-export async function registerRoutes(app: Express): Promise<Server> {
+export async function registerRoutes(
+  app: Express,
+  notificationService: NotificationService,
+): Promise<Server> {
   // Setup authentication
   await setupAuth(app);
   await seedSuperAdmin();
@@ -1061,18 +1065,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (notify) {
         const channels: ("sms" | "email")[] = [];
         if (order.customerPhone) {
-          console.log(`SMS sent to ${order.customerPhone} for order ${order.orderNumber} status ${status}`);
-          channels.push("sms");
+          const sent = await notificationService.sendSMS(
+            order.customerPhone,
+            `Order ${order.orderNumber} status ${status}`,
+          );
+          if (sent) channels.push("sms");
         }
         if (order.customerId) {
-          const customer = await storage.getCustomer(order.customerId, user.branchId || undefined);
+          const customer = await storage.getCustomer(
+            order.customerId,
+            user.branchId || undefined,
+          );
           if (customer?.email) {
-            console.log(`Email sent to ${customer.email} for order ${order.orderNumber} status ${status}`);
-            channels.push("email");
+            const sent = await notificationService.sendEmail(
+              customer.email,
+              "Order Status Updated",
+              `Order ${order.orderNumber} status ${status}`,
+            );
+            if (sent) channels.push("email");
           }
         }
         await Promise.all(
-          channels.map((type) => storage.createNotification({ orderId: order.id, type }))
+          channels.map((type) =>
+            storage.createNotification({ orderId: order.id, type }),
+          ),
         );
       }
 
@@ -1204,33 +1220,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!email || !html) {
         return res.status(400).json({ message: "Email and receipt content required" });
       }
-
-      if (!process.env.SMTP_HOST) {
-        return res.status(500).json({ message: "Email service not configured" });
-      }
-
-      const transporter = nodemailer.createTransport({
-        host: process.env.SMTP_HOST,
-        port: parseInt(process.env.SMTP_PORT || "587", 10),
-        secure: process.env.SMTP_SECURE === "true",
-        auth: process.env.SMTP_USER
-          ? {
-              user: process.env.SMTP_USER,
-              pass: process.env.SMTP_PASS,
-            }
-          : undefined,
-      });
-
-      await transporter.sendMail({
-        from: process.env.SMTP_FROM || process.env.SMTP_USER,
-        to: email,
-        subject: "Your Receipt",
-        html,
-      });
-
+      await notificationService.sendEmail(email, "Your Receipt", html);
       res.json({ message: "Receipt emailed successfully" });
     } catch (error) {
-      console.error("Error sending receipt email:", error);
+      logger.error("Error sending receipt email:", error);
       res.status(500).json({ message: "Failed to send receipt email" });
     }
   });
