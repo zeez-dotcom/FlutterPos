@@ -59,10 +59,11 @@ export const useCurrency = () => {
 
   const formatCurrency = (amount: string | number) => {
     const config = currencyConfigs[currency];
-    const num = typeof amount === 'string' ? parseFloat(amount) : amount;
+    const raw = typeof amount === 'string' ? parseFloat(amount) : amount;
+    const num = Number.isFinite(raw) ? raw : 0;
     const formattedAmount = num.toFixed(config.decimals);
-    
-    return config.position === 'before' 
+
+    return config.position === 'before'
       ? `${config.symbol}${formattedAmount}`
       : `${formattedAmount} ${config.symbol}`;
   };

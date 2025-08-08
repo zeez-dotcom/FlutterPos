@@ -374,9 +374,9 @@ export function CustomerManagement({ onCustomerSelect }: CustomerManagementProps
       const row = [
         order.orderNumber,
         format(new Date(order.createdAt), "MMM dd, yyyy"),
-        formatCurrency(order.subtotal),
-        formatCurrency(order.paid),
-        formatCurrency(order.remaining),
+        formatCurrency(Number(order.subtotal ?? 0)),
+        formatCurrency(Number(order.paid ?? 0)),
+        formatCurrency(Number(order.remaining ?? 0)),
       ].join(" | ");
       doc.text(row, 14, y);
       y += 10;
@@ -410,7 +410,7 @@ export function CustomerManagement({ onCustomerSelect }: CustomerManagementProps
     payments.forEach((p) => {
       const row = [
         format(new Date(p.createdAt), "MMM dd, yyyy"),
-        formatCurrency(p.amount),
+        formatCurrency(Number(p.amount ?? 0)),
         p.paymentMethod,
         p.notes || "",
       ].join(" | ");
@@ -457,9 +457,9 @@ export function CustomerManagement({ onCustomerSelect }: CustomerManagementProps
       const row = [
         o.orderNumber,
         format(new Date(o.createdAt), "MMM dd, yyyy"),
-        formatCurrency(o.subtotal),
-        formatCurrency(o.paid),
-        formatCurrency(o.remaining),
+        formatCurrency(Number(o.subtotal ?? 0)),
+        formatCurrency(Number(o.paid ?? 0)),
+        formatCurrency(Number(o.remaining ?? 0)),
       ].join(" | ");
       doc.text(row, 14, y);
       y += 10;
@@ -611,7 +611,7 @@ export function CustomerManagement({ onCustomerSelect }: CustomerManagementProps
                       setIsReportDialogOpen(true);
                     }}
                   >
-                    Due: {formatCurrency(customer.balanceDue)}
+                    Due: {formatCurrency(Number(customer.balanceDue ?? 0))}
                   </Badge>
                 )}
               </div>
@@ -622,7 +622,7 @@ export function CustomerManagement({ onCustomerSelect }: CustomerManagementProps
               )}
               <div className="flex justify-between text-sm">
                 <span>Total Spent:</span>
-                <span className="font-medium">{formatCurrency(customer.totalSpent)}</span>
+                <span className="font-medium">{formatCurrency(Number(customer.totalSpent ?? 0))}</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span>Loyalty Points:</span>
@@ -730,9 +730,9 @@ export function CustomerManagement({ onCustomerSelect }: CustomerManagementProps
                       <tr key={order.id} className="border-t">
                         <td className="p-2">{order.orderNumber}</td>
                         <td className="p-2">{format(new Date(order.createdAt), "MMM dd, yyyy")}</td>
-                        <td className="p-2">{formatCurrency(order.subtotal)}</td>
-                        <td className="p-2">{formatCurrency(order.paid)}</td>
-                        <td className="p-2">{formatCurrency(order.remaining)}</td>
+                        <td className="p-2">{formatCurrency(Number(order.subtotal ?? 0))}</td>
+                        <td className="p-2">{formatCurrency(Number(order.paid ?? 0))}</td>
+                        <td className="p-2">{formatCurrency(Number(order.remaining ?? 0))}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -778,7 +778,7 @@ export function CustomerManagement({ onCustomerSelect }: CustomerManagementProps
                         {paymentHistory.data.map((p) => (
                           <tr key={p.id} className="border-t">
                             <td className="p-2">{format(new Date(p.createdAt), "MMM dd, yyyy")}</td>
-                            <td className="p-2">{formatCurrency(p.amount)}</td>
+                            <td className="p-2">{formatCurrency(Number(p.amount ?? 0))}</td>
                             <td className="p-2">{p.paymentMethod}</td>
                             <td className="p-2">{p.notes || ""}</td>
                           </tr>
@@ -839,9 +839,9 @@ export function CustomerManagement({ onCustomerSelect }: CustomerManagementProps
                           <tr key={o.id} className="border-t">
                             <td className="p-2">{o.orderNumber}</td>
                             <td className="p-2">{format(new Date(o.createdAt), "MMM dd, yyyy")}</td>
-                            <td className="p-2">{formatCurrency(o.subtotal)}</td>
-                            <td className="p-2">{formatCurrency(o.paid)}</td>
-                            <td className="p-2">{formatCurrency(o.remaining)}</td>
+                            <td className="p-2">{formatCurrency(Number(o.subtotal ?? 0))}</td>
+                            <td className="p-2">{formatCurrency(Number(o.paid ?? 0))}</td>
+                            <td className="p-2">{formatCurrency(Number(o.remaining ?? 0))}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -965,7 +965,7 @@ export function CustomerManagement({ onCustomerSelect }: CustomerManagementProps
           <DialogHeader>
             <DialogTitle>Record Payment - {selectedCustomer?.name}</DialogTitle>
             <DialogDescription>
-              Current balance due: {formatCurrency(selectedCustomer?.balanceDue || "0")}
+              Current balance due: {formatCurrency(Number(selectedCustomer?.balanceDue ?? 0))}
             </DialogDescription>
           </DialogHeader>
           
@@ -1016,7 +1016,7 @@ export function CustomerManagement({ onCustomerSelect }: CustomerManagementProps
                     <div key={payment.id} className="flex justify-between items-center text-sm">
                       <div className="flex items-center gap-2">
                         <CreditCard className="w-3 h-3" />
-                        <span>{formatCurrency(payment.amount)}</span>
+                        <span>{formatCurrency(Number(payment.amount ?? 0))}</span>
                         <Badge variant="outline" className="text-xs">
                           {payment.paymentMethod}
                         </Badge>
