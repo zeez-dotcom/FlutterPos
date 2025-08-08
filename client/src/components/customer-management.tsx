@@ -7,9 +7,10 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { Customer, InsertCustomer, Payment, InsertPayment, insertCustomerSchema } from "@shared/schema";
+import { Customer, InsertCustomer, Payment, InsertPayment, LoyaltyHistory, insertCustomerSchema } from "@shared/schema";
 import { Search, Plus, Phone, DollarSign, CreditCard, User, Calendar, UserX } from "lucide-react";
 import { format } from "date-fns";
 import { useCurrency } from "@/lib/currency";
@@ -105,6 +106,12 @@ export function CustomerManagement({ onCustomerSelect }: CustomerManagementProps
   const [paymentNotes, setPaymentNotes] = useState("");
   const [isReportDialogOpen, setIsReportDialogOpen] = useState(false);
   const [reportCustomer, setReportCustomer] = useState<Customer | null>(null);
+  const [isHistoryDialogOpen, setIsHistoryDialogOpen] = useState(false);
+  const [historyCustomer, setHistoryCustomer] = useState<Customer | null>(null);
+  const pageSize = 10;
+  const [paymentPage, setPaymentPage] = useState(1);
+  const [orderPage, setOrderPage] = useState(1);
+  const [loyaltyPage, setLoyaltyPage] = useState(1);
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -129,6 +136,11 @@ export function CustomerManagement({ onCustomerSelect }: CustomerManagementProps
     enabled: !!selectedCustomer?.id,
   });
 
+  interface Paginated<T> {
+    data: T[];
+    total: number;
+  }
+
   interface CustomerOrder {
     id: string;
     orderNumber: string;
@@ -141,6 +153,63 @@ export function CustomerManagement({ onCustomerSelect }: CustomerManagementProps
   const { data: customerOrders = [] } = useQuery<CustomerOrder[]>({
     queryKey: ["/api/customers", reportCustomer?.id, "orders"],
     enabled: !!reportCustomer && isReportDialogOpen,
+  });
+
+  const { data: paymentHistory = { data: [], total: 0 } } = useQuery<Paginated<Payment>>({
+    queryKey: ["/api/customers", historyCustomer?.id, "payments", paymentPage],
+    enabled: !!historyCustomer?.id && isHistoryDialogOpen,
+    queryFn: async () => {
+      if (!historyCustomer) return { data: [], total: 0 };
+      const res = await fetch(
+        `/api/customers/${historyCustomer.id}/payments?page=${paymentPage}&pageSize=${pageSize}`,
+        { credentials: "include" }
+      );
+      if (!res.ok) throw new Error("Failed to fetch payment history");
+      const json = await res.json();
+      if (Array.isArray(json)) {
+        const start = (paymentPage - 1) * pageSize;
+        return { data: json.slice(start, start + pageSize), total: json.length };
+      }
+      return json;
+    },
+  });
+
+  const { data: orderHistory = { data: [], total: 0 } } = useQuery<Paginated<CustomerOrder>>({
+    queryKey: ["/api/customers", historyCustomer?.id, "orders-history", orderPage],
+    enabled: !!historyCustomer?.id && isHistoryDialogOpen,
+    queryFn: async () => {
+      if (!historyCustomer) return { data: [], total: 0 };
+      const res = await fetch(
+        `/api/customers/${historyCustomer.id}/orders?page=${orderPage}&pageSize=${pageSize}`,
+        { credentials: "include" }
+      );
+      if (!res.ok) throw new Error("Failed to fetch order history");
+      const json = await res.json();
+      if (Array.isArray(json)) {
+        const start = (orderPage - 1) * pageSize;
+        return { data: json.slice(start, start + pageSize), total: json.length };
+      }
+      return json;
+    },
+  });
+
+  const { data: loyaltyHistory = { data: [], total: 0 } } = useQuery<Paginated<LoyaltyHistory>>({
+    queryKey: ["/api/customers", historyCustomer?.id, "loyalty", loyaltyPage],
+    enabled: !!historyCustomer?.id && isHistoryDialogOpen,
+    queryFn: async () => {
+      if (!historyCustomer) return { data: [], total: 0 };
+      const res = await fetch(
+        `/api/customers/${historyCustomer.id}/loyalty-history?page=${loyaltyPage}&pageSize=${pageSize}`,
+        { credentials: "include" }
+      );
+      if (!res.ok) throw new Error("Failed to fetch loyalty history");
+      const json = await res.json();
+      if (Array.isArray(json)) {
+        const start = (loyaltyPage - 1) * pageSize;
+        return { data: json.slice(start, start + pageSize), total: json.length };
+      }
+      return json;
+    },
   });
 
   const addCustomerMutation = useMutation({
@@ -329,6 +398,146 @@ export function CustomerManagement({ onCustomerSelect }: CustomerManagementProps
     XLSX.writeFile(workbook, "customer_due_report.xlsx");
   };
 
+  const handlePaymentsExportPDF = async () => {
+    if (!historyCustomer) return;
+    const res = await fetch(`/api/customers/${historyCustomer.id}/payments`, {
+      credentials: "include",
+    });
+    const payments: Payment[] = await res.json();
+    const doc = new jsPDF();
+    doc.text(`Payment History - ${historyCustomer.name}`, 14, 16);
+    let y = 30;
+    payments.forEach((p) => {
+      const row = [
+        format(new Date(p.createdAt), "MMM dd, yyyy"),
+        formatCurrency(p.amount),
+        p.paymentMethod,
+        p.notes || "",
+      ].join(" | ");
+      doc.text(row, 14, y);
+      y += 10;
+    });
+    doc.save("payment_history.pdf");
+  };
+
+  const handlePaymentsExportCSV = async () => {
+    if (!historyCustomer) return;
+    const res = await fetch(`/api/customers/${historyCustomer.id}/payments`, {
+      credentials: "include",
+    });
+    const payments: Payment[] = await res.json();
+    const rows = payments.map((p) => ({
+      date: format(new Date(p.createdAt), "yyyy-MM-dd"),
+      amount: Number(p.amount),
+      method: p.paymentMethod,
+      notes: p.notes || "",
+    }));
+    const worksheet = XLSX.utils.json_to_sheet(rows);
+    const csv = XLSX.utils.sheet_to_csv(worksheet);
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", "payment_history.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleOrdersExportPDF = async () => {
+    if (!historyCustomer) return;
+    const res = await fetch(`/api/customers/${historyCustomer.id}/orders`, {
+      credentials: "include",
+    });
+    const orders: CustomerOrder[] = await res.json();
+    const doc = new jsPDF();
+    doc.text(`Order History - ${historyCustomer.name}`, 14, 16);
+    let y = 30;
+    orders.forEach((o) => {
+      const row = [
+        o.orderNumber,
+        format(new Date(o.createdAt), "MMM dd, yyyy"),
+        formatCurrency(o.subtotal),
+        formatCurrency(o.paid),
+        formatCurrency(o.remaining),
+      ].join(" | ");
+      doc.text(row, 14, y);
+      y += 10;
+    });
+    doc.save("order_history.pdf");
+  };
+
+  const handleOrdersExportCSV = async () => {
+    if (!historyCustomer) return;
+    const res = await fetch(`/api/customers/${historyCustomer.id}/orders`, {
+      credentials: "include",
+    });
+    const orders: CustomerOrder[] = await res.json();
+    const rows = orders.map((o) => ({
+      orderNumber: o.orderNumber,
+      date: format(new Date(o.createdAt), "yyyy-MM-dd"),
+      subtotal: Number(o.subtotal),
+      paid: Number(o.paid),
+      remaining: Number(o.remaining),
+    }));
+    const worksheet = XLSX.utils.json_to_sheet(rows);
+    const csv = XLSX.utils.sheet_to_csv(worksheet);
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", "order_history.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleLoyaltyExportPDF = async () => {
+    if (!historyCustomer) return;
+    const res = await fetch(
+      `/api/customers/${historyCustomer.id}/loyalty-history`,
+      { credentials: "include" }
+    );
+    const history: LoyaltyHistory[] = await res.json();
+    const doc = new jsPDF();
+    doc.text(`Loyalty History - ${historyCustomer.name}`, 14, 16);
+    let y = 30;
+    history.forEach((h) => {
+      const row = [
+        format(new Date(h.createdAt), "MMM dd, yyyy"),
+        h.change.toString(),
+        h.description || "",
+      ].join(" | ");
+      doc.text(row, 14, y);
+      y += 10;
+    });
+    doc.save("loyalty_history.pdf");
+  };
+
+  const handleLoyaltyExportCSV = async () => {
+    if (!historyCustomer) return;
+    const res = await fetch(
+      `/api/customers/${historyCustomer.id}/loyalty-history`,
+      { credentials: "include" }
+    );
+    const history: LoyaltyHistory[] = await res.json();
+    const rows = history.map((h) => ({
+      date: format(new Date(h.createdAt), "yyyy-MM-dd"),
+      change: h.change,
+      description: h.description || "",
+    }));
+    const worksheet = XLSX.utils.json_to_sheet(rows);
+    const csv = XLSX.utils.sheet_to_csv(worksheet);
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", "loyalty_history.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   if (isLoading) {
     return <div className="p-4">Loading customers...</div>;
   }
@@ -463,6 +672,20 @@ export function CustomerManagement({ onCustomerSelect }: CustomerManagementProps
                   Edit
                 </Button>
                 <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex-1"
+                  onClick={() => {
+                    setHistoryCustomer(customer);
+                    setPaymentPage(1);
+                    setOrderPage(1);
+                    setLoyaltyPage(1);
+                    setIsHistoryDialogOpen(true);
+                  }}
+                >
+                  History
+                </Button>
+                <Button
                   variant="destructive"
                   size="sm"
                   className="flex-1"
@@ -521,6 +744,199 @@ export function CustomerManagement({ onCustomerSelect }: CustomerManagementProps
               </DialogFooter>
             </>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* History Dialog */}
+      <Dialog open={isHistoryDialogOpen} onOpenChange={setIsHistoryDialogOpen}>
+        <DialogContent className="max-w-4xl">
+          <DialogHeader>
+            <DialogTitle>History - {historyCustomer?.name}</DialogTitle>
+          </DialogHeader>
+          <Tabs defaultValue="payments">
+            <TabsList>
+              <TabsTrigger value="payments">Payments</TabsTrigger>
+              <TabsTrigger value="orders">Orders</TabsTrigger>
+              <TabsTrigger value="loyalty">Loyalty</TabsTrigger>
+            </TabsList>
+            <TabsContent value="payments">
+              {paymentHistory.data.length === 0 ? (
+                <p className="text-sm text-gray-500">No payments found.</p>
+              ) : (
+                <>
+                  <div className="overflow-x-auto max-h-64 overflow-y-auto">
+                    <table className="min-w-full text-sm">
+                      <thead>
+                        <tr className="text-left">
+                          <th className="p-2">Date</th>
+                          <th className="p-2">Amount</th>
+                          <th className="p-2">Method</th>
+                          <th className="p-2">Notes</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {paymentHistory.data.map((p) => (
+                          <tr key={p.id} className="border-t">
+                            <td className="p-2">{format(new Date(p.createdAt), "MMM dd, yyyy")}</td>
+                            <td className="p-2">{formatCurrency(p.amount)}</td>
+                            <td className="p-2">{p.paymentMethod}</td>
+                            <td className="p-2">{p.notes || ""}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  <div className="flex justify-between items-center mt-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={paymentPage === 1}
+                      onClick={() => setPaymentPage((p) => p - 1)}
+                    >
+                      Previous
+                    </Button>
+                    <span className="text-sm">
+                      Page {paymentPage} of {Math.max(1, Math.ceil(paymentHistory.total / pageSize))}
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={paymentPage * pageSize >= paymentHistory.total}
+                      onClick={() => setPaymentPage((p) => p + 1)}
+                    >
+                      Next
+                    </Button>
+                  </div>
+                  <div className="flex justify-end gap-2 mt-2">
+                    <Button variant="outline" size="sm" onClick={handlePaymentsExportPDF}>
+                      Export PDF
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={handlePaymentsExportCSV}>
+                      Export CSV
+                    </Button>
+                  </div>
+                </>
+              )}
+            </TabsContent>
+            <TabsContent value="orders">
+              {orderHistory.data.length === 0 ? (
+                <p className="text-sm text-gray-500">No orders found.</p>
+              ) : (
+                <>
+                  <div className="overflow-x-auto max-h-64 overflow-y-auto">
+                    <table className="min-w-full text-sm">
+                      <thead>
+                        <tr className="text-left">
+                          <th className="p-2">Order #</th>
+                          <th className="p-2">Date</th>
+                          <th className="p-2">Subtotal</th>
+                          <th className="p-2">Paid</th>
+                          <th className="p-2">Remaining</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {orderHistory.data.map((o) => (
+                          <tr key={o.id} className="border-t">
+                            <td className="p-2">{o.orderNumber}</td>
+                            <td className="p-2">{format(new Date(o.createdAt), "MMM dd, yyyy")}</td>
+                            <td className="p-2">{formatCurrency(o.subtotal)}</td>
+                            <td className="p-2">{formatCurrency(o.paid)}</td>
+                            <td className="p-2">{formatCurrency(o.remaining)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  <div className="flex justify-between items-center mt-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={orderPage === 1}
+                      onClick={() => setOrderPage((p) => p - 1)}
+                    >
+                      Previous
+                    </Button>
+                    <span className="text-sm">
+                      Page {orderPage} of {Math.max(1, Math.ceil(orderHistory.total / pageSize))}
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={orderPage * pageSize >= orderHistory.total}
+                      onClick={() => setOrderPage((p) => p + 1)}
+                    >
+                      Next
+                    </Button>
+                  </div>
+                  <div className="flex justify-end gap-2 mt-2">
+                    <Button variant="outline" size="sm" onClick={handleOrdersExportPDF}>
+                      Export PDF
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={handleOrdersExportCSV}>
+                      Export CSV
+                    </Button>
+                  </div>
+                </>
+              )}
+            </TabsContent>
+            <TabsContent value="loyalty">
+              {loyaltyHistory.data.length === 0 ? (
+                <p className="text-sm text-gray-500">No loyalty changes found.</p>
+              ) : (
+                <>
+                  <div className="overflow-x-auto max-h-64 overflow-y-auto">
+                    <table className="min-w-full text-sm">
+                      <thead>
+                        <tr className="text-left">
+                          <th className="p-2">Date</th>
+                          <th className="p-2">Change</th>
+                          <th className="p-2">Description</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {loyaltyHistory.data.map((l) => (
+                          <tr key={l.id} className="border-t">
+                            <td className="p-2">{format(new Date(l.createdAt), "MMM dd, yyyy")}</td>
+                            <td className="p-2">{l.change}</td>
+                            <td className="p-2">{l.description || ""}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  <div className="flex justify-between items-center mt-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={loyaltyPage === 1}
+                      onClick={() => setLoyaltyPage((p) => p - 1)}
+                    >
+                      Previous
+                    </Button>
+                    <span className="text-sm">
+                      Page {loyaltyPage} of {Math.max(1, Math.ceil(loyaltyHistory.total / pageSize))}
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={loyaltyPage * pageSize >= loyaltyHistory.total}
+                      onClick={() => setLoyaltyPage((p) => p + 1)}
+                    >
+                      Next
+                    </Button>
+                  </div>
+                  <div className="flex justify-end gap-2 mt-2">
+                    <Button variant="outline" size="sm" onClick={handleLoyaltyExportPDF}>
+                      Export PDF
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={handleLoyaltyExportCSV}>
+                      Export CSV
+                    </Button>
+                  </div>
+                </>
+              )}
+            </TabsContent>
+          </Tabs>
         </DialogContent>
       </Dialog>
 
