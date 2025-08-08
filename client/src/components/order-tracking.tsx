@@ -14,6 +14,12 @@ import { format } from "date-fns";
 import { useCurrency } from "@/lib/currency";
 import { ReceiptModal } from "./receipt-modal";
 
+export interface OrderItem {
+  clothingItem: string | { name: string };
+  service: string | { name: string };
+  quantity: number;
+}
+
 const statusColors = {
   received: "bg-blue-100 text-blue-800",
   processing: "bg-yellow-100 text-yellow-800", 
@@ -30,6 +36,22 @@ const statusIcons = {
   drying: Clock,
   ready: CheckCircle,
   completed: CheckCircle,
+};
+
+export const getItemsSummary = (items: OrderItem[]): string => {
+  return items
+    .map((item) => {
+      const clothingName =
+        typeof item.clothingItem === "string"
+          ? item.clothingItem
+          : item.clothingItem?.name || "Item";
+      const serviceName =
+        typeof item.service === "string"
+          ? item.service
+          : item.service?.name || "Service";
+      return `${item.quantity}x ${clothingName} (${serviceName})`;
+    })
+    .join(", ");
 };
 
 export function OrderTracking() {
@@ -101,18 +123,6 @@ export function OrderTracking() {
     }
   };
 
-  const getItemsSummary = (items: any[]) => {
-    return items.map(item => {
-      const clothingName = typeof item.clothingItem === 'string'
-        ? item.clothingItem
-        : item.clothingItem?.name || 'Item';
-      const serviceName = typeof item.service === 'string'
-        ? item.service
-        : item.service?.name || 'Service';
-      return `${item.quantity}x ${clothingName} (${serviceName})`;
-    }).join(", ");
-  };
-
   if (isLoading) {
     return <div className="p-4">Loading orders...</div>;
   }
@@ -172,7 +182,9 @@ export function OrderTracking() {
         <div className="space-y-4">
         {filteredOrders.map((order) => {
           const StatusIcon = statusIcons[order.status as keyof typeof statusIcons];
-          const items = Array.isArray(order.items) ? order.items : [];
+          const items: OrderItem[] = Array.isArray(order.items)
+            ? (order.items as OrderItem[])
+            : [];
           
           return (
             <Card key={order.id} className="hover:shadow-md transition-shadow">
