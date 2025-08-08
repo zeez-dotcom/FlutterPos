@@ -4,6 +4,7 @@ import express from 'express';
 import request from 'supertest';
 
 process.env.DATABASE_URL = process.env.DATABASE_URL || 'postgres://user:pass@localhost/db';
+process.env.SESSION_SECRET = process.env.SESSION_SECRET || 'test-secret';
 
 const { requireSuperAdmin } = await import('./auth');
 const { storage } = await import('./storage');

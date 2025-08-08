@@ -5,6 +5,7 @@ import request from 'supertest';
 import { insertTransactionSchema } from '@shared/schema';
 
 process.env.DATABASE_URL = process.env.DATABASE_URL || 'postgres://user:pass@localhost/db';
+process.env.SESSION_SECRET = process.env.SESSION_SECRET || 'test-secret';
 const { requireAuth } = await import('./auth');
 
 function createApp(storage: any) {
