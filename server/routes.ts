@@ -1,7 +1,22 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage, type ParsedRow } from "./storage";
-import { insertTransactionSchema, insertClothingItemSchema, insertLaundryServiceSchema, insertProductSchema, insertUserSchema, updateUserSchema, insertCategorySchema, insertBranchSchema, insertCustomerSchema, insertOrderSchema, insertPaymentSchema, insertSecuritySettingsSchema, insertItemServicePriceSchema } from "@shared/schema";
+import {
+  insertTransactionSchema,
+  insertClothingItemSchema,
+  insertLaundryServiceSchema,
+  insertProductSchema,
+  insertUserSchema,
+  updateUserSchema,
+  insertCategorySchema,
+  insertBranchSchema,
+  insertCustomerSchema,
+  insertOrderSchema,
+  insertPaymentSchema,
+  insertSecuritySettingsSchema,
+  insertItemServicePriceSchema,
+  type InsertPayment,
+} from "@shared/schema";
 import { setupAuth, requireAuth, requireSuperAdmin, requireAdminOrSuperAdmin } from "./auth";
 import { seedSuperAdmin } from "./seed-superadmin";
 import passport from "passport";
@@ -1014,22 +1029,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  const handleCreatePayment = async (payment: InsertPayment, user: UserWithBranch, res: any) => {
+    if (payment.orderId) {
+      const order = await storage.getOrder(payment.orderId, user.branchId || undefined);
+      if (!order) {
+        return res.status(404).json({ message: "Order not found" });
+      }
+    }
+    const newPayment = await storage.createPayment(payment);
+
+    // Update customer balance when payment is received
+    await storage.updateCustomerBalance(payment.customerId, -parseFloat(newPayment.amount));
+
+    res.status(201).json(newPayment);
+  };
+
+  app.post("/api/customers/:customerId/payments", requireAuth, async (req, res) => {
+    try {
+      const user = req.user as UserWithBranch;
+      const data = insertPaymentSchema
+        .omit({ customerId: true })
+        .parse(req.body);
+      await handleCreatePayment({ ...data, customerId: req.params.customerId }, user, res);
+    } catch (error) {
+      res.status(400).json({ message: "Invalid payment data" });
+    }
+  });
+
   app.post("/api/payments", requireAuth, async (req, res) => {
+    console.warn(
+      "POST /api/payments is deprecated. Use POST /api/customers/:customerId/payments instead."
+    );
     try {
       const user = req.user as UserWithBranch;
       const paymentData = insertPaymentSchema.parse(req.body);
-      if (paymentData.orderId) {
-        const order = await storage.getOrder(paymentData.orderId, user.branchId || undefined);
-        if (!order) {
-          return res.status(404).json({ message: "Order not found" });
-        }
-      }
-      const payment = await storage.createPayment(paymentData);
-      
-      // Update customer balance when payment is received
-      await storage.updateCustomerBalance(payment.customerId, -parseFloat(payment.amount));
-      
-      res.status(201).json(payment);
+      await handleCreatePayment(paymentData, user, res);
     } catch (error) {
       res.status(400).json({ message: "Invalid payment data" });
     }

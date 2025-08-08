@@ -159,7 +159,12 @@ export function CustomerManagement({ onCustomerSelect }: CustomerManagementProps
 
   const recordPaymentMutation = useMutation({
     mutationFn: async (payment: InsertPayment) => {
-      const response = await apiRequest("POST", "/api/payments", payment);
+      const { customerId, ...data } = payment;
+      const response = await apiRequest(
+        "POST",
+        `/api/customers/${customerId}/payments`,
+        data
+      );
       return response.json();
     },
     onSuccess: () => {
