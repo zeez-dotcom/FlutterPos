@@ -21,22 +21,22 @@ export function BusinessReports() {
   const { branch } = useAuthContext();
 
   const { data: transactions = [], isLoading: transactionsLoading } = useQuery<Transaction[]>({
-    queryKey: ["/api/transactions", branch?.id],
+    queryKey: ["/api/transactions"],
     refetchInterval: 30000, // Refresh every 30 seconds
   });
 
   const { data: orders = [], isLoading: ordersLoading } = useQuery<Order[]>({
-    queryKey: ["/api/orders", branch?.id],
+    queryKey: ["/api/orders"],
     refetchInterval: 30000,
   });
 
   const { data: customers = [], isLoading: customersLoading } = useQuery<Customer[]>({
-    queryKey: ["/api/customers", branch?.id],
+    queryKey: ["/api/customers"],
     refetchInterval: 60000, // Refresh every minute
   });
 
   const { data: payments = [], isLoading: paymentsLoading } = useQuery<Payment[]>({
-    queryKey: ["/api/payments", branch?.id],
+    queryKey: ["/api/payments"],
     refetchInterval: 30000,
   });
 
