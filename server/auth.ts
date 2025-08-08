@@ -22,6 +22,11 @@ const hardcodedAdmin: User = {
   updatedAt: new Date(),
 };
 
+const sessionSecret = process.env.SESSION_SECRET;
+if (!sessionSecret) {
+  throw new Error("SESSION_SECRET environment variable is required");
+}
+
 export function getSession() {
   const sessionTtl = 7 * 24 * 60 * 60 * 1000; // 1 week
   const pgStore = connectPg(session);
@@ -31,8 +36,7 @@ export function getSession() {
     ttl: sessionTtl,
     tableName: "sessions",
   });
-  const sessionSecret = process.env.SESSION_SECRET || 'fallback-secret-for-development';
-  
+
   return session({
     secret: sessionSecret,
     store: sessionStore,
@@ -40,7 +44,8 @@ export function getSession() {
     saveUninitialized: false,
     cookie: {
       httpOnly: true,
-      secure: false, // Set to true in production with HTTPS
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
       maxAge: sessionTtl,
     },
   });

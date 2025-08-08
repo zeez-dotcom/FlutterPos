@@ -5,6 +5,7 @@ import request from 'supertest';
 
 // Ensure DATABASE_URL is set to allow importing auth module without DB
 process.env.DATABASE_URL = process.env.DATABASE_URL || 'postgres://user:pass@localhost/db';
+process.env.SESSION_SECRET = process.env.SESSION_SECRET || 'test-secret';
 
 const { requireAdminOrSuperAdmin, requireAuth } = await import('./auth');
 

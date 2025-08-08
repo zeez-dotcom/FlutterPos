@@ -5,13 +5,8 @@ import { setupVite, serveStatic, log } from "./vite";
 import logger from "./logger";
 import { NotificationService } from "./services/notification";
 
-// Set SESSION_SECRET if not present
 if (!process.env.SESSION_SECRET) {
-  process.env.SESSION_SECRET = 'laundry-system-secret-key-' + Date.now();
-  logger.warn(
-    'SESSION_SECRET was not set, generated fallback:',
-    process.env.SESSION_SECRET.substring(0, 20) + '...',
-  );
+  throw new Error("SESSION_SECRET environment variable is required");
 }
 
 const app = express();
