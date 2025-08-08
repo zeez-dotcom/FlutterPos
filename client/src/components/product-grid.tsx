@@ -18,20 +18,17 @@ interface Product {
   imageUrl?: string;
 }
 
+interface Category {
+  id: string;
+  name: string;
+  nameAr?: string | null;
+}
+
 interface ProductGridProps {
   onAddToCart: (product: Product) => void;
   cartItemCount: number;
   onToggleCart: () => void;
 }
-
-const categories = [
-  { id: "all", label: "All Items" },
-  { id: "beverages", label: "Beverages" },
-  { id: "snacks", label: "Snacks" },
-  { id: "electronics", label: "Electronics" },
-  { id: "food", label: "Food" },
-  { id: "household", label: "Household" }
-];
 
 export function ProductGrid({ onAddToCart, cartItemCount, onToggleCart }: ProductGridProps) {
   const [selectedCategory, setSelectedCategory] = useState("all");
@@ -39,7 +36,30 @@ export function ProductGrid({ onAddToCart, cartItemCount, onToggleCart }: Produc
   const isMobile = useIsMobile();
   const { language } = useTranslation();
 
-  const { data: products = [], isLoading } = useQuery<Product[]>({
+  const {
+    data: fetchedCategories = [],
+    isLoading: categoriesLoading,
+    isError: categoriesError,
+  } = useQuery<Category[]>({
+    queryKey: ["/api/product-categories"],
+    queryFn: async () => {
+      const response = await fetch("/api/product-categories", {
+        credentials: "include",
+      });
+      if (!response.ok) throw new Error("Failed to fetch categories");
+      return response.json();
+    },
+  });
+
+  const categories: Category[] = [
+    { id: "all", name: "All Items", nameAr: "All Items" },
+    ...fetchedCategories,
+  ];
+
+  const {
+    data: products = [],
+    isLoading: productsLoading,
+  } = useQuery<Product[]>({
     queryKey: ["/api/products", selectedCategory, searchQuery],
     queryFn: async () => {
       const params = new URLSearchParams();
@@ -55,7 +75,15 @@ export function ProductGrid({ onAddToCart, cartItemCount, onToggleCart }: Produc
     }
   });
 
-  if (isLoading) {
+  if (categoriesLoading) {
+    return <div className="flex-1 flex items-center justify-center">Loading categories...</div>;
+  }
+
+  if (categoriesError) {
+    return <div className="flex-1 flex items-center justify-center">Failed to load categories</div>;
+  }
+
+  if (productsLoading) {
     return <div className="flex-1 flex items-center justify-center">Loading products...</div>;
   }
 
@@ -99,7 +127,9 @@ export function ProductGrid({ onAddToCart, cartItemCount, onToggleCart }: Produc
               }`}
               onClick={() => setSelectedCategory(category.id)}
             >
-              {category.label}
+              {language === "ar" && category.nameAr
+                ? category.nameAr
+                : category.name}
             </Button>
           ))}
         </div>
