@@ -724,8 +724,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "User branch not set" });
       }
 
-      const { customerId, loyaltyPointsEarned = 0, loyaltyPointsRedeemed = 0 } = req.body;
-      const validatedData = insertTransactionSchema.parse(req.body);
+      const {
+        customerId,
+        loyaltyPointsEarned = 0,
+        loyaltyPointsRedeemed = 0,
+        ...transactionData
+      } = req.body;
+      const validatedData = insertTransactionSchema.parse(transactionData);
 
       const transaction = await storage.createTransaction({
         ...validatedData,

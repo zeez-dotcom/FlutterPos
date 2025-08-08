@@ -581,6 +581,7 @@ export class MemStorage {
     const id = randomUUID();
     const transaction: Transaction = {
       ...insertTransaction,
+      orderId: insertTransaction.orderId ?? null,
       id,
       createdAt: new Date()
     };
@@ -1364,7 +1365,7 @@ export class DatabaseStorage implements IStorage {
   async createTransaction(transaction: InsertTransaction & { branchId: string }): Promise<Transaction> {
     const [newTransaction] = await db
       .insert(transactions)
-      .values(transaction)
+      .values({ ...transaction, orderId: transaction.orderId ?? null })
       .returning();
     return newTransaction;
   }

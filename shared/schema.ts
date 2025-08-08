@@ -51,18 +51,6 @@ export const products = pgTable("products", {
   branchId: varchar("branch_id").references(() => branches.id).notNull(),
 });
 
-export const transactions = pgTable("transactions", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  items: jsonb("items").notNull(),
-  subtotal: decimal("subtotal", { precision: 10, scale: 2 }).notNull(),
-  tax: decimal("tax", { precision: 10, scale: 2 }).notNull(),
-  total: decimal("total", { precision: 10, scale: 2 }).notNull(),
-  paymentMethod: text("payment_method").notNull(),
-  createdAt: timestamp("created_at").default(sql`now()`).notNull(),
-  sellerName: text("seller_name").notNull(),
-  branchId: varchar("branch_id").references(() => branches.id).notNull(),
-});
-
 // Session storage table.
 // (IMPORTANT) This table is mandatory for authentication, don't drop it.
 export const sessions = pgTable(
@@ -182,6 +170,19 @@ export const payments = pgTable("payments", {
   notes: text("notes"),
   receivedBy: varchar("received_by").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const transactions = pgTable("transactions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  items: jsonb("items").notNull(),
+  subtotal: decimal("subtotal", { precision: 10, scale: 2 }).notNull(),
+  tax: decimal("tax", { precision: 10, scale: 2 }).notNull(),
+  total: decimal("total", { precision: 10, scale: 2 }).notNull(),
+  paymentMethod: text("payment_method").notNull(),
+  orderId: varchar("order_id").references(() => orders.id),
+  createdAt: timestamp("created_at").default(sql`now()`).notNull(),
+  sellerName: text("seller_name").notNull(),
+  branchId: varchar("branch_id").references(() => branches.id).notNull(),
 });
 
 // Notification audit trail
