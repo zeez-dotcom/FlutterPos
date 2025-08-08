@@ -788,15 +788,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/customers", requireAuth, async (req, res) => {
     try {
       const q = (req.query.q as string | undefined)?.trim();
+      const includeInactive = req.query.includeInactive === "true";
       if (q) {
         const byPhone = await storage.getCustomerByPhone(q);
-        if (byPhone) return res.json([byPhone]);
+        if (byPhone && (includeInactive || byPhone.isActive)) return res.json([byPhone]);
         const byNickname = await storage.getCustomerByNickname(q);
-        if (byNickname) return res.json([byNickname]);
-        const customers = await storage.getCustomers(q);
+        if (byNickname && (includeInactive || byNickname.isActive)) return res.json([byNickname]);
+        const customers = await storage.getCustomers(q, includeInactive);
         return res.json(customers);
       }
-      const customers = await storage.getCustomers();
+      const customers = await storage.getCustomers(undefined, includeInactive);
       res.json(customers);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch customers" });
@@ -859,6 +860,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(customer);
     } catch (error) {
       res.status(500).json({ message: "Failed to update customer" });
+    }
+  });
+
+  app.delete("/api/customers/:id", requireAuth, async (req, res) => {
+    try {
+      const deleted = await storage.deleteCustomer(req.params.id);
+      if (!deleted) {
+        return res.status(404).json({ message: "Customer not found" });
+      }
+      res.json({ message: "Customer deactivated" });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to deactivate customer" });
     }
   });
 
