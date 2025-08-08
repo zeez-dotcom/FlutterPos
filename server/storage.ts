@@ -20,7 +20,7 @@ import {
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { db } from "./db";
-import { eq, sql, and, inArray, desc } from "drizzle-orm";
+import { eq, sql, and, inArray, desc, or, ilike } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import {
   CATEGORY_SEEDS,
@@ -134,7 +134,7 @@ export interface IStorage {
   getTransaction(id: string, branchId?: string): Promise<Transaction | undefined>;
   
   // Customers
-  getCustomers(): Promise<Customer[]>;
+  getCustomers(search?: string): Promise<Customer[]>;
   getCustomer(id: string): Promise<Customer | undefined>;
   getCustomerByPhone(phoneNumber: string): Promise<Customer | undefined>;
   getCustomerByNickname(nickname: string): Promise<Customer | undefined>;
@@ -1383,7 +1383,21 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Customer methods
-  async getCustomers(): Promise<Customer[]> {
+  async getCustomers(search?: string): Promise<Customer[]> {
+    if (search) {
+      const term = `%${search}%`;
+      return await db
+        .select()
+        .from(customers)
+        .where(
+          or(
+            ilike(customers.name, term),
+            ilike(customers.phoneNumber, term),
+            ilike(customers.email, term),
+            ilike(customers.nickname, term),
+          ),
+        );
+    }
     return await db.select().from(customers);
   }
 

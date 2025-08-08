@@ -112,7 +112,16 @@ export function CustomerManagement({ onCustomerSelect }: CustomerManagementProps
   const { user } = useAuth();
 
   const { data: customers = [], isLoading } = useQuery<Customer[]>({
-    queryKey: ["/api/customers"],
+    queryKey: ["/api/customers", searchTerm],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (searchTerm) params.set("q", searchTerm);
+      const response = await fetch(`/api/customers${params.toString() ? `?${params}` : ""}`, {
+        credentials: "include",
+      });
+      if (!response.ok) throw new Error("Failed to fetch customers");
+      return response.json();
+    },
   });
 
   const { data: selectedCustomerPayments = [] } = useQuery<Payment[]>({
@@ -214,12 +223,6 @@ export function CustomerManagement({ onCustomerSelect }: CustomerManagementProps
     },
   });
 
-  const filteredCustomers = customers.filter(customer =>
-    customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    customer.nickname?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    customer.phoneNumber.includes(searchTerm) ||
-    customer.email?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
 
   const handleAddCustomer = () => {
     if (!newCustomer.phoneNumber || !newCustomer.name) {
@@ -345,7 +348,7 @@ export function CustomerManagement({ onCustomerSelect }: CustomerManagementProps
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {filteredCustomers.map((customer) => (
+        {customers.map((customer) => (
           <Card key={customer.id} className="cursor-pointer hover:shadow-md transition-shadow">
             <CardHeader className="pb-3">
               <div className="flex justify-between items-start">
