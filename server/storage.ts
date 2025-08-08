@@ -134,12 +134,13 @@ export interface IStorage {
   getTransaction(id: string, branchId?: string): Promise<Transaction | undefined>;
   
   // Customers
-  getCustomers(search?: string): Promise<Customer[]>;
+  getCustomers(search?: string, includeInactive?: boolean): Promise<Customer[]>;
   getCustomer(id: string): Promise<Customer | undefined>;
   getCustomerByPhone(phoneNumber: string): Promise<Customer | undefined>;
   getCustomerByNickname(nickname: string): Promise<Customer | undefined>;
   createCustomer(customer: InsertCustomer): Promise<Customer>;
   updateCustomer(id: string, customer: Partial<InsertCustomer>): Promise<Customer | undefined>;
+  deleteCustomer(id: string): Promise<boolean>;
   updateCustomerBalance(id: string, balanceChange: number): Promise<Customer | undefined>;
   
   // Orders
@@ -1383,22 +1384,26 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Customer methods
-  async getCustomers(search?: string): Promise<Customer[]> {
+  async getCustomers(search?: string, includeInactive = false): Promise<Customer[]> {
     if (search) {
       const term = `%${search}%`;
-      return await db
-        .select()
-        .from(customers)
-        .where(
-          or(
-            ilike(customers.name, term),
-            ilike(customers.phoneNumber, term),
-            ilike(customers.email, term),
-            ilike(customers.nickname, term),
-          ),
-        );
+      const conditions = [
+        or(
+          ilike(customers.name, term),
+          ilike(customers.phoneNumber, term),
+          ilike(customers.email, term),
+          ilike(customers.nickname, term),
+        ),
+      ];
+      if (!includeInactive) {
+        conditions.push(eq(customers.isActive, true));
+      }
+      return await db.select().from(customers).where(and(...conditions));
     }
-    return await db.select().from(customers);
+    if (includeInactive) {
+      return await db.select().from(customers);
+    }
+    return await db.select().from(customers).where(eq(customers.isActive, true));
   }
 
   async getCustomer(id: string): Promise<Customer | undefined> {
@@ -1431,6 +1436,15 @@ export class DatabaseStorage implements IStorage {
       .where(eq(customers.id, id))
       .returning();
     return updated || undefined;
+  }
+
+  async deleteCustomer(id: string): Promise<boolean> {
+    const [updated] = await db
+      .update(customers)
+      .set({ isActive: false, updatedAt: new Date() })
+      .where(eq(customers.id, id))
+      .returning();
+    return !!updated;
   }
 
   async updateCustomerBalance(id: string, balanceChange: number): Promise<Customer | undefined> {

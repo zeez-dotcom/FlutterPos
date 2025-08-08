@@ -10,7 +10,7 @@ import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { Customer, InsertCustomer, Payment, InsertPayment, insertCustomerSchema } from "@shared/schema";
-import { Search, Plus, Phone, DollarSign, CreditCard, User, Calendar } from "lucide-react";
+import { Search, Plus, Phone, DollarSign, CreditCard, User, Calendar, UserX } from "lucide-react";
 import { format } from "date-fns";
 import { useCurrency } from "@/lib/currency";
 import { useAuth } from "@/hooks/useAuth";
@@ -223,6 +223,33 @@ export function CustomerManagement({ onCustomerSelect }: CustomerManagementProps
     },
   });
 
+  const deactivateCustomerMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await apiRequest("DELETE", `/api/customers/${id}`);
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "Customer deactivated successfully",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/customers"] });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to deactivate customer",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleDeactivateCustomer = (id: string) => {
+    if (confirm("Are you sure you want to deactivate this customer?")) {
+      deactivateCustomerMutation.mutate(id);
+    }
+  };
+
 
   const handleAddCustomer = () => {
     if (!newCustomer.phoneNumber || !newCustomer.name) {
@@ -434,6 +461,16 @@ export function CustomerManagement({ onCustomerSelect }: CustomerManagementProps
                   }}
                 >
                   Edit
+                </Button>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  className="flex-1"
+                  onClick={() => handleDeactivateCustomer(customer.id)}
+                  disabled={deactivateCustomerMutation.isPending}
+                >
+                  <UserX className="w-3 h-3 mr-1" />
+                  Deactivate
                 </Button>
               </div>
             </CardFooter>
