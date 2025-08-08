@@ -726,15 +726,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const {
         customerId,
+        customerName,
+        customerPhone,
         loyaltyPointsEarned = 0,
         loyaltyPointsRedeemed = 0,
         ...transactionData
       } = req.body;
       const validatedData = insertTransactionSchema.parse(transactionData);
 
+      let orderId = validatedData.orderId;
+      if (!orderId) {
+        const orderData = insertOrderSchema.parse({
+          customerId,
+          customerName: customerName || "Walk-in",
+          customerPhone: customerPhone || "",
+          items: validatedData.items,
+          subtotal: validatedData.subtotal,
+          tax: validatedData.tax,
+          total: validatedData.total,
+          paymentMethod: validatedData.paymentMethod,
+          status: "completed",
+          sellerName: validatedData.sellerName,
+        });
+        const order = await storage.createOrder({ ...orderData, branchId: user.branchId });
+        orderId = order.id;
+      }
+
       const transaction = await storage.createTransaction({
         ...validatedData,
         branchId: user.branchId,
+        orderId,
       });
 
       if (customerId) {
