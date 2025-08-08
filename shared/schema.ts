@@ -124,6 +124,7 @@ export const customers = pgTable("customers", {
   nickname: text("nickname").unique(),
   email: varchar("email", { length: 255 }),
   address: text("address"),
+  branchId: varchar("branch_id").references(() => branches.id).notNull(),
   balanceDue: decimal("balance_due", { precision: 10, scale: 2 }).default("0.00").notNull(),
   totalSpent: decimal("total_spent", { precision: 10, scale: 2 }).default("0.00").notNull(),
   loyaltyPoints: integer("loyalty_points").default(0).notNull(),
@@ -236,6 +237,7 @@ export const insertCustomerSchema = createInsertSchema(customers).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
+  branchId: true,
 });
 
 export const insertOrderSchema = createInsertSchema(orders).omit({

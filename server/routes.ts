@@ -733,7 +733,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       if (customerId) {
-        const customer = await storage.getCustomer(customerId);
+        const customer = await storage.getCustomer(customerId, user.branchId);
         if (customer) {
           const newPoints = customer.loyaltyPoints + (loyaltyPointsEarned - loyaltyPointsRedeemed);
           await storage.updateCustomer(customerId, { loyaltyPoints: newPoints });
@@ -787,17 +787,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Customer Management Routes
   app.get("/api/customers", requireAuth, async (req, res) => {
     try {
+      const user = req.user as UserWithBranch;
+      const branchId = user.role === "super_admin" ? undefined : user.branchId || undefined;
       const q = (req.query.q as string | undefined)?.trim();
       const includeInactive = req.query.includeInactive === "true";
       if (q) {
         const byPhone = await storage.getCustomerByPhone(q);
-        if (byPhone && (includeInactive || byPhone.isActive)) return res.json([byPhone]);
+        if (
+          byPhone &&
+          (!branchId || byPhone.branchId === branchId) &&
+          (includeInactive || byPhone.isActive)
+        ) {
+          return res.json([byPhone]);
+        }
         const byNickname = await storage.getCustomerByNickname(q);
-        if (byNickname && (includeInactive || byNickname.isActive)) return res.json([byNickname]);
-        const customers = await storage.getCustomers(q, includeInactive);
+        if (
+          byNickname &&
+          (!branchId || byNickname.branchId === branchId) &&
+          (includeInactive || byNickname.isActive)
+        ) {
+          return res.json([byNickname]);
+        }
+        const customers = await storage.getCustomers(q, includeInactive, branchId);
         return res.json(customers);
       }
-      const customers = await storage.getCustomers(undefined, includeInactive);
+      const customers = await storage.getCustomers(undefined, includeInactive, branchId);
       res.json(customers);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch customers" });
@@ -806,7 +820,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/customers/:id", requireAuth, async (req, res) => {
     try {
-      const customer = await storage.getCustomer(req.params.id);
+      const user = req.user as UserWithBranch;
+      const branchId = user.role === "super_admin" ? undefined : user.branchId || undefined;
+      const customer = await storage.getCustomer(req.params.id, branchId);
       if (!customer) {
         return res.status(404).json({ message: "Customer not found" });
       }
@@ -818,8 +834,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/customers/phone/:phoneNumber", requireAuth, async (req, res) => {
     try {
+      const user = req.user as UserWithBranch;
+      const branchId = user.role === "super_admin" ? undefined : user.branchId || undefined;
       const customer = await storage.getCustomerByPhone(req.params.phoneNumber);
-      if (!customer) {
+      if (!customer || (branchId && customer.branchId !== branchId)) {
         return res.status(404).json({ message: "Customer not found" });
       }
       res.json(customer);
@@ -830,8 +848,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/customers/nickname/:nickname", requireAuth, async (req, res) => {
     try {
+      const user = req.user as UserWithBranch;
+      const branchId = user.role === "super_admin" ? undefined : user.branchId || undefined;
       const customer = await storage.getCustomerByNickname(req.params.nickname);
-      if (!customer) {
+      if (!customer || (branchId && customer.branchId !== branchId)) {
         return res.status(404).json({ message: "Customer not found" });
       }
       res.json(customer);
@@ -842,8 +862,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/customers", requireAuth, async (req, res) => {
     try {
+      const user = req.user as UserWithBranch;
+      if (!user.branchId) {
+        return res.status(400).json({ message: "User branch not set" });
+      }
       const customerData = insertCustomerSchema.parse(req.body);
-      const customer = await storage.createCustomer(customerData);
+      const customer = await storage.createCustomer(customerData, user.branchId);
       res.status(201).json(customer);
     } catch (error) {
       res.status(400).json({ message: "Invalid customer data" });
@@ -852,11 +876,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.patch("/api/customers/:id", requireAuth, async (req, res) => {
     try {
+      const user = req.user as UserWithBranch;
+      const branchId = user.role === "super_admin" ? undefined : user.branchId || undefined;
       const data = insertCustomerSchema.partial().parse(req.body);
-      const customer = await storage.updateCustomer(req.params.id, data);
-      if (!customer) {
+      const existing = await storage.getCustomer(req.params.id, branchId);
+      if (!existing) {
         return res.status(404).json({ message: "Customer not found" });
       }
+      const customer = await storage.updateCustomer(req.params.id, data);
       res.json(customer);
     } catch (error) {
       res.status(500).json({ message: "Failed to update customer" });
@@ -865,6 +892,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete("/api/customers/:id", requireAuth, async (req, res) => {
     try {
+      const user = req.user as UserWithBranch;
+      const branchId = user.role === "super_admin" ? undefined : user.branchId || undefined;
+      const existing = await storage.getCustomer(req.params.id, branchId);
+      if (!existing) {
+        return res.status(404).json({ message: "Customer not found" });
+      }
       const deleted = await storage.deleteCustomer(req.params.id);
       if (!deleted) {
         return res.status(404).json({ message: "Customer not found" });
@@ -938,7 +971,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // If payment method is pay_later, update customer balance
       if (order.paymentMethod === 'pay_later' && order.customerId) {
-        const customer = await storage.getCustomer(order.customerId);
+        const customer = await storage.getCustomer(order.customerId, user.branchId);
         if (customer) {
           const orderAmount = parseFloat(order.total);
           const updatedBalance = parseFloat(customer.balanceDue) + orderAmount;
@@ -950,7 +983,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       if (order.customerId) {
-        const customer = await storage.getCustomer(order.customerId);
+        const customer = await storage.getCustomer(order.customerId, user.branchId);
         if (customer) {
           const newPoints = customer.loyaltyPoints + (loyaltyPointsEarned - loyaltyPointsRedeemed);
           await storage.updateCustomer(order.customerId, { loyaltyPoints: newPoints });
@@ -992,6 +1025,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.patch("/api/orders/:id/status", requireAuth, async (req, res) => {
     try {
+      const user = req.user as UserWithBranch;
       const { status, notify } = req.body as { status: string; notify?: boolean };
       const order = await storage.updateOrderStatus(req.params.id, status);
       if (!order) {
@@ -1005,7 +1039,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           channels.push("sms");
         }
         if (order.customerId) {
-          const customer = await storage.getCustomer(order.customerId);
+          const customer = await storage.getCustomer(order.customerId, user.branchId || undefined);
           if (customer?.email) {
             console.log(`Email sent to ${customer.email} for order ${order.orderNumber} status ${status}`);
             channels.push("email");
@@ -1104,7 +1138,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const newPayment = await storage.createPayment(payment);
 
     // Update customer balance when payment is received
-    await storage.updateCustomerBalance(payment.customerId, -parseFloat(newPayment.amount));
+    await storage.updateCustomerBalance(
+      payment.customerId,
+      -parseFloat(newPayment.amount),
+      user.branchId || undefined,
+    );
 
     res.status(201).json(newPayment);
   };
