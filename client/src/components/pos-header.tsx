@@ -1,7 +1,7 @@
 import { Shirt, Store, User, LogOut, ShoppingCart, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuthContext } from "@/context/AuthContext";
 import defaultLogo from "@/assets/logo.png";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
@@ -14,7 +14,7 @@ interface POSHeaderProps {
 }
 
 export function POSHeader({ cartItemCount = 0, onToggleCart }: POSHeaderProps) {
-  const { user, branch } = useAuth();
+  const { user, branch } = useAuthContext();
   const { toast } = useToast();
   const queryClient = useQueryClient();
 

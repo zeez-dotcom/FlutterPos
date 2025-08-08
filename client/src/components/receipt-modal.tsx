@@ -10,7 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { getTaxRate } from "@/lib/tax";
 import { format } from "date-fns";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuthContext } from "@/context/AuthContext";
 
 interface ReceiptModalProps {
   transaction?: Transaction | null;
@@ -47,7 +47,7 @@ export function ReceiptModal({ transaction, order, customer, isOpen, onClose, pr
     }
   }, []);
 
-  const { branch } = useAuth();
+  const { branch } = useAuthContext();
   // Company logo - branch logo if available, else default asset
   const logoUrl = branch?.logoUrl || logoImage;
 

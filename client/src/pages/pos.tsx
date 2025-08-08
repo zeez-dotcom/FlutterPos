@@ -23,7 +23,7 @@ import { SystemSettings } from "@/components/system-settings";
 import { ClothingItem, LaundryService, Customer } from "@shared/schema";
 import { ShoppingCart, Package, BarChart3, Settings, Users, Truck, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuthContext } from "@/context/AuthContext";
 
 export default function POS() {
   const [activeView, setActiveView] = useState("sales");
@@ -40,7 +40,7 @@ export default function POS() {
   const queryClient = useQueryClient();
   const { t, language } = useTranslation();
   const { formatCurrency } = useCurrency();
-  const { user, branch } = useAuth();
+  const { user, branch } = useAuthContext();
   const username = user?.username ?? "";
   
   const {

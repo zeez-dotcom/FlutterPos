@@ -9,7 +9,7 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuthContext } from "@/context/AuthContext";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n";
 import { SecuritySettings } from "./security-settings";
@@ -47,7 +47,7 @@ export function SettingsPanel() {
   });
 
   const { toast } = useToast();
-  const { isAdmin, isSuperAdmin } = useAuth();
+  const { isAdmin, isSuperAdmin } = useAuthContext();
   const hasAdminAccess = isAdmin || isSuperAdmin;
 
   const handleSettingChange = (key: string, value: string | boolean | number) => {

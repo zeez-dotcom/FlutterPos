@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuthContext } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { CategoryManager } from "@/components/admin/CategoryManager";
@@ -13,7 +13,7 @@ import { Link } from "wouter";
 import logoUrl from "@/assets/logo.png";
 
 export default function AdminDashboard() {
-  const { user, isSuperAdmin } = useAuth();
+  const { user, isSuperAdmin } = useAuthContext();
   const { toast } = useToast();
   const queryClient = useQueryClient();
 

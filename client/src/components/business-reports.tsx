@@ -9,7 +9,7 @@ import { Transaction, Order, Customer, Payment } from "@shared/schema";
 import { DollarSign, TrendingUp, Users, Package, Calendar, CreditCard } from "lucide-react";
 import { format, subDays, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from "date-fns";
 import { useCurrency } from "@/lib/currency";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuthContext } from "@/context/AuthContext";
 import jsPDF from "jspdf";
 import * as XLSX from "xlsx";
 
@@ -18,7 +18,7 @@ type ReportPeriod = "today" | "week" | "month" | "all";
 export function BusinessReports() {
   const [reportPeriod, setReportPeriod] = useState<ReportPeriod>("today");
   const { formatCurrency } = useCurrency();
-  const { branch } = useAuth();
+  const { branch } = useAuthContext();
 
   const { data: transactions = [], isLoading: transactionsLoading } = useQuery<Transaction[]>({
     queryKey: ["/api/transactions", branch?.id],
