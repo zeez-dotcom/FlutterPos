@@ -19,7 +19,7 @@ interface ReceiptModalProps {
   isOpen: boolean;
   onClose: () => void;
   printNumber?: number;
-  printedAt?: string;
+  printedAt?: string | Date;
 }
 
 export function ReceiptModal({ transaction, order, customer, isOpen, onClose, printNumber, printedAt }: ReceiptModalProps) {
