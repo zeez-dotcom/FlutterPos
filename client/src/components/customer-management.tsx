@@ -14,7 +14,7 @@ import { Customer, InsertCustomer, Payment, InsertPayment, LoyaltyHistory, inser
 import { Search, Plus, Phone, DollarSign, CreditCard, User, Calendar, UserX } from "lucide-react";
 import { format } from "date-fns";
 import { useCurrency } from "@/lib/currency";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuthContext } from "@/context/AuthContext";
 import jsPDF from "jspdf";
 import * as XLSX from "xlsx";
 
@@ -116,7 +116,7 @@ export function CustomerManagement({ onCustomerSelect }: CustomerManagementProps
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { formatCurrency } = useCurrency();
-  const { user, branch } = useAuth();
+  const { user, branch } = useAuthContext();
 
   const { data: customers = [], isLoading } = useQuery<Customer[]>({
     queryKey: ["/api/customers", searchTerm, branch?.id],

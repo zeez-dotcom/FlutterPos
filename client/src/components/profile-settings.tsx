@@ -4,14 +4,14 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuthContext } from "@/context/AuthContext";
 import { apiRequest } from "@/lib/queryClient";
 import { useQueryClient } from "@tanstack/react-query";
 import { User as UserIcon } from "lucide-react";
 import { useTranslation } from "@/lib/i18n";
 
 export function ProfileSettings() {
-  const { user } = useAuth();
+  const { user } = useAuthContext();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { t } = useTranslation();
