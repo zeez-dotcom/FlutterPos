@@ -16,6 +16,28 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "@/lib/i18n";
 
+interface ClothingItemPayload {
+  name: string;
+  nameAr?: string;
+  description?: string;
+  categoryId: string;
+  imageUrl?: string;
+}
+
+interface ServicePayload {
+  name: string;
+  nameAr?: string;
+  description?: string;
+  price: string;
+  categoryId: string;
+}
+
+interface PricePayload {
+  clothingItemId: string;
+  serviceId: string;
+  price: string;
+}
+
 export function InventoryManagement() {
   const [searchQuery, setSearchQuery] = useState("");
   const [isClothingModalOpen, setIsClothingModalOpen] = useState(false);
@@ -78,40 +100,40 @@ export function InventoryManagement() {
   }) as { data: (LaundryService & { itemPrice?: string })[] };
 
   // Forms
-  const clothingForm = useForm({
+  const clothingForm = useForm<ClothingItemPayload>({
     resolver: zodResolver(insertClothingItemSchema),
     defaultValues: {
       name: "",
       nameAr: "",
       description: "",
       categoryId: "",
-      imageUrl: ""
-    }
+      imageUrl: "",
+    },
   });
 
-  const serviceForm = useForm({
+  const serviceForm = useForm<ServicePayload>({
     resolver: zodResolver(insertLaundryServiceSchema),
     defaultValues: {
       name: "",
       nameAr: "",
       description: "",
       price: "",
-      categoryId: ""
-    }
+      categoryId: "",
+    },
   });
 
-  const priceForm = useForm({
+  const priceForm = useForm<PricePayload>({
     resolver: zodResolver(insertItemServicePriceSchema),
     defaultValues: {
       clothingItemId: "",
       serviceId: "",
       price: "",
-    }
+    },
   });
 
   // Mutations for clothing items
   const createClothingMutation = useMutation({
-    mutationFn: async (data: any) => {
+    mutationFn: async (data: ClothingItemPayload) => {
       const response = await apiRequest("POST", "/api/clothing-items", data);
       return response.json();
     },
@@ -124,7 +146,7 @@ export function InventoryManagement() {
   });
 
   const updateClothingMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: string, data: any }) => {
+    mutationFn: async ({ id, data }: { id: string; data: ClothingItemPayload }) => {
       const response = await apiRequest("PUT", `/api/clothing-items/${id}`, data);
       return response.json();
     },
@@ -150,7 +172,7 @@ export function InventoryManagement() {
 
   // Mutations for services
   const createServiceMutation = useMutation({
-    mutationFn: async (data: any) => {
+    mutationFn: async (data: ServicePayload) => {
       const response = await apiRequest("POST", "/api/laundry-services", data);
       return response.json();
     },
@@ -163,7 +185,7 @@ export function InventoryManagement() {
   });
 
   const updateServiceMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: string, data: any }) => {
+    mutationFn: async ({ id, data }: { id: string; data: ServicePayload }) => {
       const response = await apiRequest("PUT", `/api/laundry-services/${id}`, data);
       return response.json();
     },
@@ -188,7 +210,7 @@ export function InventoryManagement() {
   });
 
   const priceMutation = useMutation({
-    mutationFn: async (data: any) => {
+    mutationFn: async (data: PricePayload) => {
       const response = await apiRequest("POST", "/api/item-service-prices", data);
       return response.json();
     },
@@ -199,7 +221,7 @@ export function InventoryManagement() {
     }
   });
 
-  const handleClothingSubmit = (data: any) => {
+  const handleClothingSubmit = (data: ClothingItemPayload) => {
     if (editingClothing) {
       updateClothingMutation.mutate({ id: editingClothing.id, data });
     } else {
@@ -207,7 +229,7 @@ export function InventoryManagement() {
     }
   };
 
-  const handleServiceSubmit = (data: any) => {
+  const handleServiceSubmit = (data: ServicePayload) => {
     if (editingService) {
       updateServiceMutation.mutate({ id: editingService.id, data });
     } else {
@@ -215,7 +237,7 @@ export function InventoryManagement() {
     }
   };
 
-  const handlePriceSubmit = (data: any) => {
+  const handlePriceSubmit = (data: PricePayload) => {
     priceMutation.mutate(data);
   };
 
