@@ -47,6 +47,10 @@ export function ReceiptModal({ transaction, order, customer, isOpen, onClose, pr
     }
   }, []);
 
+  const { branch } = useAuth();
+  // Company logo - branch logo if available, else default asset
+  const logoUrl = branch?.logoUrl || logoImage;
+
   const renderBilingualRow = (
     enLabel: string,
     enValue: ReactNode,
@@ -200,10 +204,6 @@ export function ReceiptModal({ transaction, order, customer, isOpen, onClose, pr
   const identifier = isPayLater && receiptData.orderNumber
     ? receiptData.orderNumber
     : receiptData.id.slice(-6).toUpperCase();
-  
-  const { branch } = useAuth();
-  // Company logo - branch logo if available, else default asset
-  const logoUrl = branch?.logoUrl || logoImage;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
