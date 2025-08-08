@@ -374,9 +374,9 @@ export function CustomerManagement({ onCustomerSelect }: CustomerManagementProps
       const row = [
         order.orderNumber,
         format(new Date(order.createdAt), "MMM dd, yyyy"),
-        formatCurrency(Number(order.subtotal ?? 0)),
-        formatCurrency(Number(order.paid ?? 0)),
-        formatCurrency(Number(order.remaining ?? 0)),
+        formatCurrency(Number(order.subtotal)),
+        formatCurrency(Number(order.paid)),
+        formatCurrency(Number(order.remaining)),
       ].join(" | ");
       doc.text(row, 14, y);
       y += 10;
@@ -457,9 +457,9 @@ export function CustomerManagement({ onCustomerSelect }: CustomerManagementProps
       const row = [
         o.orderNumber,
         format(new Date(o.createdAt), "MMM dd, yyyy"),
-        formatCurrency(Number(o.subtotal ?? 0)),
-        formatCurrency(Number(o.paid ?? 0)),
-        formatCurrency(Number(o.remaining ?? 0)),
+        formatCurrency(Number(o.subtotal)),
+        formatCurrency(Number(o.paid)),
+        formatCurrency(Number(o.remaining)),
       ].join(" | ");
       doc.text(row, 14, y);
       y += 10;
@@ -730,9 +730,9 @@ export function CustomerManagement({ onCustomerSelect }: CustomerManagementProps
                       <tr key={order.id} className="border-t">
                         <td className="p-2">{order.orderNumber}</td>
                         <td className="p-2">{format(new Date(order.createdAt), "MMM dd, yyyy")}</td>
-                        <td className="p-2">{formatCurrency(Number(order.subtotal ?? 0))}</td>
-                        <td className="p-2">{formatCurrency(Number(order.paid ?? 0))}</td>
-                        <td className="p-2">{formatCurrency(Number(order.remaining ?? 0))}</td>
+                        <td className="p-2">{formatCurrency(Number(order.subtotal))}</td>
+                        <td className="p-2">{formatCurrency(Number(order.paid))}</td>
+                        <td className="p-2">{formatCurrency(Number(order.remaining))}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -839,9 +839,9 @@ export function CustomerManagement({ onCustomerSelect }: CustomerManagementProps
                           <tr key={o.id} className="border-t">
                             <td className="p-2">{o.orderNumber}</td>
                             <td className="p-2">{format(new Date(o.createdAt), "MMM dd, yyyy")}</td>
-                            <td className="p-2">{formatCurrency(Number(o.subtotal ?? 0))}</td>
-                            <td className="p-2">{formatCurrency(Number(o.paid ?? 0))}</td>
-                            <td className="p-2">{formatCurrency(Number(o.remaining ?? 0))}</td>
+                            <td className="p-2">{formatCurrency(Number(o.subtotal))}</td>
+                            <td className="p-2">{formatCurrency(Number(o.paid))}</td>
+                            <td className="p-2">{formatCurrency(Number(o.remaining))}</td>
                           </tr>
                         ))}
                       </tbody>

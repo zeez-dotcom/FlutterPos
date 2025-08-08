@@ -981,18 +981,32 @@ export async function registerRoutes(
   app.get("/api/customers/:customerId/orders", requireAuth, async (req, res) => {
     try {
       const user = req.user as UserWithBranch;
-      const orders = await storage.getOrdersByCustomer(
+      let orders = await storage.getOrdersByCustomer(
         req.params.customerId,
-        user.branchId || undefined
+        user.branchId || undefined,
       );
+
+      if (req.query.unpaid === "true") {
+        orders = orders.filter((o) => Number(o.remaining) > 0);
+      }
+
+      const mapped = orders.map((o) => ({
+        id: o.id,
+        orderNumber: o.orderNumber,
+        createdAt: o.createdAt,
+        subtotal: o.subtotal,
+        paid: o.paid,
+        remaining: o.remaining,
+      }));
+
       const page = parseInt(req.query.page as string);
       const pageSize = parseInt(req.query.pageSize as string) || 10;
       if (page) {
         const start = (page - 1) * pageSize;
-        const data = orders.slice(start, start + pageSize);
-        res.json({ data, total: orders.length });
+        const data = mapped.slice(start, start + pageSize);
+        res.json({ data, total: mapped.length });
       } else {
-        res.json(orders);
+        res.json(mapped);
       }
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch customer orders" });
