@@ -908,8 +908,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/customers/:customerId/orders", requireAuth, async (req, res) => {
     try {
       const user = req.user as UserWithBranch;
-      const orders = await storage.getOrdersByCustomer(req.params.customerId, user.branchId || undefined);
-      res.json(orders);
+      const orders = await storage.getOrdersByCustomer(
+        req.params.customerId,
+        user.branchId || undefined
+      );
+      const page = parseInt(req.query.page as string);
+      const pageSize = parseInt(req.query.pageSize as string) || 10;
+      if (page) {
+        const start = (page - 1) * pageSize;
+        const data = orders.slice(start, start + pageSize);
+        res.json({ data, total: orders.length });
+      } else {
+        res.json(orders);
+      }
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch customer orders" });
     }
@@ -1044,12 +1055,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/customers/:customerId/payments", requireAuth, async (req, res) => {
     try {
       const user = req.user as UserWithBranch;
-      const payments = await storage.getPaymentsByCustomer(req.params.customerId, user.branchId || undefined);
-      res.json(payments);
+      const payments = await storage.getPaymentsByCustomer(
+        req.params.customerId,
+        user.branchId || undefined
+      );
+      const page = parseInt(req.query.page as string);
+      const pageSize = parseInt(req.query.pageSize as string) || 10;
+      if (page) {
+        const start = (page - 1) * pageSize;
+        const data = payments.slice(start, start + pageSize);
+        res.json({ data, total: payments.length });
+      } else {
+        res.json(payments);
+      }
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch customer payments" });
     }
   });
+
+  app.get(
+    "/api/customers/:customerId/loyalty-history",
+    requireAuth,
+    async (req, res) => {
+      try {
+        const history = await storage.getLoyaltyHistory(req.params.customerId);
+        const page = parseInt(req.query.page as string);
+        const pageSize = parseInt(req.query.pageSize as string) || 10;
+        if (page) {
+          const start = (page - 1) * pageSize;
+          const data = history.slice(start, start + pageSize);
+          res.json({ data, total: history.length });
+        } else {
+          res.json(history);
+        }
+      } catch (error) {
+        res.status(500).json({ message: "Failed to fetch loyalty history" });
+      }
+    }
+  );
 
   const handleCreatePayment = async (payment: InsertPayment, user: UserWithBranch, res: any) => {
     if (payment.orderId) {
