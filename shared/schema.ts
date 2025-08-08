@@ -241,13 +241,18 @@ export const insertCustomerSchema = createInsertSchema(customers).omit({
   branchId: true,
 });
 
-export const insertOrderSchema = createInsertSchema(orders).omit({
-  id: true,
-  orderNumber: true,
-  createdAt: true,
-  updatedAt: true,
-  branchId: true,
-});
+export const insertOrderSchema = createInsertSchema(orders)
+  .omit({
+    id: true,
+    orderNumber: true,
+    createdAt: true,
+    updatedAt: true,
+    branchId: true,
+  })
+  .extend({
+    estimatedPickup: z.coerce.date().optional(),
+    actualPickup: z.coerce.date().optional(),
+  });
 
 export const insertOrderPrintSchema = createInsertSchema(orderPrints).omit({
   printedAt: true,
