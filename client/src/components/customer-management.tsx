@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { Customer, InsertCustomer, Payment, InsertPayment } from "@shared/schema";
+import { Customer, InsertCustomer, Payment, InsertPayment, insertCustomerSchema } from "@shared/schema";
 import { Search, Plus, Phone, DollarSign, CreditCard, User, Calendar } from "lucide-react";
 import { format } from "date-fns";
 import { useCurrency } from "@/lib/currency";
@@ -21,12 +21,79 @@ interface CustomerManagementProps {
   onCustomerSelect?: (customer: Customer) => void;
 }
 
+interface CustomerFormFieldsProps {
+  customer: InsertCustomer;
+  onChange: (value: InsertCustomer) => void;
+}
+
+function CustomerFormFields({ customer, onChange }: CustomerFormFieldsProps) {
+  return (
+    <div className="space-y-4">
+      <div>
+        <Label htmlFor="phone">Phone Number *</Label>
+        <Input
+          id="phone"
+          value={customer.phoneNumber}
+          onChange={(e) => onChange({ ...customer, phoneNumber: e.target.value })}
+          placeholder="Enter phone number"
+        />
+      </div>
+      <div>
+        <Label htmlFor="name">Name *</Label>
+        <Input
+          id="name"
+          value={customer.name}
+          onChange={(e) => onChange({ ...customer, name: e.target.value })}
+          placeholder="Enter customer name"
+        />
+      </div>
+      <div>
+        <Label htmlFor="nickname">Nickname</Label>
+        <Input
+          id="nickname"
+          value={customer.nickname || ""}
+          onChange={(e) => onChange({ ...customer, nickname: e.target.value })}
+          placeholder="Enter nickname"
+        />
+      </div>
+      <div>
+        <Label htmlFor="email">Email</Label>
+        <Input
+          id="email"
+          type="email"
+          value={customer.email || ""}
+          onChange={(e) => onChange({ ...customer, email: e.target.value })}
+          placeholder="Enter email address"
+        />
+      </div>
+      <div>
+        <Label htmlFor="address">Address</Label>
+        <Input
+          id="address"
+          value={customer.address || ""}
+          onChange={(e) => onChange({ ...customer, address: e.target.value })}
+          placeholder="Enter address"
+        />
+      </div>
+    </div>
+  );
+}
+
 export function CustomerManagement({ onCustomerSelect }: CustomerManagementProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [newCustomer, setNewCustomer] = useState<InsertCustomer>({
+    phoneNumber: "",
+    name: "",
+    email: "",
+    address: "",
+    nickname: "",
+  });
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
+  const [editCustomerData, setEditCustomerData] = useState<InsertCustomer>({
     phoneNumber: "",
     name: "",
     email: "",
@@ -115,6 +182,33 @@ export function CustomerManagement({ onCustomerSelect }: CustomerManagementProps
     },
   });
 
+  const editCustomerMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: InsertCustomer }) => {
+      const response = await apiRequest("PATCH", `/api/customers/${id}`, data);
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "Customer updated successfully",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/customers"] });
+      if (editingCustomer) {
+        queryClient.invalidateQueries({ queryKey: ["/api/customers", editingCustomer.id, "payments"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/customers", editingCustomer.id, "orders"] });
+      }
+      setIsEditDialogOpen(false);
+      setEditingCustomer(null);
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to update customer",
+        variant: "destructive",
+      });
+    },
+  });
+
   const filteredCustomers = customers.filter(customer =>
     customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     customer.nickname?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -153,6 +247,20 @@ export function CustomerManagement({ onCustomerSelect }: CustomerManagementProps
         receivedBy: user?.username || "Unknown",
       });
     };
+
+  const handleEditCustomer = () => {
+    if (!editingCustomer) return;
+    try {
+      const data = insertCustomerSchema.parse(editCustomerData);
+      editCustomerMutation.mutate({ id: editingCustomer.id, data });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Invalid customer data",
+        variant: "destructive",
+      });
+    }
+  };
 
   const handleExportPDF = () => {
     const doc = new jsPDF();
@@ -208,54 +316,7 @@ export function CustomerManagement({ onCustomerSelect }: CustomerManagementProps
                 Enter customer details to create a new account
               </DialogDescription>
             </DialogHeader>
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="phone">Phone Number *</Label>
-                <Input
-                  id="phone"
-                  value={newCustomer.phoneNumber}
-                  onChange={(e) => setNewCustomer({ ...newCustomer, phoneNumber: e.target.value })}
-                  placeholder="Enter phone number"
-                />
-              </div>
-              <div>
-                <Label htmlFor="name">Name *</Label>
-                <Input
-                  id="name"
-                  value={newCustomer.name}
-                  onChange={(e) => setNewCustomer({ ...newCustomer, name: e.target.value })}
-                  placeholder="Enter customer name"
-                />
-              </div>
-              <div>
-                <Label htmlFor="nickname">Nickname</Label>
-                <Input
-                  id="nickname"
-                  value={newCustomer.nickname || ""}
-                  onChange={(e) => setNewCustomer({ ...newCustomer, nickname: e.target.value })}
-                  placeholder="Enter nickname"
-                />
-              </div>
-              <div>
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={newCustomer.email || ""}
-                  onChange={(e) => setNewCustomer({ ...newCustomer, email: e.target.value })}
-                  placeholder="Enter email address"
-                />
-              </div>
-              <div>
-                <Label htmlFor="address">Address</Label>
-                <Input
-                  id="address"
-                  value={newCustomer.address || ""}
-                  onChange={(e) => setNewCustomer({ ...newCustomer, address: e.target.value })}
-                  placeholder="Enter address"
-                />
-              </div>
-            </div>
+            <CustomerFormFields customer={newCustomer} onChange={setNewCustomer} />
             <DialogFooter>
               <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
                 Cancel
@@ -348,6 +409,24 @@ export function CustomerManagement({ onCustomerSelect }: CustomerManagementProps
                     Pay
                   </Button>
                 )}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex-1"
+                  onClick={() => {
+                    setEditingCustomer(customer);
+                    setEditCustomerData({
+                      phoneNumber: customer.phoneNumber,
+                      name: customer.name,
+                      email: customer.email || "",
+                      address: customer.address || "",
+                      nickname: customer.nickname || "",
+                    });
+                    setIsEditDialogOpen(true);
+                  }}
+                >
+                  Edit
+                </Button>
               </div>
             </CardFooter>
           </Card>
@@ -397,6 +476,25 @@ export function CustomerManagement({ onCustomerSelect }: CustomerManagementProps
               </DialogFooter>
             </>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Customer Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Customer</DialogTitle>
+            <DialogDescription>Update customer details</DialogDescription>
+          </DialogHeader>
+          <CustomerFormFields customer={editCustomerData} onChange={setEditCustomerData} />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleEditCustomer} disabled={editCustomerMutation.isPending}>
+              Save Changes
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 
