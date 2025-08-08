@@ -57,43 +57,44 @@ export default function POS() {
   const cartSummary = getCartSummary();
 
   const checkoutMutation = useMutation({
-    mutationFn: async (orderData: any) => {
-      if (paymentMethod === "pay_later") {
-        // Create order for pay later
-        const response = await apiRequest("POST", "/api/orders", orderData);
-        return response.json();
-      } else {
-        // Process immediate transaction
-        const response = await apiRequest("POST", "/api/transactions", orderData);
-        return response.json();
+    mutationFn: async ({ order, transaction }: { order: any; transaction?: any }) => {
+      const orderRes = await apiRequest("POST", "/api/orders", order);
+      const createdOrder = await orderRes.json();
+      let recordedTransaction = null;
+      if (transaction) {
+        const txRes = await apiRequest("POST", "/api/transactions", {
+          ...transaction,
+          orderId: createdOrder.id,
+        });
+        recordedTransaction = await txRes.json();
       }
+      return { order: createdOrder, transaction: recordedTransaction };
     },
-    onSuccess: (result) => {
-      if (paymentMethod === "pay_later") {
-        setCurrentOrder({
-          ...result,
+    onSuccess: ({ order, transaction }) => {
+      setCurrentOrder({
+        ...order,
+        branchName: branch?.name,
+        branchAddress: branch?.address,
+        branchPhone: branch?.phone,
+        sellerName: username,
+      });
+      if (transaction) {
+        setCurrentTransaction({
+          ...transaction,
+          sellerName: username,
           branchName: branch?.name,
           branchAddress: branch?.address,
           branchPhone: branch?.phone,
-          sellerName: username,
         });
+        toast({
+          title: "Order completed successfully",
+          description: `Total: ${formatCurrency(order.total)}`,
+        });
+      } else {
         setCurrentTransaction(null);
         toast({
           title: "Order created successfully",
-          description: `Pay-later order for ${selectedCustomer?.name} has been created`,
-        });
-      } else {
-        setCurrentTransaction({
-          ...result,
-          sellerName: username,
-          branchName: branch?.name,
-          branchAddress: branch?.address,
-          branchPhone: branch?.phone,
-        });
-        setCurrentOrder(null);
-        toast({
-          title: "Order completed successfully",
-          description: `Total: ${formatCurrency(result.total)}`,
+          description: `Pay-later order for ${order.customerName} has been created`,
         });
       }
       setIsReceiptModalOpen(true);
@@ -159,39 +160,33 @@ export default function POS() {
       total: item.total
     }));
 
-    if (paymentMethod === "pay_later") {
-      // Create order with customer
-      const orderData = {
-        customerId: selectedCustomer!.id,
-        customerName: selectedCustomer!.name,
-        customerPhone: selectedCustomer!.phoneNumber,
-        items: orderItems,
-        subtotal: cartSummary.subtotal.toString(),
-        tax: cartSummary.tax.toString(),
-        total: finalTotal.toString(),
-        paymentMethod: "pay_later",
-        status: "received",
-        estimatedPickupDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(), // 3 days from now
-        sellerName: username,
-        loyaltyPointsEarned: pointsEarned,
-        loyaltyPointsRedeemed: redeemedPoints,
-      };
-      checkoutMutation.mutate(orderData);
-    } else {
-      // Create immediate transaction
-      const transaction: any = {
-        items: orderItems,
-        subtotal: cartSummary.subtotal.toString(),
-        tax: cartSummary.tax.toString(),
-        total: finalTotal.toString(),
-        paymentMethod,
-        sellerName: username,
-        customerId: selectedCustomer?.id,
-        loyaltyPointsEarned: pointsEarned,
-        loyaltyPointsRedeemed: redeemedPoints,
-      };
-      checkoutMutation.mutate(transaction);
-    }
+    const orderData = {
+      customerId: selectedCustomer?.id,
+      customerName: selectedCustomer?.name || "Walk-in",
+      customerPhone: selectedCustomer?.phoneNumber || "",
+      items: orderItems,
+      subtotal: cartSummary.subtotal.toString(),
+      tax: cartSummary.tax.toString(),
+      total: finalTotal.toString(),
+      paymentMethod,
+      status: "received",
+      estimatedPickup: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
+      sellerName: username,
+      loyaltyPointsEarned: pointsEarned,
+      loyaltyPointsRedeemed: redeemedPoints,
+    };
+
+    const transaction = paymentMethod === "pay_later" ? undefined : {
+      items: orderItems,
+      subtotal: cartSummary.subtotal.toString(),
+      tax: cartSummary.tax.toString(),
+      total: finalTotal.toString(),
+      paymentMethod,
+      sellerName: username,
+      customerId: selectedCustomer?.id,
+    };
+
+    checkoutMutation.mutate({ order: orderData, transaction });
   };
 
   const toggleCart = () => {
