@@ -2,11 +2,16 @@ import 'dotenv/config';
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import logger from "./logger";
+import { NotificationService } from "./services/notification";
 
 // Set SESSION_SECRET if not present
 if (!process.env.SESSION_SECRET) {
   process.env.SESSION_SECRET = 'laundry-system-secret-key-' + Date.now();
-  console.log('SESSION_SECRET was not set, generated fallback:', process.env.SESSION_SECRET.substring(0, 20) + '...');
+  logger.warn(
+    'SESSION_SECRET was not set, generated fallback:',
+    process.env.SESSION_SECRET.substring(0, 20) + '...',
+  );
 }
 
 const app = express();
@@ -44,7 +49,8 @@ app.use((req, res, next) => {
 });
 
 (async () => {
-  const server = await registerRoutes(app);
+  const notificationService = new NotificationService();
+  const server = await registerRoutes(app, notificationService);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
