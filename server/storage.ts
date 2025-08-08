@@ -134,14 +134,14 @@ export interface IStorage {
   getTransaction(id: string, branchId?: string): Promise<Transaction | undefined>;
   
   // Customers
-  getCustomers(search?: string, includeInactive?: boolean): Promise<Customer[]>;
-  getCustomer(id: string): Promise<Customer | undefined>;
+  getCustomers(search?: string, includeInactive?: boolean, branchId?: string): Promise<Customer[]>;
+  getCustomer(id: string, branchId?: string): Promise<Customer | undefined>;
   getCustomerByPhone(phoneNumber: string): Promise<Customer | undefined>;
   getCustomerByNickname(nickname: string): Promise<Customer | undefined>;
-  createCustomer(customer: InsertCustomer): Promise<Customer>;
+  createCustomer(customer: InsertCustomer, branchId: string): Promise<Customer>;
   updateCustomer(id: string, customer: Partial<InsertCustomer>): Promise<Customer | undefined>;
   deleteCustomer(id: string): Promise<boolean>;
-  updateCustomerBalance(id: string, balanceChange: number): Promise<Customer | undefined>;
+  updateCustomerBalance(id: string, balanceChange: number, branchId?: string): Promise<Customer | undefined>;
   
   // Orders
   getOrders(branchId?: string): Promise<Order[]>;
@@ -1384,7 +1384,11 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Customer methods
-  async getCustomers(search?: string, includeInactive = false): Promise<Customer[]> {
+  async getCustomers(
+    search?: string,
+    includeInactive = false,
+    branchId?: string,
+  ): Promise<Customer[]> {
     if (search) {
       const term = `%${search}%`;
       const conditions = [
@@ -1395,19 +1399,33 @@ export class DatabaseStorage implements IStorage {
           ilike(customers.nickname, term),
         ),
       ];
+      if (branchId) {
+        conditions.push(eq(customers.branchId, branchId));
+      }
       if (!includeInactive) {
         conditions.push(eq(customers.isActive, true));
       }
       return await db.select().from(customers).where(and(...conditions));
     }
-    if (includeInactive) {
-      return await db.select().from(customers);
+
+    const conditions = [] as any[];
+    if (branchId) {
+      conditions.push(eq(customers.branchId, branchId));
     }
-    return await db.select().from(customers).where(eq(customers.isActive, true));
+    if (!includeInactive) {
+      conditions.push(eq(customers.isActive, true));
+    }
+    if (conditions.length) {
+      return await db.select().from(customers).where(and(...conditions));
+    }
+    return await db.select().from(customers);
   }
 
-  async getCustomer(id: string): Promise<Customer | undefined> {
-    const [customer] = await db.select().from(customers).where(eq(customers.id, id));
+  async getCustomer(id: string, branchId?: string): Promise<Customer | undefined> {
+    const where = branchId
+      ? and(eq(customers.id, id), eq(customers.branchId, branchId))
+      : eq(customers.id, id);
+    const [customer] = await db.select().from(customers).where(where);
     return customer || undefined;
   }
 
@@ -1421,10 +1439,10 @@ export class DatabaseStorage implements IStorage {
     return customer || undefined;
   }
 
-  async createCustomer(customerData: InsertCustomer): Promise<Customer> {
+  async createCustomer(customerData: InsertCustomer, branchId: string): Promise<Customer> {
     const [customer] = await db
       .insert(customers)
-      .values(customerData)
+      .values({ ...customerData, branchId })
       .returning();
     return customer;
   }
@@ -1447,10 +1465,14 @@ export class DatabaseStorage implements IStorage {
     return !!updated;
   }
 
-  async updateCustomerBalance(id: string, balanceChange: number): Promise<Customer | undefined> {
-    const customer = await this.getCustomer(id);
+  async updateCustomerBalance(
+    id: string,
+    balanceChange: number,
+    branchId?: string,
+  ): Promise<Customer | undefined> {
+    const customer = await this.getCustomer(id, branchId);
     if (!customer) return undefined;
-    
+
     const newBalance = parseFloat(customer.balanceDue) + balanceChange;
     return await this.updateCustomer(id, { balanceDue: newBalance.toFixed(2) });
   }

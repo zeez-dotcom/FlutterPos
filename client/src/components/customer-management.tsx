@@ -116,10 +116,10 @@ export function CustomerManagement({ onCustomerSelect }: CustomerManagementProps
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { formatCurrency } = useCurrency();
-  const { user } = useAuth();
+  const { user, branch } = useAuth();
 
   const { data: customers = [], isLoading } = useQuery<Customer[]>({
-    queryKey: ["/api/customers", searchTerm],
+    queryKey: ["/api/customers", searchTerm, branch?.id],
     queryFn: async () => {
       const params = new URLSearchParams();
       if (searchTerm) params.set("q", searchTerm);
