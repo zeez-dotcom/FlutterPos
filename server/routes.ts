@@ -448,6 +448,16 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/api/product-categories", requireAuth, async (req, res) => {
+    try {
+      const userId = (req.user as UserWithBranch).id;
+      const categories = await storage.getCategoriesByType("product", userId);
+      res.json(categories);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch product categories" });
+    }
+  });
+
   app.post("/api/products", requireAdminOrSuperAdmin, async (req, res) => {
     try {
       const user = req.user as UserWithBranch;
