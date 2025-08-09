@@ -29,6 +29,7 @@ import {
   mapLaundryServiceSeeds,
 } from "./seed-data";
 import { PRICE_MATRIX } from "./seed-prices";
+import { haversineDistance } from "./utils/geolocation";
 
 const PAY_LATER_AGGREGATE = `
   SELECT order_id, SUM(amount::numeric) AS amount
@@ -1615,9 +1616,43 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateDeliveryStatus(orderId: string, update: Partial<DeliveryOrder>): Promise<DeliveryOrder | undefined> {
+    const [existing] = await db
+      .select()
+      .from(deliveryOrders)
+      .where(eq(deliveryOrders.orderId, orderId));
+    if (!existing) return undefined;
+
+    let computed: Partial<DeliveryOrder> = {};
+
+    const pickupLat = update.pickupLat ?? existing.pickupLat;
+    const pickupLng = update.pickupLng ?? existing.pickupLng;
+    const dropoffLat = update.dropoffLat ?? existing.dropoffLat;
+    const dropoffLng = update.dropoffLng ?? existing.dropoffLng;
+    if (
+      pickupLat != null &&
+      pickupLng != null &&
+      dropoffLat != null &&
+      dropoffLng != null
+    ) {
+      const distance = haversineDistance(
+        { lat: Number(pickupLat), lng: Number(pickupLng) },
+        { lat: Number(dropoffLat), lng: Number(dropoffLng) },
+      );
+      computed.distanceMeters = Math.round(distance);
+    }
+
+    const pickupTime = update.pickupTime ?? existing.pickupTime;
+    const dropoffTime = update.dropoffTime ?? existing.dropoffTime;
+    if (pickupTime && dropoffTime) {
+      const duration =
+        (new Date(dropoffTime).getTime() - new Date(pickupTime).getTime()) /
+        1000;
+      computed.durationSeconds = Math.round(duration);
+    }
+
     const [record] = await db
       .update(deliveryOrders)
-      .set({ ...update })
+      .set({ ...existing, ...update, ...computed })
       .where(eq(deliveryOrders.orderId, orderId))
       .returning();
     return record || undefined;
