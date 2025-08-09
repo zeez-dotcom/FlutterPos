@@ -157,6 +157,19 @@ export const orders = pgTable("orders", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+// Delivery orders for tracking dispatch and driver status
+export const deliveryOrders = pgTable("delivery_orders", {
+  orderId: varchar("order_id").references(() => orders.id).primaryKey(),
+  driverId: varchar("driver_id").references(() => users.id),
+  status: text("status").notNull().default("pending"), // 'pending', 'dispatched', 'in_transit', 'delivered'
+  pickupTime: timestamp("pickup_time"),
+  dropoffTime: timestamp("dropoff_time"),
+  pickupLat: decimal("pickup_lat", { precision: 9, scale: 6 }),
+  pickupLng: decimal("pickup_lng", { precision: 9, scale: 6 }),
+  dropoffLat: decimal("dropoff_lat", { precision: 9, scale: 6 }),
+  dropoffLng: decimal("dropoff_lng", { precision: 9, scale: 6 }),
+});
+
 export const orderPrints = pgTable(
   "order_prints",
   {
@@ -268,6 +281,8 @@ export const insertOrderSchema = createInsertSchema(orders)
     actualPickup: z.coerce.date().optional(),
   });
 
+export const insertDeliveryOrderSchema = createInsertSchema(deliveryOrders);
+
 export const insertOrderPrintSchema = createInsertSchema(orderPrints).omit({
   printedAt: true,
 });
@@ -352,6 +367,8 @@ export type Customer = typeof customers.$inferSelect;
 export type InsertCustomer = z.infer<typeof insertCustomerSchema>;
 export type Order = typeof orders.$inferSelect;
 export type InsertOrder = z.infer<typeof insertOrderSchema>;
+export type DeliveryOrder = typeof deliveryOrders.$inferSelect;
+export type InsertDeliveryOrder = z.infer<typeof insertDeliveryOrderSchema>;
 export type OrderPrint = typeof orderPrints.$inferSelect;
 export type InsertOrderPrint = z.infer<typeof insertOrderPrintSchema>;
 export type Payment = typeof payments.$inferSelect;
