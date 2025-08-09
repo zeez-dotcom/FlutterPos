@@ -1,6 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage, type ParsedRow } from "./storage";
+import { db } from "./db";
 import {
   insertTransactionSchema,
   insertClothingItemSchema,
@@ -12,6 +13,7 @@ import {
   insertBranchSchema,
   insertCustomerSchema,
   insertOrderSchema,
+  deliveryOrders,
   insertPaymentSchema,
   insertSecuritySettingsSchema,
   insertItemServicePriceSchema,
@@ -348,7 +350,11 @@ export async function registerRoutes(
   app.get("/api/branches", requireSuperAdmin, async (_req, res) => {
     try {
       const branches = await storage.getBranches();
-      res.json(branches);
+      const withUrls = branches.map((b) => ({
+        ...b,
+        deliveryUrl: `/delivery/branch/${b.code}`,
+      }));
+      res.json(withUrls);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch branches" });
     }
@@ -1138,6 +1144,61 @@ export async function registerRoutes(
       res.json(history);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch order print history" });
+    }
+  });
+
+  app.post("/delivery/orders", async (req, res) => {
+    try {
+      const schema = z.object({
+        branchCode: z.string(),
+        customerName: z.string(),
+        customerPhone: z.string(),
+        address: z.string(),
+        pickupTime: z.string().optional(),
+        dropoffTime: z.string().optional(),
+        items: z.array(
+          z.object({
+            name: z.string(),
+            quantity: z.number().int().positive().optional().default(1),
+            price: z.number().nonnegative().optional().default(0),
+          }),
+        ),
+      });
+
+      const data = schema.parse(req.body);
+      const branch = await storage.getBranchByCode(data.branchCode);
+      if (!branch) return res.status(404).json({ message: "Branch not found" });
+
+      const subtotal = data.items.reduce(
+        (sum, item) => sum + (item.price ?? 0) * (item.quantity ?? 1),
+        0,
+      );
+
+      const order = await storage.createOrder({
+        customerName: data.customerName,
+        customerPhone: data.customerPhone,
+        items: data.items,
+        subtotal: subtotal.toFixed(2),
+        tax: "0",
+        total: subtotal.toFixed(2),
+        paymentMethod: "cash",
+        status: "received",
+        estimatedPickup: data.pickupTime ? new Date(data.pickupTime) : null,
+        notes: data.address,
+        sellerName: "online",
+        branchId: branch.id,
+      });
+
+      await db.insert(deliveryOrders).values({
+        orderId: order.id,
+        pickupTime: data.pickupTime ? new Date(data.pickupTime) : null,
+        dropoffTime: data.dropoffTime ? new Date(data.dropoffTime) : null,
+      });
+
+      res.status(201).json({ orderId: order.id });
+    } catch (error) {
+      console.error("Error creating delivery order:", error);
+      res.status(400).json({ message: "Invalid order data" });
     }
   });
 

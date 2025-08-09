@@ -81,6 +81,7 @@ export interface IStorage {
   // Branch operations
   getBranches(): Promise<Branch[]>;
   getBranch(id: string): Promise<Branch | undefined>;
+  getBranchByCode(code: string): Promise<Branch | undefined>;
   createBranch(branch: InsertBranch): Promise<Branch>;
   updateBranch(id: string, branch: Partial<InsertBranch>): Promise<Branch | undefined>;
   deleteBranch(id: string): Promise<boolean>;
@@ -697,6 +698,7 @@ export class MemStorage {
   // Branch methods (stub for MemStorage - not used in production)
   async getBranches(): Promise<Branch[]> { return []; }
   async getBranch(id: string): Promise<Branch | undefined> { return undefined; }
+  async getBranchByCode(code: string): Promise<Branch | undefined> { return undefined; }
   async createBranch(branch: InsertBranch): Promise<Branch> { throw new Error("Not implemented in MemStorage"); }
   async updateBranch(id: string, branch: Partial<InsertBranch>): Promise<Branch | undefined> { return undefined; }
   async deleteBranch(id: string): Promise<boolean> { return false; }
@@ -937,6 +939,14 @@ export class DatabaseStorage implements IStorage {
 
   async getBranch(id: string): Promise<Branch | undefined> {
     const [branch] = await db.select().from(branches).where(eq(branches.id, id));
+    return branch || undefined;
+  }
+
+  async getBranchByCode(code: string): Promise<Branch | undefined> {
+    const [branch] = await db
+      .select()
+      .from(branches)
+      .where(eq(branches.code, code));
     return branch || undefined;
   }
 
