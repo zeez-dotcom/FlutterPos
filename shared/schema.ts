@@ -164,11 +164,29 @@ export const deliveryOrders = pgTable("delivery_orders", {
   status: text("status").notNull().default("pending"), // 'pending', 'dispatched', 'in_transit', 'delivered'
   pickupTime: timestamp("pickup_time"),
   dropoffTime: timestamp("dropoff_time"),
+  pickupAddress: text("pickup_address"),
+  dropoffAddress: text("dropoff_address"),
   pickupLat: decimal("pickup_lat", { precision: 9, scale: 6 }),
   pickupLng: decimal("pickup_lng", { precision: 9, scale: 6 }),
   dropoffLat: decimal("dropoff_lat", { precision: 9, scale: 6 }),
   dropoffLng: decimal("dropoff_lng", { precision: 9, scale: 6 }),
+  distanceMeters: integer("distance_meters"),
+  durationSeconds: integer("duration_seconds"),
 });
+
+// Driver location history streamed from driver apps
+export const driverLocations = pgTable(
+  "driver_locations",
+  {
+    driverId: varchar("driver_id").references(() => users.id).notNull(),
+    lat: decimal("lat", { precision: 9, scale: 6 }).notNull(),
+    lng: decimal("lng", { precision: 9, scale: 6 }).notNull(),
+    timestamp: timestamp("timestamp").defaultNow().notNull(),
+  },
+  (table) => ({
+    pk: primaryKey({ columns: [table.driverId, table.timestamp] }),
+  }),
+);
 
 export const orderPrints = pgTable(
   "order_prints",
@@ -282,6 +300,7 @@ export const insertOrderSchema = createInsertSchema(orders)
   });
 
 export const insertDeliveryOrderSchema = createInsertSchema(deliveryOrders);
+export const insertDriverLocationSchema = createInsertSchema(driverLocations);
 
 export const insertOrderPrintSchema = createInsertSchema(orderPrints).omit({
   printedAt: true,
@@ -369,6 +388,7 @@ export type Order = typeof orders.$inferSelect;
 export type InsertOrder = z.infer<typeof insertOrderSchema>;
 export type DeliveryOrder = typeof deliveryOrders.$inferSelect;
 export type InsertDeliveryOrder = z.infer<typeof insertDeliveryOrderSchema>;
+export type InsertDriverLocation = z.infer<typeof insertDriverLocationSchema>;
 export type OrderPrint = typeof orderPrints.$inferSelect;
 export type InsertOrderPrint = z.infer<typeof insertOrderPrintSchema>;
 export type Payment = typeof payments.$inferSelect;

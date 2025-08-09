@@ -14,6 +14,7 @@ import {
   insertCustomerSchema,
   insertOrderSchema,
   deliveryOrders,
+  driverLocations,
   insertPaymentSchema,
   insertSecuritySettingsSchema,
   insertItemServicePriceSchema,
@@ -33,6 +34,8 @@ import {
 } from "./utils/excel";
 import logger from "./logger";
 import { NotificationService } from "./services/notification";
+import { geocodeAddress } from "./utils/geolocation";
+import { WebSocketServer } from "ws";
 
 const upload = multer();
 
@@ -1189,10 +1192,15 @@ export async function registerRoutes(
         branchId: branch.id,
       });
 
+      const geo = await geocodeAddress(data.address);
+
       await db.insert(deliveryOrders).values({
         orderId: order.id,
         pickupTime: data.pickupTime ? new Date(data.pickupTime) : null,
         dropoffTime: data.dropoffTime ? new Date(data.dropoffTime) : null,
+        dropoffAddress: data.address,
+        dropoffLat: geo?.lat,
+        dropoffLng: geo?.lng,
       });
 
       res.status(201).json({ orderId: order.id });
@@ -1405,5 +1413,29 @@ export async function registerRoutes(
   });
 
   const httpServer = createServer(app);
+
+  // WebSocket endpoint for driver GPS streaming
+  const wss = new WebSocketServer({ server: httpServer, path: "/ws/driver-location" });
+  wss.on("connection", (ws) => {
+    ws.on("message", async (data) => {
+      try {
+        const msg = JSON.parse(data.toString());
+        if (
+          msg.driverId &&
+          typeof msg.lat === "number" &&
+          typeof msg.lng === "number"
+        ) {
+          await db.insert(driverLocations).values({
+            driverId: msg.driverId,
+            lat: msg.lat,
+            lng: msg.lng,
+          });
+        }
+      } catch (err) {
+        logger.error("driver location ws error", err);
+      }
+    });
+  });
+
   return httpServer;
 }
