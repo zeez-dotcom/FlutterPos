@@ -5,9 +5,10 @@ import {
   type User, type InsertUser, type UpsertUser, type UserWithBranch,
   type Category, type InsertCategory,
   type Branch, type InsertBranch,
-  type Customer, type InsertCustomer,
-  type Order, type InsertOrder,
-  type OrderPrint,
+    type Customer, type InsertCustomer,
+    type Order, type InsertOrder,
+    type DeliveryOrder, type InsertDeliveryOrder,
+    type OrderPrint,
   type Payment, type InsertPayment,
   type Product, type InsertProduct,
   type LoyaltyHistory, type InsertLoyaltyHistory,
@@ -16,7 +17,7 @@ import {
   type ItemServicePrice, type InsertItemServicePrice,
   type BulkUploadResult,
   clothingItems, laundryServices, itemServicePrices,
-  transactions, users, categories, branches, customers, orders, orderPrints, payments, products, loyaltyHistory, notifications, securitySettings
+  transactions, users, categories, branches, customers, orders, deliveryOrders, orderPrints, payments, products, loyaltyHistory, notifications, securitySettings
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { db } from "./db";
@@ -154,6 +155,12 @@ export interface IStorage {
   createOrder(order: InsertOrder & { branchId: string }): Promise<Order>;
   updateOrder(id: string, order: Partial<Omit<Order, 'id' | 'orderNumber' | 'createdAt'>>): Promise<Order | undefined>;
   updateOrderStatus(id: string, status: string): Promise<Order | undefined>;
+
+  // Delivery orders
+  getDeliveryOrders(): Promise<(DeliveryOrder & { order: Order })[]>;
+  getDeliveryOrdersByDriver(driverId: string): Promise<(DeliveryOrder & { order: Order })[]>;
+  assignDeliveryOrder(orderId: string, driverId: string): Promise<DeliveryOrder>;
+  updateDeliveryStatus(orderId: string, update: Partial<DeliveryOrder>): Promise<DeliveryOrder | undefined>;
 
   // Order print history
   recordOrderPrint(orderId: string, printedBy: string): Promise<OrderPrint>;
@@ -1566,6 +1573,44 @@ export class DatabaseStorage implements IStorage {
 
   async updateOrderStatus(id: string, status: string): Promise<Order | undefined> {
     return await this.updateOrder(id, { status });
+  }
+
+  async getDeliveryOrders(): Promise<(DeliveryOrder & { order: Order })[]> {
+    const rows = await db
+      .select({ delivery: deliveryOrders, order: orders })
+      .from(deliveryOrders)
+      .leftJoin(orders, eq(deliveryOrders.orderId, orders.id));
+    return rows.map(r => ({ ...r.delivery, order: r.order }));
+  }
+
+  async getDeliveryOrdersByDriver(driverId: string): Promise<(DeliveryOrder & { order: Order })[]> {
+    const rows = await db
+      .select({ delivery: deliveryOrders, order: orders })
+      .from(deliveryOrders)
+      .leftJoin(orders, eq(deliveryOrders.orderId, orders.id))
+      .where(eq(deliveryOrders.driverId, driverId));
+    return rows.map(r => ({ ...r.delivery, order: r.order }));
+  }
+
+  async assignDeliveryOrder(orderId: string, driverId: string): Promise<DeliveryOrder> {
+    const [record] = await db
+      .insert(deliveryOrders)
+      .values({ orderId, driverId, status: 'dispatched' })
+      .onConflictDoUpdate({
+        target: deliveryOrders.orderId,
+        set: { driverId, status: 'dispatched' },
+      })
+      .returning();
+    return record;
+  }
+
+  async updateDeliveryStatus(orderId: string, update: Partial<DeliveryOrder>): Promise<DeliveryOrder | undefined> {
+    const [record] = await db
+      .update(deliveryOrders)
+      .set({ ...update })
+      .where(eq(deliveryOrders.orderId, orderId))
+      .returning();
+    return record || undefined;
   }
 
   async recordOrderPrint(orderId: string, printedBy: string): Promise<OrderPrint> {

@@ -17,7 +17,7 @@ import {
   insertItemServicePriceSchema,
   type InsertPayment,
 } from "@shared/schema";
-import { setupAuth, requireAuth, requireSuperAdmin, requireAdminOrSuperAdmin } from "./auth";
+import { setupAuth, requireAuth, requireSuperAdmin, requireAdminOrSuperAdmin, requireDispatcher, requireDriver } from "./auth";
 import { seedSuperAdmin } from "./seed-superadmin";
 import passport from "passport";
 import type { UserWithBranch } from "@shared/schema";
@@ -1138,6 +1138,63 @@ export async function registerRoutes(
       res.json(history);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch order print history" });
+    }
+  });
+
+  // Delivery management routes
+  app.get("/api/delivery/orders", requireAuth, async (req, res) => {
+    try {
+      const user = req.user as UserWithBranch;
+      if (user.role === "dispatcher") {
+        const orders = await storage.getDeliveryOrders();
+        res.json(orders);
+      } else if (user.role === "driver") {
+        const orders = await storage.getDeliveryOrdersByDriver(user.id);
+        res.json(orders);
+      } else {
+        res.status(403).json({ message: "Access denied" });
+      }
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch delivery orders" });
+    }
+  });
+
+  app.post("/api/delivery/assign", requireDispatcher, async (req, res) => {
+    try {
+      const data = z.object({ orderId: z.string(), driverId: z.string() }).parse(req.body);
+      const record = await storage.assignDeliveryOrder(data.orderId, data.driverId);
+      res.json(record);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to assign driver" });
+    }
+  });
+
+  app.post("/api/delivery/status", requireDriver, async (req, res) => {
+    try {
+      const data = z
+        .object({
+          orderId: z.string(),
+          status: z.string(),
+          pickupTime: z.coerce.date().optional(),
+          dropoffTime: z.coerce.date().optional(),
+          pickupLat: z.number().optional(),
+          pickupLng: z.number().optional(),
+          dropoffLat: z.number().optional(),
+          dropoffLng: z.number().optional(),
+        })
+        .parse(req.body);
+      const record = await storage.updateDeliveryStatus(data.orderId, {
+        status: data.status,
+        pickupTime: data.pickupTime,
+        dropoffTime: data.dropoffTime,
+        pickupLat: data.pickupLat?.toFixed(6),
+        pickupLng: data.pickupLng?.toFixed(6),
+        dropoffLat: data.dropoffLat?.toFixed(6),
+        dropoffLng: data.dropoffLng?.toFixed(6),
+      });
+      res.json(record);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update delivery status" });
     }
   });
 
