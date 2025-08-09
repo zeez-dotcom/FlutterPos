@@ -15,6 +15,7 @@ import {
   insertOrderSchema,
   deliveryOrders,
   driverLocations,
+  users,
   insertPaymentSchema,
   insertSecuritySettingsSchema,
   insertItemServicePriceSchema,
@@ -27,6 +28,7 @@ import type { UserWithBranch } from "@shared/schema";
 import multer from "multer";
 import * as XLSX from "xlsx";
 import { z } from "zod";
+import { eq, sql } from "drizzle-orm";
 import {
   generateCatalogTemplate,
   parsePrice,
@@ -1264,6 +1266,37 @@ export async function registerRoutes(
       res.json(record);
     } catch (error) {
       res.status(500).json({ message: "Failed to update delivery status" });
+    }
+  });
+
+  app.get("/api/delivery/report", requireAuth, async (_req, res) => {
+    try {
+      const rows = await db
+        .select({
+          driverId: deliveryOrders.driverId,
+          firstName: users.firstName,
+          lastName: users.lastName,
+          deliveries: sql<number>`count(${deliveryOrders.orderId})`,
+          totalDistance: sql<number>`coalesce(sum(${deliveryOrders.distanceMeters}), 0)` ,
+          totalDuration: sql<number>`coalesce(sum(${deliveryOrders.durationSeconds}), 0)` ,
+        })
+        .from(deliveryOrders)
+        .leftJoin(users, eq(deliveryOrders.driverId, users.id))
+        .groupBy(deliveryOrders.driverId, users.firstName, users.lastName);
+
+      const report = rows
+        .filter((r) => r.driverId)
+        .map((r) => ({
+          driverId: r.driverId!,
+          driverName: `${r.firstName ?? ""} ${r.lastName ?? ""}`.trim(),
+          deliveries: Number(r.deliveries),
+          totalKilometers: Number(r.totalDistance) / 1000,
+          totalHours: Number(r.totalDuration) / 3600,
+        }));
+
+      res.json(report);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to generate report" });
     }
   });
 
