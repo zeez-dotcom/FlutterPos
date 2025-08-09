@@ -72,7 +72,8 @@ export const users = pgTable("users", {
   firstName: varchar("first_name", { length: 100 }),
   lastName: varchar("last_name", { length: 100 }),
   branchId: varchar("branch_id").references(() => branches.id),
-  role: text("role").notNull().default('user'), // 'super_admin', 'admin', 'user'
+  deliveryAccountId: varchar("delivery_account_id").references(() => users.id),
+  role: text("role").notNull().default('user'), // 'super_admin', 'admin', 'user', 'delivery_admin', 'dispatcher', 'driver'
   isActive: boolean("is_active").default(true).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
@@ -103,6 +104,19 @@ export const branches = pgTable("branches", {
   code: varchar("code", { length: 3 }).unique().notNull(),
   nextOrderNumber: integer("next_order_number").notNull().default(1),
 });
+
+export const deliveryAccountBranches = pgTable(
+  "delivery_account_branches",
+  {
+    deliveryAccountId: varchar("delivery_account_id")
+      .references(() => users.id)
+      .notNull(),
+    branchId: varchar("branch_id").references(() => branches.id).notNull(),
+  },
+  (table) => ({
+    pk: primaryKey({ columns: [table.deliveryAccountId, table.branchId] }),
+  }),
+);
 
 // Customers table for customer management and pay-later tracking
 export const customers = pgTable("customers", {
@@ -312,6 +326,8 @@ export const insertBranchSchema = createInsertSchema(branches).omit({
   logoUrl: z.string().url().optional(),
 });
 
+export const insertDeliveryAccountBranchSchema = createInsertSchema(deliveryAccountBranches);
+
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type UpdateUser = z.infer<typeof updateUserSchema>;
@@ -330,6 +346,8 @@ export type Category = typeof categories.$inferSelect;
 export type InsertCategory = z.infer<typeof insertCategorySchema>;
 export type Branch = typeof branches.$inferSelect;
 export type InsertBranch = z.infer<typeof insertBranchSchema>;
+export type DeliveryAccountBranch = typeof deliveryAccountBranches.$inferSelect;
+export type InsertDeliveryAccountBranch = z.infer<typeof insertDeliveryAccountBranchSchema>;
 export type Customer = typeof customers.$inferSelect;
 export type InsertCustomer = z.infer<typeof insertCustomerSchema>;
 export type Order = typeof orders.$inferSelect;

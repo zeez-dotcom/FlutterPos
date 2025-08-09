@@ -18,6 +18,7 @@ const hardcodedAdmin: User = {
   role: "super_admin",
   isActive: true,
   branchId: null,
+  deliveryAccountId: null,
   createdAt: new Date(),
   updatedAt: new Date(),
 };
@@ -125,4 +126,25 @@ export const requireAdminOrSuperAdmin: RequestHandler = (req, res, next) => {
     return next();
   }
   res.status(403).json({ message: "Admin access required" });
+};
+
+export const requireDeliveryAdmin: RequestHandler = (req, res, next) => {
+  if (req.isAuthenticated() && (req.user as User)?.role === 'delivery_admin') {
+    return next();
+  }
+  res.status(403).json({ message: "Delivery admin access required" });
+};
+
+export const requireDispatcher: RequestHandler = (req, res, next) => {
+  if (req.isAuthenticated() && (req.user as User)?.role === 'dispatcher') {
+    return next();
+  }
+  res.status(403).json({ message: "Dispatcher access required" });
+};
+
+export const requireDriver: RequestHandler = (req, res, next) => {
+  if (req.isAuthenticated() && (req.user as User)?.role === 'driver') {
+    return next();
+  }
+  res.status(403).json({ message: "Driver access required" });
 };

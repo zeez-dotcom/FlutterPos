@@ -157,6 +157,12 @@ export function UserManager() {
         return <Badge variant="destructive">Super Admin</Badge>;
       case 'admin':
         return <Badge variant="default">Admin</Badge>;
+      case 'delivery_admin':
+        return <Badge variant="default">Delivery Admin</Badge>;
+      case 'dispatcher':
+        return <Badge variant="secondary">Dispatcher</Badge>;
+      case 'driver':
+        return <Badge variant="secondary">Driver</Badge>;
       default:
         return <Badge variant="secondary">User</Badge>;
     }
@@ -263,6 +269,9 @@ export function UserManager() {
                       <SelectItem value="user">User</SelectItem>
                       <SelectItem value="admin">Admin</SelectItem>
                       <SelectItem value="super_admin">Super Admin</SelectItem>
+                      <SelectItem value="delivery_admin">Delivery Admin</SelectItem>
+                      <SelectItem value="dispatcher">Dispatcher</SelectItem>
+                      <SelectItem value="driver">Driver</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

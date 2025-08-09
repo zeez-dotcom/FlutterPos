@@ -78,10 +78,13 @@ export function POSHeader({ cartItemCount = 0, onToggleCart }: POSHeaderProps) {
             <LanguageSelector />
             
             {/* Admin Access */}
-            {user && (user.role === 'admin' || user.role === 'super_admin') && (
+            {user &&
+              (user.role === 'admin' ||
+                user.role === 'super_admin' ||
+                user.role === 'delivery_admin') && (
               <Link href="/admin">
-                <Button 
-                  variant="ghost" 
+                <Button
+                  variant="ghost"
                   size="sm"
                   className="p-2 hover:bg-blue-700 text-white hover:text-white flex items-center space-x-2"
                 >

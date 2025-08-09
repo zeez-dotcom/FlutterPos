@@ -12,6 +12,9 @@ interface AuthContextValue {
   isAuthenticated: boolean;
   isAdmin: boolean;
   isSuperAdmin: boolean;
+  isDeliveryAdmin: boolean;
+  isDispatcher: boolean;
+  isDriver: boolean;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -29,8 +32,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     branch: user?.branch || null,
     isLoading,
     isAuthenticated: !!user && !error,
-    isAdmin: user?.role === "admin" || user?.role === "super_admin",
+    isAdmin:
+      user?.role === "admin" ||
+      user?.role === "super_admin" ||
+      user?.role === "delivery_admin",
     isSuperAdmin: user?.role === "super_admin",
+    isDeliveryAdmin: user?.role === "delivery_admin",
+    isDispatcher: user?.role === "dispatcher",
+    isDriver: user?.role === "driver",
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

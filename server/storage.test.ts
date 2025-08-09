@@ -15,6 +15,7 @@ const baseUser = {
   email: 'test@example.com',
   role: 'user',
   branchId: null,
+  deliveryAccountId: null,
   passwordHash: 'existing-hash',
   createdAt: new Date(),
   updatedAt: new Date(),
