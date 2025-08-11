@@ -17,7 +17,7 @@ import {
   type ItemServicePrice, type InsertItemServicePrice,
   type BulkUploadResult,
   clothingItems, laundryServices, itemServicePrices,
-  transactions, users, categories, branches, customers, orders, deliveryOrders, orderPrints, payments, products, loyaltyHistory, notifications, securitySettings
+  transactions, users, categories, branches, customers, orders, deliveryOrders, driverLocations, orderPrints, payments, products, loyaltyHistory, notifications, securitySettings
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { db } from "./db";
@@ -159,13 +159,15 @@ export interface IStorage {
   updateOrderStatus(id: string, status: string): Promise<Order | undefined>;
 
   // Delivery orders
-  getDeliveryOrders(): Promise<(DeliveryOrder & { order: Order })[]>;
-  getDeliveryOrdersByDriver(driverId: string): Promise<(DeliveryOrder & { order: Order })[]>;
-  assignDeliveryOrder(orderId: string, driverId: string): Promise<DeliveryOrder>;
-  updateDeliveryStatus(orderId: string, update: Partial<DeliveryOrder>): Promise<DeliveryOrder | undefined>;
+    getDeliveryOrders(): Promise<(DeliveryOrder & { order: Order })[]>;
+    getDeliveryOrdersByDriver(driverId: string): Promise<(DeliveryOrder & { order: Order })[]>;
+    assignDeliveryOrder(orderId: string, driverId: string): Promise<DeliveryOrder>;
+    updateDeliveryStatus(orderId: string, update: Partial<DeliveryOrder>): Promise<DeliveryOrder | undefined>;
 
-  // Order print history
-  recordOrderPrint(orderId: string, printedBy: string): Promise<OrderPrint>;
+    getLatestDriverLocations(): Promise<{ driverId: string; lat: number; lng: number; timestamp: Date }[]>;
+
+    // Order print history
+    recordOrderPrint(orderId: string, printedBy: string): Promise<OrderPrint>;
   getOrderPrintHistory(orderId: string): Promise<OrderPrint[]>;
 
   // Payments
@@ -1656,6 +1658,20 @@ export class DatabaseStorage implements IStorage {
       .where(eq(deliveryOrders.orderId, orderId))
       .returning();
     return record || undefined;
+  }
+
+  async getLatestDriverLocations(): Promise<{ driverId: string; lat: number; lng: number; timestamp: Date }[]> {
+    const { rows } = await db.execute<any>(sql.raw(`
+      SELECT DISTINCT ON (driver_id) driver_id, lat, lng, timestamp
+      FROM driver_locations
+      ORDER BY driver_id, timestamp DESC
+    `));
+    return rows.map((r: any) => ({
+      driverId: r.driver_id,
+      lat: Number(r.lat),
+      lng: Number(r.lng),
+      timestamp: r.timestamp,
+    }));
   }
 
   async recordOrderPrint(orderId: string, printedBy: string): Promise<OrderPrint> {
