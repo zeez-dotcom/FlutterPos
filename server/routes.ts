@@ -1161,6 +1161,8 @@ export async function registerRoutes(
         address: z.string(),
         pickupTime: z.string().optional(),
         dropoffTime: z.string().optional(),
+        lat: z.number().optional(),
+        lng: z.number().optional(),
         items: z.array(
           z.object({
             name: z.string(),
@@ -1194,15 +1196,18 @@ export async function registerRoutes(
         branchId: branch.id,
       });
 
-      const geo = await geocodeAddress(data.address);
+      const coords =
+        typeof data.lat === "number" && typeof data.lng === "number"
+          ? { lat: data.lat, lng: data.lng }
+          : await geocodeAddress(data.address);
 
       await db.insert(deliveryOrders).values({
         orderId: order.id,
         pickupTime: data.pickupTime ? new Date(data.pickupTime) : null,
         dropoffTime: data.dropoffTime ? new Date(data.dropoffTime) : null,
         dropoffAddress: data.address,
-        dropoffLat: geo?.lat,
-        dropoffLng: geo?.lng,
+        dropoffLat: coords?.lat,
+        dropoffLng: coords?.lng,
       });
 
       res.status(201).json({ orderId: order.id });

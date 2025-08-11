@@ -1,4 +1,6 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import maplibregl from "maplibre-gl";
+import "maplibre-gl/dist/maplibre-gl.css";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,6 +12,58 @@ interface Item {
   price: number;
 }
 
+interface LocationPickerProps {
+  lat: number;
+  lng: number;
+  onChange: (coords: { lat: number; lng: number }) => void;
+}
+
+function LocationPicker({ lat, lng, onChange }: LocationPickerProps) {
+  const ref = useRef<HTMLDivElement>(null);
+  const markerRef = useRef<maplibregl.Marker | null>(null);
+  const mapRef = useRef<maplibregl.Map | null>(null);
+
+  useEffect(() => {
+    if (!ref.current) return;
+    const map = new maplibregl.Map({
+      container: ref.current,
+      style: "https://demotiles.maplibre.org/style.json",
+      center: [lng, lat],
+      zoom: 14,
+    });
+    const marker = new maplibregl.Marker({ draggable: true })
+      .setLngLat([lng, lat])
+      .addTo(map);
+
+    marker.on("dragend", () => {
+      const { lat, lng } = marker.getLngLat();
+      onChange({ lat, lng });
+    });
+
+    map.on("click", (e) => {
+      marker.setLngLat(e.lngLat);
+      onChange({ lat: e.lngLat.lat, lng: e.lngLat.lng });
+    });
+
+    markerRef.current = marker;
+    mapRef.current = map;
+
+    return () => {
+      marker.remove();
+      map.remove();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (markerRef.current && mapRef.current) {
+      markerRef.current.setLngLat([lng, lat]);
+      mapRef.current.setCenter([lng, lat]);
+    }
+  }, [lat, lng]);
+
+  return <div className="w-full h-64" ref={ref} />;
+}
+
 export default function DeliveryOrderForm({ params }: { params: { branchCode: string } }) {
   const { branchCode } = params;
   const [customerName, setCustomerName] = useState("");
@@ -18,6 +72,8 @@ export default function DeliveryOrderForm({ params }: { params: { branchCode: st
   const [pickupTime, setPickupTime] = useState("");
   const [dropoffTime, setDropoffTime] = useState("");
   const [items, setItems] = useState<Item[]>([{ name: "", quantity: 1, price: 0 }]);
+  const [lat, setLat] = useState(0);
+  const [lng, setLng] = useState(0);
   const [submitted, setSubmitted] = useState(false);
 
   const addItem = () => setItems([...items, { name: "", quantity: 1, price: 0 }]);
@@ -44,6 +100,8 @@ export default function DeliveryOrderForm({ params }: { params: { branchCode: st
         address,
         pickupTime,
         dropoffTime,
+        lat,
+        lng,
         items,
       }),
     });
@@ -68,6 +126,17 @@ export default function DeliveryOrderForm({ params }: { params: { branchCode: st
       <div className="space-y-2">
         <Label htmlFor="address">Address</Label>
         <Textarea id="address" value={address} onChange={(e) => setAddress(e.target.value)} required />
+      </div>
+      <div className="space-y-2">
+        <Label>Location</Label>
+        <LocationPicker
+          lat={lat}
+          lng={lng}
+          onChange={({ lat, lng }) => {
+            setLat(lat);
+            setLng(lng);
+          }}
+        />
       </div>
       <div className="flex gap-4">
         <div className="flex-1 space-y-2">
