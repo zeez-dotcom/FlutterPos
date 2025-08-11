@@ -28,9 +28,10 @@ interface ProductGridProps {
   onAddToCart: (product: Product) => void;
   cartItemCount: number;
   onToggleCart: () => void;
+  branchCode?: string;
 }
 
-export function ProductGrid({ onAddToCart, cartItemCount, onToggleCart }: ProductGridProps) {
+export function ProductGrid({ onAddToCart, cartItemCount, onToggleCart, branchCode }: ProductGridProps) {
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const isMobile = useIsMobile();
@@ -60,9 +61,10 @@ export function ProductGrid({ onAddToCart, cartItemCount, onToggleCart }: Produc
     data: products = [],
     isLoading: productsLoading,
   } = useQuery<Product[]>({
-    queryKey: ["/api/products", selectedCategory, searchQuery],
+    queryKey: ["/api/products", branchCode, selectedCategory, searchQuery],
     queryFn: async () => {
       const params = new URLSearchParams();
+      if (branchCode) params.append("branchCode", branchCode);
       if (selectedCategory !== "all") params.append("categoryId", selectedCategory);
       if (searchQuery) params.append("search", searchQuery);
 
