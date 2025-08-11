@@ -100,8 +100,8 @@ export default function DeliveryOrderForm({ params }: { params: { branchCode: st
         address,
         pickupTime,
         dropoffTime,
-        lat,
-        lng,
+        dropoffLat: lat,
+        dropoffLng: lng,
         items,
       }),
     });
