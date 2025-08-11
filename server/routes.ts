@@ -36,7 +36,7 @@ import {
 } from "./utils/excel";
 import logger from "./logger";
 import { NotificationService } from "./services/notification";
-import { geocodeAddress } from "./utils/geolocation";
+import { geocodeAddress, routeDistance } from "./utils/geolocation";
 import { WebSocketServer } from "ws";
 
 const upload = multer();
@@ -1161,8 +1161,8 @@ export async function registerRoutes(
         address: z.string(),
         pickupTime: z.string().optional(),
         dropoffTime: z.string().optional(),
-        lat: z.number().optional(),
-        lng: z.number().optional(),
+        dropoffLat: z.number().optional(),
+        dropoffLng: z.number().optional(),
         items: z.array(
           z.object({
             name: z.string(),
@@ -1196,18 +1196,35 @@ export async function registerRoutes(
         branchId: branch.id,
       });
 
-      const coords =
-        typeof data.lat === "number" && typeof data.lng === "number"
-          ? { lat: data.lat, lng: data.lng }
+      const dropoffCoords =
+        typeof data.dropoffLat === "number" && typeof data.dropoffLng === "number"
+          ? { lat: data.dropoffLat, lng: data.dropoffLng }
           : await geocodeAddress(data.address);
+
+      const pickupCoords = branch.address
+        ? await geocodeAddress(branch.address)
+        : null;
+
+      let distance: number | null = null;
+      let duration: number | null = null;
+      if (dropoffCoords && pickupCoords) {
+        const route = await routeDistance(pickupCoords, dropoffCoords);
+        distance = Math.round(route.distance);
+        duration = Math.round(route.duration);
+      }
 
       await db.insert(deliveryOrders).values({
         orderId: order.id,
         pickupTime: data.pickupTime ? new Date(data.pickupTime) : null,
         dropoffTime: data.dropoffTime ? new Date(data.dropoffTime) : null,
+        pickupAddress: branch.address ?? null,
+        pickupLat: pickupCoords?.lat,
+        pickupLng: pickupCoords?.lng,
         dropoffAddress: data.address,
-        dropoffLat: coords?.lat,
-        dropoffLng: coords?.lng,
+        dropoffLat: dropoffCoords?.lat,
+        dropoffLng: dropoffCoords?.lng,
+        distanceMeters: distance ?? null,
+        durationSeconds: duration ?? null,
       });
 
       res.status(201).json({ orderId: order.id });
