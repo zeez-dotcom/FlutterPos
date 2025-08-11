@@ -98,6 +98,27 @@ export default function DeliveryOrderForm({ params }: { params: { branchCode: st
     setSubmitted(true);
   };
 
+  const handleSchedule = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await fetch("/delivery/orders", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        branchCode,
+        customerName,
+        customerPhone,
+        address,
+        pickupTime,
+        dropoffTime,
+        dropoffLat: lat,
+        dropoffLng: lng,
+        scheduled: true,
+        items: [],
+      }),
+    });
+    setSubmitted(true);
+  };
+
   if (submitted) {
     return <div className="p-4 text-center">Thank you! Your order has been submitted.</div>;
   }
@@ -186,6 +207,9 @@ export default function DeliveryOrderForm({ params }: { params: { branchCode: st
       </div>
       <Button type="submit" className="w-full">
         Submit Order
+      </Button>
+      <Button type="button" variant="outline" className="w-full" onClick={handleSchedule}>
+        Schedule Pickup
       </Button>
     </form>
   );
