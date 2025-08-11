@@ -1163,13 +1163,17 @@ export async function registerRoutes(
         dropoffTime: z.string().optional(),
         dropoffLat: z.number().optional(),
         dropoffLng: z.number().optional(),
-        items: z.array(
-          z.object({
-            name: z.string(),
-            quantity: z.number().int().positive().optional().default(1),
-            price: z.number().nonnegative().optional().default(0),
-          }),
-        ),
+        scheduled: z.boolean().optional().default(false),
+        items: z
+          .array(
+            z.object({
+              name: z.string(),
+              quantity: z.number().int().positive().optional().default(1),
+              price: z.number().nonnegative().optional().default(0),
+            }),
+          )
+          .optional()
+          .default([]),
       });
 
       const data = schema.parse(req.body);
@@ -1189,25 +1193,32 @@ export async function registerRoutes(
         tax: "0",
         total: subtotal.toFixed(2),
         paymentMethod: "cash",
-        status: "received",
+        status: data.scheduled ? "scheduled" : "received",
         estimatedPickup: data.pickupTime ? new Date(data.pickupTime) : null,
         notes: data.address,
         sellerName: "online",
         branchId: branch.id,
       });
 
-      const dropoffCoords =
+      const customerCoords =
         typeof data.dropoffLat === "number" && typeof data.dropoffLng === "number"
           ? { lat: data.dropoffLat, lng: data.dropoffLng }
           : await geocodeAddress(data.address);
 
-      const pickupCoords = branch.address
+      const branchCoords = branch.address
         ? await geocodeAddress(branch.address)
         : null;
 
+      let pickupCoords = branchCoords;
+      let dropoffCoords = customerCoords;
+      if (data.scheduled) {
+        pickupCoords = customerCoords;
+        dropoffCoords = branchCoords;
+      }
+
       let distance: number | null = null;
       let duration: number | null = null;
-      if (dropoffCoords && pickupCoords) {
+      if (pickupCoords && dropoffCoords) {
         const route = await routeDistance(pickupCoords, dropoffCoords);
         distance = Math.round(route.distance);
         duration = Math.round(route.duration);
@@ -1217,10 +1228,10 @@ export async function registerRoutes(
         orderId: order.id,
         pickupTime: data.pickupTime ? new Date(data.pickupTime) : null,
         dropoffTime: data.dropoffTime ? new Date(data.dropoffTime) : null,
-        pickupAddress: branch.address ?? null,
+        pickupAddress: data.scheduled ? data.address : branch.address ?? null,
         pickupLat: pickupCoords?.lat,
         pickupLng: pickupCoords?.lng,
-        dropoffAddress: data.address,
+        dropoffAddress: data.scheduled ? branch.address ?? null : data.address,
         dropoffLat: dropoffCoords?.lat,
         dropoffLng: dropoffCoords?.lng,
         distanceMeters: distance ?? null,
@@ -1293,6 +1304,40 @@ export async function registerRoutes(
       res.json(record);
     } catch (error) {
       res.status(500).json({ message: "Failed to update delivery status" });
+    }
+  });
+
+  app.post("/api/delivery/finalize", requireDriver, async (req, res) => {
+    try {
+      const data = z
+        .object({
+          orderId: z.string(),
+          items: z.array(
+            z.object({
+              name: z.string(),
+              quantity: z.number().int().positive().optional().default(1),
+              price: z.number().nonnegative().optional().default(0),
+            }),
+          ),
+        })
+        .parse(req.body);
+
+      const subtotal = data.items.reduce(
+        (sum, item) => sum + (item.price ?? 0) * (item.quantity ?? 1),
+        0,
+      );
+
+      const order = await storage.updateOrder(data.orderId, {
+        items: data.items,
+        subtotal: subtotal.toFixed(2),
+        tax: "0",
+        total: subtotal.toFixed(2),
+        status: "received",
+      });
+
+      res.json(order);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to finalize order" });
     }
   });
 
