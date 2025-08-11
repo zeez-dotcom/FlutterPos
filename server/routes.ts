@@ -1252,6 +1252,11 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/api/delivery/driver-locations", requireDispatcher, async (_req, res) => {
+    const locations = await storage.getLatestDriverLocations();
+    res.json(locations);
+  });
+
   app.post("/api/delivery/assign", requireDispatcher, async (req, res) => {
     try {
       const data = z.object({ orderId: z.string(), driverId: z.string() }).parse(req.body);

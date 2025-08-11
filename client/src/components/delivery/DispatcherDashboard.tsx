@@ -14,6 +14,7 @@ interface DriverLocation {
   driverId: string;
   lat: number;
   lng: number;
+  timestamp: string;
 }
 
 export default function DispatcherDashboard() {
