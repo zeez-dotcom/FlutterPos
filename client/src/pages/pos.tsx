@@ -12,6 +12,7 @@ import { SettingsPanel } from "@/components/settings-panel";
 import { CustomerManagement } from "@/components/customer-management";
 import { OrderTracking } from "@/components/order-tracking";
 import { BusinessReports } from "@/components/business-reports";
+import DispatcherDashboard from "@/components/delivery/DispatcherDashboard";
 import { useLaundryCart } from "@/hooks/use-laundry-cart";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useToast } from "@/hooks/use-toast";
@@ -200,12 +201,13 @@ export default function POS() {
       { id: "customers", label: "Customers", icon: Users },
       { id: "orders", label: "Orders", icon: Truck },
       { id: "reports", label: "Reports", icon: TrendingUp },
+      { id: "delivery-orders", label: "Delivery Orders", icon: Truck },
       { id: "settings", label: "Settings", icon: Settings }
     ];
 
     return (
       <nav className="fixed bottom-0 left-0 right-0 bg-pos-surface border-t border-gray-200 shadow-material-lg z-40">
-        <div className="grid grid-cols-5 h-16">
+        <div className="grid grid-cols-6 h-16">
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeView === item.id;
@@ -267,6 +269,8 @@ export default function POS() {
         return <OrderTracking />;
       case "reports":
         return <BusinessReports />;
+      case "delivery-orders":
+        return <DispatcherDashboard />;
       case "inventory":
         return <InventoryManagement />;
       case "settings":

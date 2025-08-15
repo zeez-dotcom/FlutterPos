@@ -12,6 +12,7 @@ export function POSSidebar({ activeView, onViewChange }: POSSidebarProps) {
     { id: "customers", label: "Customers", icon: Users },
     { id: "orders", label: "Orders", icon: Truck },
     { id: "reports", label: "Reports", icon: TrendingUp },
+    { id: "delivery-orders", label: "Delivery Orders", icon: Truck },
     { id: "inventory", label: "Inventory", icon: Package },
     { id: "settings", label: "Settings", icon: Settings }
   ];
