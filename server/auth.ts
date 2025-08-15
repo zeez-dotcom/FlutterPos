@@ -136,10 +136,14 @@ export const requireDeliveryAdmin: RequestHandler = (req, res, next) => {
 };
 
 export const requireDispatcher: RequestHandler = (req, res, next) => {
-  if (req.isAuthenticated() && (req.user as User)?.role === 'dispatcher') {
+  const user = req.user as User;
+  if (
+    req.isAuthenticated() &&
+    (user?.role === 'dispatcher' || user?.role === 'admin' || user?.role === 'super_admin')
+  ) {
     return next();
   }
-  res.status(403).json({ message: "Dispatcher access required" });
+  res.status(403).json({ message: "Dispatcher or Admin access required" });
 };
 
 export const requireDriver: RequestHandler = (req, res, next) => {
