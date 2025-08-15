@@ -209,6 +209,9 @@ export function InventoryManagement() {
       return response.json();
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/item-service-prices"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/clothing-items"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/laundry-services"] });
       setIsPriceModalOpen(false);
       priceForm.reset();
       toast({ title: "Price saved successfully" });
