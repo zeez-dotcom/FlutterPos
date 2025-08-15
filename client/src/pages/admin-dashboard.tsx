@@ -8,12 +8,13 @@ import { CategoryManager } from "@/components/admin/CategoryManager";
 import { UserManager } from "@/components/admin/UserManager";
 import { BranchManager } from "@/components/admin/BranchManager";
 import { BulkUploadManager } from "@/components/admin/BulkUploadManager";
-import { LogOut, Users, Tags, MapPin, ArrowLeft, Upload } from "lucide-react";
+import { BranchDeliveryPage } from "@/components/admin/BranchDeliveryPage";
+import { LogOut, Users, Tags, MapPin, ArrowLeft, Upload, QrCode } from "lucide-react";
 import { Link } from "wouter";
 import logoUrl from "@/assets/logo.png";
 
 export default function AdminDashboard() {
-  const { user, isSuperAdmin } = useAuthContext();
+  const { user, isSuperAdmin, isDeliveryAdmin } = useAuthContext();
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -86,11 +87,25 @@ export default function AdminDashboard() {
         </div>
 
         <Tabs defaultValue="categories" className="space-y-6">
-          <TabsList className={`grid w-full ${isSuperAdmin ? "grid-cols-4" : "grid-cols-1"}`}>
+          <TabsList
+            className={`grid w-full ${
+              isSuperAdmin
+                ? "grid-cols-5"
+                : isDeliveryAdmin
+                  ? "grid-cols-2"
+                  : "grid-cols-1"
+            }`}
+          >
             <TabsTrigger value="categories" className="flex items-center gap-2">
               <Tags className="w-4 h-4" />
               Categories
             </TabsTrigger>
+            {(isSuperAdmin || isDeliveryAdmin) && (
+              <TabsTrigger value="delivery-qr" className="flex items-center gap-2">
+                <QrCode className="w-4 h-4" />
+                Delivery QR
+              </TabsTrigger>
+            )}
             {isSuperAdmin && (
               <>
                 <TabsTrigger value="branches" className="flex items-center gap-2">
@@ -112,6 +127,12 @@ export default function AdminDashboard() {
           <TabsContent value="categories" className="space-y-6">
             <CategoryManager />
           </TabsContent>
+
+          {(isSuperAdmin || isDeliveryAdmin) && (
+            <TabsContent value="delivery-qr" className="space-y-6">
+              <BranchDeliveryPage />
+            </TabsContent>
+          )}
 
           {isSuperAdmin && (
             <TabsContent value="branches" className="space-y-6">
