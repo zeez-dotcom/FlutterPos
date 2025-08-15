@@ -15,7 +15,8 @@ import { Link } from "wouter";
 import logoUrl from "@/assets/logo.png";
 
 export default function AdminDashboard() {
-  const { user, isSuperAdmin, isDeliveryAdmin, isAdmin } = useAuthContext();
+  const { user, isSuperAdmin, isDeliveryAdmin, isAdmin, isDispatcher } = useAuthContext();
+  const canAssignDrivers = isAdmin || isDispatcher;
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -94,7 +95,7 @@ export default function AdminDashboard() {
                 ? "grid-cols-6"
                 : isDeliveryAdmin
                   ? "grid-cols-3"
-                  : isAdmin
+                  : canAssignDrivers
                     ? "grid-cols-2"
                     : "grid-cols-1"
             }`}
@@ -109,7 +110,7 @@ export default function AdminDashboard() {
                 Delivery QR
               </TabsTrigger>
             )}
-            {isAdmin && (
+            {canAssignDrivers && (
               <TabsTrigger value="delivery-dispatch" className="flex items-center gap-2">
                 <Truck className="w-4 h-4" />
                 Delivery Dispatch
@@ -143,7 +144,7 @@ export default function AdminDashboard() {
             </TabsContent>
           )}
 
-          {isAdmin && (
+          {canAssignDrivers && (
             <TabsContent value="delivery-dispatch" className="space-y-6">
               <DispatcherDashboard />
             </TabsContent>
