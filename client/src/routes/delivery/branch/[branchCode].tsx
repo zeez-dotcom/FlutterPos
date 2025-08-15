@@ -8,10 +8,24 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
 import { ProductGrid } from "@/components/product-grid";
 import { useCart } from "@/hooks/use-cart";
 import { useToast } from "@/hooks/use-toast";
-import { Minus, Plus } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { List, Minus, Plus, ShoppingCart, Calendar, MapPin } from "lucide-react";
 import { useTranslation } from "@/lib/i18n";
 
 interface LocationPickerProps {
@@ -92,6 +106,7 @@ export default function DeliveryOrderForm({ params }: { params: { branchCode: st
 
   const { toast } = useToast();
   const { t, language } = useTranslation();
+  const isMobile = useIsMobile();
 
   const { cartItems, addToCart, updateQuantity, getCartSummary } = useCart();
 
@@ -212,211 +227,257 @@ export default function DeliveryOrderForm({ params }: { params: { branchCode: st
 
   const cartSummary = getCartSummary();
 
-  if (mode === "choose") {
-    return (
-      <div
-        className="max-w-xl mx-auto p-4 space-y-4"
-        dir={language === "ar" ? "rtl" : "ltr"}
-      >
-        <h1 className="text-2xl font-bold text-center">{t.deliveryOrder}</h1>
-        <Button className="w-full" onClick={() => setMode("cart")}>
-          {t.fillCartMyself}
-        </Button>
-        <Button
-          className="w-full"
-          variant="outline"
-          onClick={() => setMode("schedule")}
-        >
-          {t.scheduleAVisit}
-        </Button>
-      </div>
-    );
-  }
-
-  if (mode === "schedule") {
-    return (
-      <form
-        onSubmit={handleSchedule}
-        className="max-w-xl mx-auto p-4 space-y-4"
-        dir={language === "ar" ? "rtl" : "ltr"}
-      >
-        <h1 className="text-2xl font-bold text-center">{t.scheduleVisit}</h1>
-        <div className="space-y-2">
-          <Label htmlFor="name">{t.name}</Label>
-          <Input
-            id="name"
-            value={customerName}
-            onChange={(e) => setCustomerName(e.target.value)}
-            required
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="phone">{t.phoneNumber}</Label>
-          <Input
-            id="phone"
-            value={customerPhone}
-            onChange={(e) => setCustomerPhone(e.target.value)}
-            required
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="address">{t.address}</Label>
-          <Textarea
-            id="address"
-            value={address}
-            onChange={(e) => setAddress(e.target.value)}
-            required
-          />
-        </div>
-        <div className="flex gap-4">
-          <div className="flex-1 space-y-2">
-            <Label htmlFor="pickup">{t.pickupTime}</Label>
-            <Input
-              id="pickup"
-              type="datetime-local"
-              value={pickupTime}
-              onChange={(e) => setPickupTime(e.target.value)}
-            />
-          </div>
-          <div className="flex-1 space-y-2">
-            <Label htmlFor="dropoff">{t.deliveryTime}</Label>
-            <Input
-              id="dropoff"
-              type="datetime-local"
-              value={dropoffTime}
-              onChange={(e) => setDropoffTime(e.target.value)}
-            />
-          </div>
-        </div>
-        <Button type="submit" className="w-full" disabled={isScheduling}>
-          {isScheduling ? t.scheduling : t.scheduleVisit}
-        </Button>
-        {scheduleError && <p className="text-sm text-red-500">{scheduleError}</p>}
-      </form>
-    );
-  }
-
-  // cart mode
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="max-w-xl mx-auto p-4 space-y-4"
+    <Tabs
+      value={mode}
+      onValueChange={(val) => setMode(val as typeof mode)}
+      className="max-w-xl mx-auto p-4"
       dir={language === "ar" ? "rtl" : "ltr"}
     >
-      <h1 className="text-2xl font-bold text-center">{t.deliveryOrder}</h1>
-      <div className="space-y-2">
-        <Label htmlFor="name">{t.name}</Label>
-        <Input
-          id="name"
-          value={customerName}
-          onChange={(e) => setCustomerName(e.target.value)}
-          required
-        />
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="phone">{t.phoneNumber}</Label>
-        <Input
-          id="phone"
-          value={customerPhone}
-          onChange={(e) => setCustomerPhone(e.target.value)}
-          required
-        />
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="address">{t.address}</Label>
-        <Textarea
-          id="address"
-          value={address}
-          onChange={(e) => setAddress(e.target.value)}
-          required
-        />
-      </div>
-      <div className="space-y-2">
-        <Label>{t.locationLabel}</Label>
-        <LocationPicker
-          lat={lat}
-          lng={lng}
-          onChange={({ lat, lng }) => {
-            setLat(lat);
-            setLng(lng);
-          }}
-        />
-        <Button
-          type="button"
-          variant="outline"
-          onClick={handleUseCurrentLocation}
-        >
-          {t.useCurrentLocation}
-        </Button>
-      </div>
-      <div className="flex gap-4">
-        <div className="flex-1 space-y-2">
-          <Label htmlFor="pickup">{t.pickupTime}</Label>
-          <Input
-            id="pickup"
-            type="datetime-local"
-            value={pickupTime}
-            onChange={(e) => setPickupTime(e.target.value)}
-          />
-        </div>
-        <div className="flex-1 space-y-2">
-          <Label htmlFor="dropoff">{t.deliveryTime}</Label>
-          <Input
-            id="dropoff"
-            type="datetime-local"
-            value={dropoffTime}
-            onChange={(e) => setDropoffTime(e.target.value)}
-          />
-        </div>
-      </div>
-      <div className="space-y-4">
-        <Label>{t.products}</Label>
-        <ProductGrid
-          onAddToCart={addToCart}
-          cartItemCount={cartSummary.itemCount}
-          onToggleCart={() => {}}
-          branchCode={branchCode}
-        />
-        <div className="space-y-2">
-          {cartItems.length === 0 && (
-            <div className="text-sm text-gray-500">{t.noItemsSelected}</div>
-          )}
-          {cartItems.map((item) => (
-            <div key={item.id} className="flex items-center justify-between">
-              <span>{item.name}</span>
-              <div className="flex items-center gap-2">
+      <TabsList className="grid w-full grid-cols-3">
+        <TabsTrigger value="choose" className="flex items-center gap-2">
+          <List className="h-4 w-4" />
+          {!isMobile && t.deliveryOrder}
+        </TabsTrigger>
+        <TabsTrigger value="cart" className="flex items-center gap-2">
+          <ShoppingCart className="h-4 w-4" />
+          {!isMobile && t.cart}
+        </TabsTrigger>
+        <TabsTrigger value="schedule" className="flex items-center gap-2">
+          <Calendar className="h-4 w-4" />
+          {!isMobile && t.scheduleVisit}
+        </TabsTrigger>
+      </TabsList>
+
+      <TabsContent value="choose" className="mt-4">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-center">{t.deliveryOrder}</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <Button
+              className="w-full flex items-center justify-center gap-2"
+              onClick={() => setMode("cart")}
+            >
+              <ShoppingCart className="h-4 w-4" />
+              {t.fillCartMyself}
+            </Button>
+            <Button
+              className="w-full flex items-center justify-center gap-2"
+              variant="outline"
+              onClick={() => setMode("schedule")}
+            >
+              <Calendar className="h-4 w-4" />
+              {t.scheduleAVisit}
+            </Button>
+          </CardContent>
+        </Card>
+      </TabsContent>
+
+      <TabsContent value="cart" className="mt-4">
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-center">{t.deliveryOrder}</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="name">{t.name}</Label>
+                <Input
+                  id="name"
+                  value={customerName}
+                  onChange={(e) => setCustomerName(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="phone">{t.phoneNumber}</Label>
+                <Input
+                  id="phone"
+                  value={customerPhone}
+                  onChange={(e) => setCustomerPhone(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="address">{t.address}</Label>
+                <Textarea
+                  id="address"
+                  value={address}
+                  onChange={(e) => setAddress(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>{t.locationLabel}</Label>
+                <LocationPicker
+                  lat={lat}
+                  lng={lng}
+                  onChange={({ lat, lng }) => {
+                    setLat(lat);
+                    setLng(lng);
+                  }}
+                />
                 <Button
                   type="button"
-                  size="sm"
                   variant="outline"
-                  onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                  className="flex items-center gap-2"
+                  onClick={handleUseCurrentLocation}
                 >
-                  <Minus className="h-3 w-3" />
-                </Button>
-                <span>{item.quantity}</span>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                >
-                  <Plus className="h-3 w-3" />
+                  <MapPin className="h-4 w-4" />
+                  {t.useCurrentLocation}
                 </Button>
               </div>
-              <span>${(item.price * item.quantity).toFixed(2)}</span>
-            </div>
-          ))}
-          {cartItems.length > 0 && (
-            <div className="text-right font-bold">
-              {t.total}: ${cartSummary.total.toFixed(2)}
-            </div>
-          )}
-        </div>
-      </div>
-      <Button type="submit" className="w-full" disabled={isSubmitting}>
-        {isSubmitting ? t.submitting : t.submitOrder}
-      </Button>
-      {submitError && <p className="text-sm text-red-500">{submitError}</p>}
-    </form>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="pickup">{t.pickupTime}</Label>
+                  <Input
+                    id="pickup"
+                    type="datetime-local"
+                    value={pickupTime}
+                    onChange={(e) => setPickupTime(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="dropoff">{t.deliveryTime}</Label>
+                  <Input
+                    id="dropoff"
+                    type="datetime-local"
+                    value={dropoffTime}
+                    onChange={(e) => setDropoffTime(e.target.value)}
+                  />
+                </div>
+              </div>
+              <div className="space-y-4">
+                <Label>{t.products}</Label>
+                <ProductGrid
+                  onAddToCart={addToCart}
+                  cartItemCount={cartSummary.itemCount}
+                  onToggleCart={() => {}}
+                  branchCode={branchCode}
+                />
+                <div className="space-y-2">
+                  {cartItems.length === 0 && (
+                    <div className="text-sm text-gray-500">
+                      {t.noItemsSelected}
+                    </div>
+                  )}
+                  {cartItems.map((item) => (
+                    <div
+                      key={item.id}
+                      className="grid grid-cols-3 items-center gap-2"
+                    >
+                      <span className="col-span-1">{item.name}</span>
+                      <div className="col-span-1 flex items-center justify-center gap-2">
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                        >
+                          <Minus className="h-3 w-3" />
+                        </Button>
+                        <span>{item.quantity}</span>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                        >
+                          <Plus className="h-3 w-3" />
+                        </Button>
+                      </div>
+                      <span className="col-span-1 text-right">
+                        ${(item.price * item.quantity).toFixed(2)}
+                      </span>
+                    </div>
+                  ))}
+                  {cartItems.length > 0 && (
+                    <div className="text-right font-bold">
+                      {t.total}: ${cartSummary.total.toFixed(2)}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+            <CardFooter className="flex flex-col space-y-2">
+              <Button type="submit" className="w-full" disabled={isSubmitting}>
+                {isSubmitting ? t.submitting : t.submitOrder}
+              </Button>
+              {submitError && (
+                <p className="text-sm text-red-500">{submitError}</p>
+              )}
+            </CardFooter>
+          </Card>
+        </form>
+      </TabsContent>
+
+      <TabsContent value="schedule" className="mt-4">
+        <form onSubmit={handleSchedule} className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-center">{t.scheduleVisit}</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="name">{t.name}</Label>
+                <Input
+                  id="name"
+                  value={customerName}
+                  onChange={(e) => setCustomerName(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="phone">{t.phoneNumber}</Label>
+                <Input
+                  id="phone"
+                  value={customerPhone}
+                  onChange={(e) => setCustomerPhone(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="address">{t.address}</Label>
+                <Textarea
+                  id="address"
+                  value={address}
+                  onChange={(e) => setAddress(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="pickup">{t.pickupTime}</Label>
+                  <Input
+                    id="pickup"
+                    type="datetime-local"
+                    value={pickupTime}
+                    onChange={(e) => setPickupTime(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="dropoff">{t.deliveryTime}</Label>
+                  <Input
+                    id="dropoff"
+                    type="datetime-local"
+                    value={dropoffTime}
+                    onChange={(e) => setDropoffTime(e.target.value)}
+                  />
+                </div>
+              </div>
+            </CardContent>
+            <CardFooter className="flex flex-col space-y-2">
+              <Button type="submit" className="w-full" disabled={isScheduling}>
+                {isScheduling ? t.scheduling : t.scheduleVisit}
+              </Button>
+              {scheduleError && (
+                <p className="text-sm text-red-500">{scheduleError}</p>
+              )}
+            </CardFooter>
+          </Card>
+        </form>
+      </TabsContent>
+    </Tabs>
   );
 }
