@@ -49,6 +49,14 @@ function LocationPicker({ lat, lng, onChange }: LocationPickerProps) {
     markerRef.current = marker;
     mapRef.current = map;
 
+    if ("geolocation" in navigator) {
+      const control = new mapboxgl.GeolocateControl({
+        positionOptions: { enableHighAccuracy: true },
+        trackUserLocation: true,
+      });
+      map.addControl(control);
+    }
+
     return () => {
       marker.remove();
       map.remove();
@@ -83,21 +91,31 @@ export default function DeliveryOrderForm({ params }: { params: { branchCode: st
 
   const { toast } = useToast();
 
-  useEffect(() => {
-    if ("geolocation" in navigator) {
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          setLat(pos.coords.latitude);
-          setLng(pos.coords.longitude);
-        },
-        () => {
-          // Could set branch default coordinates here if available
-        },
-      );
-    }
-  }, []);
-
   const { cartItems, addToCart, updateQuantity, getCartSummary } = useCart();
+
+  const handleUseCurrentLocation = () => {
+    if (!("geolocation" in navigator)) {
+      toast({
+        title: "Geolocation not supported",
+        description: "Your browser does not support geolocation.",
+        variant: "destructive",
+      });
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setLat(pos.coords.latitude);
+        setLng(pos.coords.longitude);
+      },
+      () => {
+        toast({
+          title: "Unable to retrieve location",
+          description: "Please enable location access or enter it manually.",
+          variant: "destructive",
+        });
+      },
+    );
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -260,6 +278,13 @@ export default function DeliveryOrderForm({ params }: { params: { branchCode: st
             setLng(lng);
           }}
         />
+        <Button
+          type="button"
+          variant="outline"
+          onClick={handleUseCurrentLocation}
+        >
+          Use Current Location
+        </Button>
       </div>
       <div className="flex gap-4">
         <div className="flex-1 space-y-2">
