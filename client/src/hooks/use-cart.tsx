@@ -6,7 +6,7 @@ export function useCart() {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [paymentMethod, setPaymentMethod] = useState<"cash" | "card">("cash");
 
-  const addToCart = useCallback((product: { id: string; name: string; nameAr?: string; price: string; imageUrl?: string }) => {
+  const addToCart = useCallback((product: { id: string; name: string; price: string; imageUrl?: string }) => {
     setCartItems(prev => {
       const existing = prev.find(item => item.id === product.id);
       if (existing) {
@@ -21,7 +21,6 @@ export function useCart() {
       return [...prev, {
         id: product.id,
         name: product.name,
-        nameAr: product.nameAr,
         price,
         quantity: 1,
         total: price,

@@ -12,7 +12,6 @@ import {
 } from "@/components/ui/tooltip";
 import { ClothingItem } from "@shared/schema";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { useTranslation } from "@/lib/i18n";
 
 interface ClothingGridProps {
   onSelectClothing: (item: ClothingItem) => void;
@@ -32,7 +31,6 @@ export function ClothingGrid({ onSelectClothing }: ClothingGridProps) {
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const isMobile = useIsMobile();
-  const { language } = useTranslation();
 
   const { data: clothingItems = [], isLoading } = useQuery({
     queryKey: ["/api/clothing-items", selectedCategory, searchQuery],
@@ -106,20 +104,20 @@ export function ClothingGrid({ onSelectClothing }: ClothingGridProps) {
                 {item.imageUrl && (
                   <img
                     src={item.imageUrl}
-                    alt={language === 'ar' && item.nameAr ? item.nameAr : item.name}
+                    alt={item.name}
                     className="w-full h-32 object-cover rounded-t-lg"
                   />
                 )}
                 <CardContent className="p-3">
                   <h3 className="font-medium text-gray-900 mb-1">
-                    {language === 'ar' && item.nameAr ? item.nameAr : item.name}
+                    {item.name}
                   </h3>
                   {item.description && (
                     <p className="text-sm text-gray-600 mb-2">{item.description}</p>
                   )}
                   <div className="text-center">
                     <span className="text-sm text-gray-500 capitalize">
-                      {language === 'ar' && item.nameAr ? item.nameAr : item.name}
+                      {item.name}
                     </span>
                   </div>
                   <TooltipProvider>

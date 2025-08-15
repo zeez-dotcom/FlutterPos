@@ -12,7 +12,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { ClothingItem, LaundryService } from "@shared/schema";
 import { useCurrency } from "@/lib/currency";
-import { useTranslation } from "@/lib/i18n";
 
 interface ServiceSelectionModalProps {
   isOpen: boolean;
@@ -28,7 +27,6 @@ interface ServiceSelectionModalProps {
 interface ServiceCategory {
   id: string;
   name: string;
-  nameAr?: string | null;
 }
 
 export function ServiceSelectionModal({
@@ -43,7 +41,6 @@ export function ServiceSelectionModal({
     null,
   );
   const { formatCurrency } = useCurrency();
-  const { language } = useTranslation();
 
   const { data: fetchedCategories = [] } = useQuery<ServiceCategory[]>({
     queryKey: ["/api/categories", "service"],
@@ -117,9 +114,7 @@ export function ServiceSelectionModal({
           <DialogTitle className="flex items-center space-x-2">
             <span>Select Service for</span>
             <span className="text-pos-primary">
-              {language === "ar" && clothingItem?.nameAr
-                ? clothingItem.nameAr
-                : clothingItem?.name}
+              {clothingItem?.name}
             </span>
           </DialogTitle>
         </DialogHeader>
@@ -140,9 +135,7 @@ export function ServiceSelectionModal({
               }`}
               onClick={() => setSelectedCategory(category.id)}
             >
-              {language === "ar" && category.nameAr
-                ? category.nameAr
-                : category.name}
+              {category.name}
             </Button>
           ))}
         </div>
@@ -164,9 +157,7 @@ export function ServiceSelectionModal({
               >
                 <CardContent className="p-4">
                   <h3 className="font-medium text-gray-900 mb-1">
-                    {language === "ar" && service.nameAr
-                      ? service.nameAr
-                      : service.name}
+                    {service.name}
                   </h3>
                   {service.description && (
                     <p className="text-sm text-gray-600 mb-2">
@@ -178,9 +169,7 @@ export function ServiceSelectionModal({
                       {formatCurrency(service.itemPrice)}
                     </span>
                     <span className="text-xs text-gray-500 capitalize bg-gray-100 px-2 py-1 rounded">
-                      {language === "ar" && category?.nameAr
-                        ? category.nameAr
-                        : category?.name || service.categoryId}
+                      {category?.name || service.categoryId}
                     </span>
                   </div>
 

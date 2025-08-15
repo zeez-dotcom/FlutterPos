@@ -5,12 +5,10 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { useTranslation } from "@/lib/i18n";
 
 interface Product {
   id: string;
   name: string;
-  nameAr?: string;
   description?: string;
   categoryId?: string;
   price: string;
@@ -21,7 +19,6 @@ interface Product {
 interface Category {
   id: string;
   name: string;
-  nameAr?: string | null;
 }
 
 interface ProductGridProps {
@@ -35,7 +32,6 @@ export function ProductGrid({ onAddToCart, cartItemCount, onToggleCart, branchCo
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const isMobile = useIsMobile();
-  const { language } = useTranslation();
 
   const {
     data: fetchedCategories = [],
@@ -53,7 +49,7 @@ export function ProductGrid({ onAddToCart, cartItemCount, onToggleCart, branchCo
   });
 
   const categories: Category[] = [
-    { id: "all", name: "All Items", nameAr: "All Items" },
+    { id: "all", name: "All Items" },
     ...fetchedCategories,
   ];
 
@@ -129,9 +125,7 @@ export function ProductGrid({ onAddToCart, cartItemCount, onToggleCart, branchCo
               }`}
               onClick={() => setSelectedCategory(category.id)}
             >
-              {language === "ar" && category.nameAr
-                ? category.nameAr
-                : category.name}
+              {category.name}
             </Button>
           ))}
         </div>
@@ -154,12 +148,12 @@ export function ProductGrid({ onAddToCart, cartItemCount, onToggleCart, branchCo
                 {product.imageUrl && (
                   <img
                     src={product.imageUrl}
-                    alt={language === 'ar' && product.nameAr ? product.nameAr : product.name}
+                    alt={product.name}
                     className="w-full h-32 object-cover rounded-t-lg"
                   />
                 )}
                 <CardContent className="p-3">
-                  <h3 className="font-medium text-gray-900 mb-1">{language === 'ar' && product.nameAr ? product.nameAr : product.name}</h3>
+                  <h3 className="font-medium text-gray-900 mb-1">{product.name}</h3>
                   {product.description && (
                     <p className="text-sm text-gray-600 mb-2">{product.description}</p>
                   )}

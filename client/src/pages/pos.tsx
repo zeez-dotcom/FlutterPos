@@ -16,7 +16,6 @@ import { useLaundryCart } from "@/hooks/use-laundry-cart";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { useTranslation } from "@/lib/i18n";
 import { LanguageSelector } from "@/components/language-selector";
 import { useCurrency } from "@/lib/currency";
 import { SystemSettings } from "@/components/system-settings";
@@ -38,7 +37,6 @@ export default function POS() {
   const isMobile = useIsMobile();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { t, language } = useTranslation();
   const { formatCurrency } = useCurrency();
   const { user, branch } = useAuthContext();
   const username = user?.username ?? "";
@@ -123,7 +121,7 @@ export default function POS() {
     addToCart(clothingItem, service, quantity);
     toast({
       title: "Added to cart",
-      description: `${quantity}x ${language === 'ar' && clothingItem.nameAr ? clothingItem.nameAr : clothingItem.name} with ${language === 'ar' && service.nameAr ? service.nameAr : service.name} service`,
+      description: `${quantity}x ${clothingItem.name} with ${service.name} service`,
     });
   };
 
