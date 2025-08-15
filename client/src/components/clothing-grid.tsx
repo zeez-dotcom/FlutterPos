@@ -12,25 +12,27 @@ import {
 } from "@/components/ui/tooltip";
 import { ClothingItem } from "@shared/schema";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useTranslation } from "@/lib/i18n";
 
 interface ClothingGridProps {
   onSelectClothing: (item: ClothingItem) => void;
 }
 
-const clothingCategories = [
-  { id: "all", label: "All Items" },
-  { id: "pants", label: "Pants" },
-  { id: "shirts", label: "Shirts" },
-  { id: "traditional", label: "Traditional" },
-  { id: "dresses", label: "Dresses" },
-  { id: "formal", label: "Formal" },
-  { id: "linens", label: "Linens" }
-];
-
 export function ClothingGrid({ onSelectClothing }: ClothingGridProps) {
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const isMobile = useIsMobile();
+  const { t } = useTranslation();
+
+  const clothingCategories = [
+    { id: "all", label: t.allItems },
+    { id: "pants", label: t.pants },
+    { id: "shirts", label: t.shirts },
+    { id: "traditional", label: t.traditional },
+    { id: "dresses", label: t.dresses },
+    { id: "formal", label: t.formal },
+    { id: "linens", label: t.linens },
+  ];
 
   const { data: clothingItems = [], isLoading } = useQuery({
     queryKey: ["/api/clothing-items", selectedCategory, searchQuery],
@@ -48,7 +50,7 @@ export function ClothingGrid({ onSelectClothing }: ClothingGridProps) {
   }) as { data: ClothingItem[], isLoading: boolean };
 
   if (isLoading) {
-    return <div className="flex-1 flex items-center justify-center">Loading clothing items...</div>;
+    return <div className="flex-1 flex items-center justify-center">{t.loadingClothingItems}</div>;
   }
 
   return (
@@ -60,7 +62,7 @@ export function ClothingGrid({ onSelectClothing }: ClothingGridProps) {
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
             <Input
               type="text"
-              placeholder="Search clothing items..."
+              placeholder={t.searchClothingItems}
               className="pl-10 py-3 text-base w-full"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -92,7 +94,7 @@ export function ClothingGrid({ onSelectClothing }: ClothingGridProps) {
       <div className="flex-1 overflow-y-auto p-4">
         {clothingItems.length === 0 ? (
           <div className="flex items-center justify-center h-64 text-gray-500">
-            No clothing items found
+            {t.noClothingItemsFound}
           </div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
@@ -127,11 +129,11 @@ export function ClothingGrid({ onSelectClothing }: ClothingGridProps) {
                           className="mt-3 w-full bg-pos-secondary hover:bg-green-600 text-white"
                           onClick={() => onSelectClothing(item)}
                         >
-                          Select Service
+                          {t.selectService}
                         </Button>
                       </TooltipTrigger>
                       <TooltipContent>
-                        Service prices will be shown in the next step
+                        {t.servicePriceInfo}
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>

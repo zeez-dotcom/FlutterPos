@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { Plus, Edit, Trash2 } from "lucide-react";
 import type { Category, InsertCategory } from "@shared/schema";
+import { useTranslation } from "@/lib/i18n";
 
 export function CategoryManager() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -25,6 +26,7 @@ export function CategoryManager() {
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { t } = useTranslation();
 
   const { data: categories = [], isLoading } = useQuery<Category[]>({
     queryKey: ["/api/categories"],
@@ -36,13 +38,13 @@ export function CategoryManager() {
       return await response.json();
     },
     onSuccess: () => {
-      toast({ title: "Category created successfully" });
+      toast({ title: t.categoryCreated });
       queryClient.invalidateQueries({ queryKey: ["/api/categories"] });
       resetForm();
     },
     onError: (error) => {
       toast({
-        title: "Error creating category",
+        title: t.errorCreatingCategory,
         description: error.message,
         variant: "destructive",
       });
@@ -55,13 +57,13 @@ export function CategoryManager() {
       return await response.json();
     },
     onSuccess: () => {
-      toast({ title: "Category updated successfully" });
+      toast({ title: t.categoryUpdated });
       queryClient.invalidateQueries({ queryKey: ["/api/categories"] });
       resetForm();
     },
     onError: (error) => {
       toast({
-        title: "Error updating category",
+        title: t.errorUpdatingCategory,
         description: error.message,
         variant: "destructive",
       });
@@ -74,12 +76,12 @@ export function CategoryManager() {
       return await response.json();
     },
     onSuccess: () => {
-      toast({ title: "Category deleted successfully" });
+      toast({ title: t.categoryDeleted });
       queryClient.invalidateQueries({ queryKey: ["/api/categories"] });
     },
     onError: (error) => {
       toast({
-        title: "Error deleting category",
+        title: t.errorDeletingCategory,
         description: error.message,
         variant: "destructive",
       });
@@ -127,29 +129,26 @@ export function CategoryManager() {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">Category Management</h2>
+        <h2 className="text-2xl font-bold">{t.categoryManagement}</h2>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
             <Button onClick={() => setEditingCategory(null)}>
               <Plus className="w-4 h-4 mr-2" />
-              Add Category
+              {t.add} {t.category}
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
               <DialogTitle>
-                {editingCategory ? "Edit Category" : "Add New Category"}
+                {editingCategory ? `${t.edit} ${t.category}` : `${t.add} ${t.category}`}
               </DialogTitle>
-              <DialogDescription>
-                {editingCategory ? "Update the category details" : "Create a new category for clothing items or services"}
-              </DialogDescription>
             </DialogHeader>
             <form onSubmit={handleSubmit}>
               <div className="grid gap-4 py-4">
                 <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="name" className="text-right">
-                    Name
-                  </Label>
+                <Label htmlFor="name" className="text-right">
+                  {t.name}
+                </Label>
                   <Input
                     id="name"
                     value={formData.name}
@@ -159,41 +158,41 @@ export function CategoryManager() {
                   />
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="type" className="text-right">
-                    Type
-                  </Label>
+                <Label htmlFor="type" className="text-right">
+                  {t.type}
+                </Label>
                   <Select
                     value={formData.type}
                     onValueChange={(value) => setFormData({ ...formData, type: value })}
                   >
                     <SelectTrigger className="col-span-3">
-                      <SelectValue />
+                      <SelectValue placeholder={t.type} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="clothing">Clothing</SelectItem>
-                      <SelectItem value="service">Service</SelectItem>
+                      <SelectItem value="clothing">{t.clothing}</SelectItem>
+                      <SelectItem value="service">{t.service}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="description" className="text-right">
-                    Description
+                    {t.description}
                   </Label>
                   <Textarea
                     id="description"
                     value={formData.description || ""}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                     className="col-span-3"
-                    placeholder="Optional description"
+                    placeholder={t.optionalDescription}
                   />
                 </div>
               </div>
               <DialogFooter>
                 <Button type="button" variant="outline" onClick={resetForm}>
-                  Cancel
+                  {t.cancel}
                 </Button>
                 <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending}>
-                  {editingCategory ? "Update" : "Create"}
+                  {editingCategory ? t.update : t.create}
                 </Button>
               </DialogFooter>
             </form>
@@ -204,8 +203,8 @@ export function CategoryManager() {
       <div className="grid md:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
-            <CardTitle>Clothing Categories</CardTitle>
-            <CardDescription>Categories for clothing items</CardDescription>
+            <CardTitle>{t.clothingCategories}</CardTitle>
+            <CardDescription>{t.categoriesForClothingItems}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
@@ -217,7 +216,7 @@ export function CategoryManager() {
                   <div className="flex items-center gap-2">
                     <span className="font-medium">{category.name}</span>
                     <Badge variant={category.isActive ? "default" : "secondary"}>
-                      {category.isActive ? "Active" : "Inactive"}
+                      {category.isActive ? t.active : t.inactive}
                     </Badge>
                   </div>
                   <div className="flex items-center gap-2">
@@ -240,7 +239,7 @@ export function CategoryManager() {
                 </div>
               ))}
               {clothingCategories.length === 0 && (
-                <p className="text-gray-500 text-center py-4">No clothing categories found</p>
+                <p className="text-gray-500 text-center py-4">{t.noClothingCategoriesFound}</p>
               )}
             </div>
           </CardContent>
@@ -248,8 +247,8 @@ export function CategoryManager() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Service Categories</CardTitle>
-            <CardDescription>Categories for laundry services</CardDescription>
+            <CardTitle>{t.serviceCategories}</CardTitle>
+            <CardDescription>{t.categoriesForLaundryServices}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
@@ -261,7 +260,7 @@ export function CategoryManager() {
                   <div className="flex items-center gap-2">
                     <span className="font-medium">{category.name}</span>
                     <Badge variant={category.isActive ? "default" : "secondary"}>
-                      {category.isActive ? "Active" : "Inactive"}
+                      {category.isActive ? t.active : t.inactive}
                     </Badge>
                   </div>
                   <div className="flex items-center gap-2">
@@ -284,7 +283,7 @@ export function CategoryManager() {
                 </div>
               ))}
               {serviceCategories.length === 0 && (
-                <p className="text-gray-500 text-center py-4">No service categories found</p>
+                <p className="text-gray-500 text-center py-4">{t.noServiceCategoriesFound}</p>
               )}
             </div>
           </CardContent>
