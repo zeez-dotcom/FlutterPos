@@ -18,10 +18,10 @@ export const CLOTHING_ITEM_SEEDS: Omit<
   InsertClothingItem,
   "categoryId" | "userId"
 >[] = [
-  { name: "Thobe", nameAr: "ثوب" },
-  { name: "Shirt", nameAr: "قميص" },
-  { name: "T-Shirt", nameAr: "تيشيرت" },
-  { name: "Trouser", nameAr: "بنطال" },
+  { name: "Thobe" },
+  { name: "Shirt" },
+  { name: "T-Shirt" },
+  { name: "Trouser" },
 ];
 
 export function mapClothingItemSeeds(
@@ -39,7 +39,6 @@ export function mapLaundryServiceSeeds(
 ): Omit<InsertLaundryService, "userId">[] {
   return CATEGORY_SEEDS.filter((c) => c.type === "service").map((c) => ({
     name: c.name,
-    nameAr: c.nameAr,
     price: "0.00",
     categoryId: categoryIds[c.name],
   }));

@@ -9,7 +9,7 @@ import { users, categories, clothingItems, laundryServices } from '@shared/schem
 
 // test will stub db methods to capture seed inserts
 
-test('new users are seeded with Arabic names', async () => {
+test('new users are seeded with default data', async () => {
   const insertedCategories: any[] = [];
   const insertedClothing: any[] = [];
   const insertedLaundry: any[] = [];
@@ -76,12 +76,8 @@ test('new users are seeded with Arabic names', async () => {
         (c) => c.name === 'Normal Iron' && c.nameAr === 'كي عادي'
       )
     );
-    assert.ok(
-      insertedClothing.some((i) => i.name === 'Thobe' && i.nameAr === 'ثوب')
-    );
-    assert.ok(
-      insertedLaundry.some((s) => s.name === 'Normal Iron' && s.nameAr === 'كي عادي')
-    );
+    assert.ok(insertedClothing.some((i) => i.name === 'Thobe'));
+    assert.ok(insertedLaundry.some((s) => s.name === 'Normal Iron'));
   } finally {
     (db as any).insert = originalInsert;
     (db as any).transaction = originalTransaction;

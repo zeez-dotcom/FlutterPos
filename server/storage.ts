@@ -451,7 +451,7 @@ export class MemStorage {
     const newItem: ClothingItem = {
       id,
       name: item.name,
-      nameAr: item.nameAr || null,
+      nameAr: null,
       description: item.description || null,
       categoryId: item.categoryId,
       imageUrl: item.imageUrl || null,
@@ -461,7 +461,7 @@ export class MemStorage {
 
     // Initialize item-service prices with default values for all existing services
     const map = new Map<string, ItemServicePrice>();
-    for (const service of this.laundryServices.values()) {
+    for (const service of Array.from(this.laundryServices.values())) {
       map.set(service.id, {
         clothingItemId: id,
         serviceId: service.id,
@@ -482,7 +482,6 @@ export class MemStorage {
     const updated: ClothingItem = {
       ...existing,
       name: item.name ?? existing.name,
-      nameAr: item.nameAr ?? existing.nameAr,
       description: item.description ?? existing.description,
       categoryId: item.categoryId ?? existing.categoryId,
       imageUrl: item.imageUrl ?? existing.imageUrl
@@ -516,7 +515,7 @@ export class MemStorage {
     const newService: LaundryService = {
       id,
       name: service.name,
-      nameAr: service.nameAr || null,
+      nameAr: null,
       description: service.description || null,
       price: service.price,
       categoryId: service.categoryId,
@@ -533,7 +532,6 @@ export class MemStorage {
     const updated: LaundryService = {
       ...existing,
       name: service.name ?? existing.name,
-      nameAr: service.nameAr ?? existing.nameAr,
       description: service.description ?? existing.description,
       price: service.price ?? existing.price,
       categoryId: service.categoryId ?? existing.categoryId
@@ -553,7 +551,7 @@ export class MemStorage {
   ): Promise<(LaundryService & { itemPrice: string })[]> {
     const serviceMap = this.itemServicePrices.get(clothingItemId);
     const services: (LaundryService & { itemPrice: string })[] = [];
-    for (const service of this.laundryServices.values()) {
+    for (const service of Array.from(this.laundryServices.values())) {
       if (categoryId && service.categoryId !== categoryId) continue;
       const itemPrice = serviceMap?.get(service.id)?.price ?? service.price;
       services.push({ ...service, itemPrice });
@@ -1150,7 +1148,7 @@ export class DatabaseStorage implements IStorage {
         categoryId: laundryServices.categoryId,
         price: laundryServices.price,
         userId: laundryServices.userId,
-        itemPrice: sql`COALESCE(${itemServicePrices.price}, ${laundryServices.price})`,
+        itemPrice: sql<string>`COALESCE(${itemServicePrices.price}, ${laundryServices.price})`,
       })
       .from(laundryServices)
       .leftJoin(
@@ -1319,7 +1317,7 @@ export class DatabaseStorage implements IStorage {
           "Urgent Wash & Iron": row.urgentWashIron,
         };
 
-        for (const [serviceName, serviceId] of serviceIdMap.entries()) {
+        for (const [serviceName, serviceId] of Array.from(serviceIdMap.entries())) {
           const price = services[serviceName];
           const priceStr =
             price != null && !isNaN(price) ? price.toFixed(2) : "0.00";
@@ -1593,7 +1591,7 @@ export class DatabaseStorage implements IStorage {
       .select({ delivery: deliveryOrders, order: orders })
       .from(deliveryOrders)
       .leftJoin(orders, eq(deliveryOrders.orderId, orders.id));
-    return rows.map(r => ({ ...r.delivery, order: r.order }));
+    return rows.map(r => ({ ...r.delivery, order: r.order! }));
   }
 
   async getDeliveryOrdersByDriver(driverId: string): Promise<(DeliveryOrder & { order: Order })[]> {
@@ -1602,7 +1600,7 @@ export class DatabaseStorage implements IStorage {
       .from(deliveryOrders)
       .leftJoin(orders, eq(deliveryOrders.orderId, orders.id))
       .where(eq(deliveryOrders.driverId, driverId));
-    return rows.map(r => ({ ...r.delivery, order: r.order }));
+    return rows.map(r => ({ ...r.delivery, order: r.order! }));
   }
 
   async assignDeliveryOrder(orderId: string, driverId: string): Promise<DeliveryOrder> {

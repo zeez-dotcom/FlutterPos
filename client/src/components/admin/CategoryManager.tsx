@@ -16,9 +16,8 @@ import type { Category, InsertCategory } from "@shared/schema";
 export function CategoryManager() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
-  const [formData, setFormData] = useState<InsertCategory>({
+  const [formData, setFormData] = useState<Omit<InsertCategory, "nameAr">>({
     name: "",
-    nameAr: "",
     type: "clothing",
     description: "",
     isActive: true,
@@ -32,7 +31,7 @@ export function CategoryManager() {
   });
 
   const createMutation = useMutation({
-    mutationFn: async (data: InsertCategory) => {
+    mutationFn: async (data: Omit<InsertCategory, "nameAr">) => {
       const response = await apiRequest("POST", "/api/categories", data);
       return await response.json();
     },
@@ -51,7 +50,7 @@ export function CategoryManager() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: InsertCategory }) => {
+    mutationFn: async ({ id, data }: { id: string; data: Omit<InsertCategory, "nameAr"> }) => {
       const response = await apiRequest("PUT", `/api/categories/${id}`, data);
       return await response.json();
     },
@@ -90,7 +89,6 @@ export function CategoryManager() {
   const resetForm = () => {
     setFormData({
       name: "",
-      nameAr: "",
       type: "clothing",
       description: "",
       isActive: true,
@@ -103,7 +101,6 @@ export function CategoryManager() {
     setEditingCategory(category);
     setFormData({
       name: category.name,
-      nameAr: category.nameAr || "",
       type: category.type,
       description: category.description || "",
       isActive: category.isActive,
@@ -159,18 +156,6 @@ export function CategoryManager() {
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     className="col-span-3"
                     required
-                  />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="nameAr" className="text-right">
-                    Name (Arabic)
-                  </Label>
-                  <Input
-                    id="nameAr"
-                    value={formData.nameAr || ""}
-                    onChange={(e) => setFormData({ ...formData, nameAr: e.target.value })}
-                    className="col-span-3"
-                    placeholder="Optional Arabic name"
                   />
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
