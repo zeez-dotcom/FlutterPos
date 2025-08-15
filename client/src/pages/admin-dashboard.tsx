@@ -104,7 +104,7 @@ export default function AdminDashboard() {
               <Tags className="w-4 h-4" />
               Categories
             </TabsTrigger>
-            {(isSuperAdmin || isDeliveryAdmin) && (
+            {(isAdmin || isSuperAdmin || isDeliveryAdmin) && (
               <TabsTrigger value="delivery-qr" className="flex items-center gap-2">
                 <QrCode className="w-4 h-4" />
                 Delivery QR
@@ -138,7 +138,7 @@ export default function AdminDashboard() {
             <CategoryManager />
           </TabsContent>
 
-          {(isSuperAdmin || isDeliveryAdmin) && (
+          {(isAdmin || isSuperAdmin || isDeliveryAdmin) && (
             <TabsContent value="delivery-qr" className="space-y-6">
               <BranchDeliveryPage />
             </TabsContent>
