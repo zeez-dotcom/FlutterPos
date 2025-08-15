@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ProductGrid } from "@/components/product-grid";
 import { useCart } from "@/hooks/use-cart";
+import { useToast } from "@/hooks/use-toast";
 import { Minus, Plus } from "lucide-react";
 
 interface LocationPickerProps {
@@ -71,52 +72,108 @@ export default function DeliveryOrderForm({ params }: { params: { branchCode: st
   const [lat, setLat] = useState(0);
   const [lng, setLng] = useState(0);
   const [submitted, setSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [isScheduling, setIsScheduling] = useState(false);
+  const [scheduleError, setScheduleError] = useState<string | null>(null);
+
+  const { toast } = useToast();
+
+  useEffect(() => {
+    if ("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          setLat(pos.coords.latitude);
+          setLng(pos.coords.longitude);
+        },
+        () => {
+          // Could set branch default coordinates here if available
+        },
+      );
+    }
+  }, []);
 
   const { cartItems, addToCart, updateQuantity, getCartSummary } = useCart();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await fetch("/delivery/orders", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        branchCode,
-        customerName,
-        customerPhone,
-        address,
-        pickupTime,
-        dropoffTime,
-        dropoffLat: lat,
-        dropoffLng: lng,
-        items: cartItems.map((item) => ({
-          name: item.name,
-          quantity: item.quantity,
-          price: item.price,
-        })),
-      }),
-    });
-    setSubmitted(true);
+    setIsSubmitting(true);
+    setSubmitError(null);
+    try {
+      const response = await fetch("/delivery/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          branchCode,
+          customerName,
+          customerPhone,
+          address,
+          pickupTime,
+          dropoffTime,
+          dropoffLat: lat,
+          dropoffLng: lng,
+          items: cartItems.map((item) => ({
+            name: item.name,
+            quantity: item.quantity,
+            price: item.price,
+          })),
+        }),
+      });
+      if (!response.ok) {
+        const message = await response.text();
+        throw new Error(message || "Failed to submit order");
+      }
+      setSubmitted(true);
+    } catch (error: any) {
+      const message = error?.message || "Failed to submit order";
+      setSubmitError(message);
+      toast({
+        title: "Order submission failed",
+        description: message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleSchedule = async (e: React.FormEvent) => {
     e.preventDefault();
-    await fetch("/delivery/orders", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        branchCode,
-        customerName,
-        customerPhone,
-        address,
-        pickupTime,
-        dropoffTime,
-        dropoffLat: lat,
-        dropoffLng: lng,
-        scheduled: true,
-        items: [],
-      }),
-    });
-    setSubmitted(true);
+    setIsScheduling(true);
+    setScheduleError(null);
+    try {
+      const response = await fetch("/delivery/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          branchCode,
+          customerName,
+          customerPhone,
+          address,
+          pickupTime,
+          dropoffTime,
+          dropoffLat: lat,
+          dropoffLng: lng,
+          scheduled: true,
+          items: [],
+        }),
+      });
+      if (!response.ok) {
+        const message = await response.text();
+        throw new Error(message || "Failed to schedule pickup");
+      }
+      setSubmitted(true);
+    } catch (error: any) {
+      const message = error?.message || "Failed to schedule pickup";
+      setScheduleError(message);
+      toast({
+        title: "Scheduling failed",
+        description: message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsScheduling(false);
+    }
   };
 
   if (submitted) {
@@ -205,12 +262,20 @@ export default function DeliveryOrderForm({ params }: { params: { branchCode: st
           )}
         </div>
       </div>
-      <Button type="submit" className="w-full">
-        Submit Order
+      <Button type="submit" className="w-full" disabled={isSubmitting}>
+        {isSubmitting ? "Submitting..." : "Submit Order"}
       </Button>
-      <Button type="button" variant="outline" className="w-full" onClick={handleSchedule}>
-        Schedule Pickup
+      {submitError && <p className="text-sm text-red-500">{submitError}</p>}
+      <Button
+        type="button"
+        variant="outline"
+        className="w-full"
+        onClick={handleSchedule}
+        disabled={isScheduling}
+      >
+        {isScheduling ? "Scheduling..." : "Schedule Pickup"}
       </Button>
+      {scheduleError && <p className="text-sm text-red-500">{scheduleError}</p>}
     </form>
   );
 }
