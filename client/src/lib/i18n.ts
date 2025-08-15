@@ -78,7 +78,7 @@ export interface Translations {
   // Company Info
   companyName: string;
   companyTagline: string;
-  location: string;
+  locationLabel: string;
   phone: string;
 
   // Settings
@@ -222,6 +222,29 @@ export interface Translations {
   serviceCreated: string;
   serviceUpdated: string;
   serviceDeleted: string;
+  // Delivery
+  geolocationNotSupported: string;
+  geolocationNotSupportedDescription: string;
+  unableToRetrieveLocation: string;
+  enableLocationAccess: string;
+  failedToSubmitOrder: string;
+  orderSubmissionFailed: string;
+  failedToSchedulePickup: string;
+  schedulingFailed: string;
+  orderSubmitted: string;
+  deliveryOrder: string;
+  fillCartMyself: string;
+  scheduleAVisit: string;
+  scheduleVisit: string;
+  pickupTime: string;
+  deliveryTime: string;
+  location: string;
+  useCurrentLocation: string;
+  products: string;
+  noItemsSelected: string;
+  submitOrder: string;
+  submitting: string;
+  scheduling: string;
 }
 
 export const translations: Record<Language, Translations> = {
@@ -444,6 +467,30 @@ export const translations: Record<Language, Translations> = {
     serviceCreated: "Service created successfully",
     serviceUpdated: "Service updated successfully",
     serviceDeleted: "Service deleted successfully",
+
+    // Delivery
+    geolocationNotSupported: "Geolocation not supported",
+    geolocationNotSupportedDescription: "Your browser does not support geolocation.",
+    unableToRetrieveLocation: "Unable to retrieve location",
+    enableLocationAccess: "Please enable location access or enter it manually.",
+    failedToSubmitOrder: "Failed to submit order",
+    orderSubmissionFailed: "Order submission failed",
+    failedToSchedulePickup: "Failed to schedule pickup",
+    schedulingFailed: "Scheduling failed",
+    orderSubmitted: "Thank you! Your order has been submitted.",
+    deliveryOrder: "Delivery Order",
+    fillCartMyself: "Fill the cart myself",
+    scheduleAVisit: "Schedule a visit",
+    scheduleVisit: "Schedule Visit",
+    pickupTime: "Pickup Time",
+    deliveryTime: "Delivery Time",
+    locationLabel: "Location",
+    useCurrentLocation: "Use Current Location",
+    products: "Products",
+    noItemsSelected: "No items selected",
+    submitOrder: "Submit Order",
+    submitting: "Submitting...",
+    scheduling: "Scheduling...",
   },
   ar: {
     // Common
@@ -664,6 +711,30 @@ export const translations: Record<Language, Translations> = {
     serviceCreated: "تم إنشاء الخدمة بنجاح",
     serviceUpdated: "تم تحديث الخدمة بنجاح",
     serviceDeleted: "تم حذف الخدمة بنجاح",
+
+    // Delivery
+    geolocationNotSupported: "خدمة تحديد الموقع غير مدعومة",
+    geolocationNotSupportedDescription: "متصفحك لا يدعم خدمة تحديد الموقع.",
+    unableToRetrieveLocation: "تعذّر الحصول على الموقع",
+    enableLocationAccess: "يرجى تفعيل الوصول إلى الموقع أو إدخاله يدويًا.",
+    failedToSubmitOrder: "فشل إرسال الطلب",
+    orderSubmissionFailed: "فشل إرسال الطلب",
+    failedToSchedulePickup: "فشل في جدولة الاستلام",
+    schedulingFailed: "فشل الجدولة",
+    orderSubmitted: "شكرًا لك! تم إرسال طلبك.",
+    deliveryOrder: "طلب توصيل",
+    fillCartMyself: "سأملأ السلة بنفسي",
+    scheduleAVisit: "جدولة زيارة",
+    scheduleVisit: "جدولة زيارة",
+    pickupTime: "وقت الاستلام",
+    deliveryTime: "وقت التوصيل",
+    locationLabel: "الموقع",
+    useCurrentLocation: "استخدام موقعي الحالي",
+    products: "المنتجات",
+    noItemsSelected: "لا توجد عناصر محددة",
+    submitOrder: "إرسال الطلب",
+    submitting: "جاري الإرسال...",
+    scheduling: "جاري الجدولة...",
   },
   ur: {
     // Common
@@ -884,6 +955,30 @@ export const translations: Record<Language, Translations> = {
     serviceCreated: "سروس کامیابی سے بن گئی",
     serviceUpdated: "سروس کامیابی سے اپ ڈیٹ ہو گئی",
     serviceDeleted: "سروس کامیابی سے حذف ہو گئی",
+
+    // Delivery
+    geolocationNotSupported: "Geolocation not supported",
+    geolocationNotSupportedDescription: "Your browser does not support geolocation.",
+    unableToRetrieveLocation: "Unable to retrieve location",
+    enableLocationAccess: "Please enable location access or enter it manually.",
+    failedToSubmitOrder: "Failed to submit order",
+    orderSubmissionFailed: "Order submission failed",
+    failedToSchedulePickup: "Failed to schedule pickup",
+    schedulingFailed: "Scheduling failed",
+    orderSubmitted: "Thank you! Your order has been submitted.",
+    deliveryOrder: "Delivery Order",
+    fillCartMyself: "Fill the cart myself",
+    scheduleAVisit: "Schedule a visit",
+    scheduleVisit: "Schedule Visit",
+    pickupTime: "Pickup Time",
+    deliveryTime: "Delivery Time",
+    locationLabel: "Location",
+    useCurrentLocation: "Use Current Location",
+    products: "Products",
+    noItemsSelected: "No items selected",
+    submitOrder: "Submit Order",
+    submitting: "Submitting...",
+    scheduling: "Scheduling...",
   }
 };
 

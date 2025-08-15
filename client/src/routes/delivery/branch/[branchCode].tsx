@@ -12,6 +12,7 @@ import { ProductGrid } from "@/components/product-grid";
 import { useCart } from "@/hooks/use-cart";
 import { useToast } from "@/hooks/use-toast";
 import { Minus, Plus } from "lucide-react";
+import { useTranslation } from "@/lib/i18n";
 
 interface LocationPickerProps {
   lat: number;
@@ -90,14 +91,15 @@ export default function DeliveryOrderForm({ params }: { params: { branchCode: st
   const [scheduleError, setScheduleError] = useState<string | null>(null);
 
   const { toast } = useToast();
+  const { t, language } = useTranslation();
 
   const { cartItems, addToCart, updateQuantity, getCartSummary } = useCart();
 
   const handleUseCurrentLocation = () => {
     if (!("geolocation" in navigator)) {
       toast({
-        title: "Geolocation not supported",
-        description: "Your browser does not support geolocation.",
+        title: t.geolocationNotSupported,
+        description: t.geolocationNotSupportedDescription,
         variant: "destructive",
       });
       return;
@@ -109,8 +111,8 @@ export default function DeliveryOrderForm({ params }: { params: { branchCode: st
       },
       () => {
         toast({
-          title: "Unable to retrieve location",
-          description: "Please enable location access or enter it manually.",
+          title: t.unableToRetrieveLocation,
+          description: t.enableLocationAccess,
           variant: "destructive",
         });
       },
@@ -144,14 +146,14 @@ export default function DeliveryOrderForm({ params }: { params: { branchCode: st
       });
       if (!response.ok) {
         const message = await response.text();
-        throw new Error(message || "Failed to submit order");
+        throw new Error(message || t.failedToSubmitOrder);
       }
       setSubmitted(true);
     } catch (error: any) {
-      const message = error?.message || "Failed to submit order";
+      const message = error?.message || t.failedToSubmitOrder;
       setSubmitError(message);
       toast({
-        title: "Order submission failed",
+        title: t.orderSubmissionFailed,
         description: message,
         variant: "destructive",
       });
@@ -184,14 +186,14 @@ export default function DeliveryOrderForm({ params }: { params: { branchCode: st
       });
       if (!response.ok) {
         const message = await response.text();
-        throw new Error(message || "Failed to schedule pickup");
+        throw new Error(message || t.failedToSchedulePickup);
       }
       setSubmitted(true);
     } catch (error: any) {
-      const message = error?.message || "Failed to schedule pickup";
+      const message = error?.message || t.failedToSchedulePickup;
       setScheduleError(message);
       toast({
-        title: "Scheduling failed",
+        title: t.schedulingFailed,
         description: message,
         variant: "destructive",
       });
@@ -201,18 +203,31 @@ export default function DeliveryOrderForm({ params }: { params: { branchCode: st
   };
 
   if (submitted) {
-    return <div className="p-4 text-center">Thank you! Your order has been submitted.</div>;
+    return (
+      <div className="p-4 text-center" dir={language === "ar" ? "rtl" : "ltr"}>
+        {t.orderSubmitted}
+      </div>
+    );
   }
 
   const cartSummary = getCartSummary();
 
   if (mode === "choose") {
     return (
-      <div className="max-w-xl mx-auto p-4 space-y-4">
-        <h1 className="text-2xl font-bold text-center">Delivery Order</h1>
-        <Button className="w-full" onClick={() => setMode("cart")}>Fill the cart myself</Button>
-        <Button className="w-full" variant="outline" onClick={() => setMode("schedule")}>
-          Schedule a visit
+      <div
+        className="max-w-xl mx-auto p-4 space-y-4"
+        dir={language === "ar" ? "rtl" : "ltr"}
+      >
+        <h1 className="text-2xl font-bold text-center">{t.deliveryOrder}</h1>
+        <Button className="w-full" onClick={() => setMode("cart")}>
+          {t.fillCartMyself}
+        </Button>
+        <Button
+          className="w-full"
+          variant="outline"
+          onClick={() => setMode("schedule")}
+        >
+          {t.scheduleAVisit}
         </Button>
       </div>
     );
@@ -220,32 +235,61 @@ export default function DeliveryOrderForm({ params }: { params: { branchCode: st
 
   if (mode === "schedule") {
     return (
-      <form onSubmit={handleSchedule} className="max-w-xl mx-auto p-4 space-y-4">
-        <h1 className="text-2xl font-bold text-center">Schedule Visit</h1>
+      <form
+        onSubmit={handleSchedule}
+        className="max-w-xl mx-auto p-4 space-y-4"
+        dir={language === "ar" ? "rtl" : "ltr"}
+      >
+        <h1 className="text-2xl font-bold text-center">{t.scheduleVisit}</h1>
         <div className="space-y-2">
-          <Label htmlFor="name">Name</Label>
-          <Input id="name" value={customerName} onChange={(e) => setCustomerName(e.target.value)} required />
+          <Label htmlFor="name">{t.name}</Label>
+          <Input
+            id="name"
+            value={customerName}
+            onChange={(e) => setCustomerName(e.target.value)}
+            required
+          />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="phone">Phone</Label>
-          <Input id="phone" value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} required />
+          <Label htmlFor="phone">{t.phoneNumber}</Label>
+          <Input
+            id="phone"
+            value={customerPhone}
+            onChange={(e) => setCustomerPhone(e.target.value)}
+            required
+          />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="address">Address</Label>
-          <Textarea id="address" value={address} onChange={(e) => setAddress(e.target.value)} required />
+          <Label htmlFor="address">{t.address}</Label>
+          <Textarea
+            id="address"
+            value={address}
+            onChange={(e) => setAddress(e.target.value)}
+            required
+          />
         </div>
         <div className="flex gap-4">
           <div className="flex-1 space-y-2">
-            <Label htmlFor="pickup">Pickup Time</Label>
-            <Input id="pickup" type="datetime-local" value={pickupTime} onChange={(e) => setPickupTime(e.target.value)} />
+            <Label htmlFor="pickup">{t.pickupTime}</Label>
+            <Input
+              id="pickup"
+              type="datetime-local"
+              value={pickupTime}
+              onChange={(e) => setPickupTime(e.target.value)}
+            />
           </div>
           <div className="flex-1 space-y-2">
-            <Label htmlFor="dropoff">Delivery Time</Label>
-            <Input id="dropoff" type="datetime-local" value={dropoffTime} onChange={(e) => setDropoffTime(e.target.value)} />
+            <Label htmlFor="dropoff">{t.deliveryTime}</Label>
+            <Input
+              id="dropoff"
+              type="datetime-local"
+              value={dropoffTime}
+              onChange={(e) => setDropoffTime(e.target.value)}
+            />
           </div>
         </div>
         <Button type="submit" className="w-full" disabled={isScheduling}>
-          {isScheduling ? "Scheduling..." : "Schedule Visit"}
+          {isScheduling ? t.scheduling : t.scheduleVisit}
         </Button>
         {scheduleError && <p className="text-sm text-red-500">{scheduleError}</p>}
       </form>
@@ -254,22 +298,41 @@ export default function DeliveryOrderForm({ params }: { params: { branchCode: st
 
   // cart mode
   return (
-    <form onSubmit={handleSubmit} className="max-w-xl mx-auto p-4 space-y-4">
-      <h1 className="text-2xl font-bold text-center">Delivery Order</h1>
+    <form
+      onSubmit={handleSubmit}
+      className="max-w-xl mx-auto p-4 space-y-4"
+      dir={language === "ar" ? "rtl" : "ltr"}
+    >
+      <h1 className="text-2xl font-bold text-center">{t.deliveryOrder}</h1>
       <div className="space-y-2">
-        <Label htmlFor="name">Name</Label>
-        <Input id="name" value={customerName} onChange={(e) => setCustomerName(e.target.value)} required />
+        <Label htmlFor="name">{t.name}</Label>
+        <Input
+          id="name"
+          value={customerName}
+          onChange={(e) => setCustomerName(e.target.value)}
+          required
+        />
       </div>
       <div className="space-y-2">
-        <Label htmlFor="phone">Phone</Label>
-        <Input id="phone" value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} required />
+        <Label htmlFor="phone">{t.phoneNumber}</Label>
+        <Input
+          id="phone"
+          value={customerPhone}
+          onChange={(e) => setCustomerPhone(e.target.value)}
+          required
+        />
       </div>
       <div className="space-y-2">
-        <Label htmlFor="address">Address</Label>
-        <Textarea id="address" value={address} onChange={(e) => setAddress(e.target.value)} required />
+        <Label htmlFor="address">{t.address}</Label>
+        <Textarea
+          id="address"
+          value={address}
+          onChange={(e) => setAddress(e.target.value)}
+          required
+        />
       </div>
       <div className="space-y-2">
-        <Label>Location</Label>
+        <Label>{t.locationLabel}</Label>
         <LocationPicker
           lat={lat}
           lng={lng}
@@ -283,21 +346,31 @@ export default function DeliveryOrderForm({ params }: { params: { branchCode: st
           variant="outline"
           onClick={handleUseCurrentLocation}
         >
-          Use Current Location
+          {t.useCurrentLocation}
         </Button>
       </div>
       <div className="flex gap-4">
         <div className="flex-1 space-y-2">
-          <Label htmlFor="pickup">Pickup Time</Label>
-          <Input id="pickup" type="datetime-local" value={pickupTime} onChange={(e) => setPickupTime(e.target.value)} />
+          <Label htmlFor="pickup">{t.pickupTime}</Label>
+          <Input
+            id="pickup"
+            type="datetime-local"
+            value={pickupTime}
+            onChange={(e) => setPickupTime(e.target.value)}
+          />
         </div>
         <div className="flex-1 space-y-2">
-          <Label htmlFor="dropoff">Delivery Time</Label>
-          <Input id="dropoff" type="datetime-local" value={dropoffTime} onChange={(e) => setDropoffTime(e.target.value)} />
+          <Label htmlFor="dropoff">{t.deliveryTime}</Label>
+          <Input
+            id="dropoff"
+            type="datetime-local"
+            value={dropoffTime}
+            onChange={(e) => setDropoffTime(e.target.value)}
+          />
         </div>
       </div>
       <div className="space-y-4">
-        <Label>Products</Label>
+        <Label>{t.products}</Label>
         <ProductGrid
           onAddToCart={addToCart}
           cartItemCount={cartSummary.itemCount}
@@ -305,7 +378,9 @@ export default function DeliveryOrderForm({ params }: { params: { branchCode: st
           branchCode={branchCode}
         />
         <div className="space-y-2">
-          {cartItems.length === 0 && <div className="text-sm text-gray-500">No items selected</div>}
+          {cartItems.length === 0 && (
+            <div className="text-sm text-gray-500">{t.noItemsSelected}</div>
+          )}
           {cartItems.map((item) => (
             <div key={item.id} className="flex items-center justify-between">
               <span>{item.name}</span>
@@ -332,12 +407,14 @@ export default function DeliveryOrderForm({ params }: { params: { branchCode: st
             </div>
           ))}
           {cartItems.length > 0 && (
-            <div className="text-right font-bold">Total: ${cartSummary.total.toFixed(2)}</div>
+            <div className="text-right font-bold">
+              {t.total}: ${cartSummary.total.toFixed(2)}
+            </div>
           )}
         </div>
       </div>
       <Button type="submit" className="w-full" disabled={isSubmitting}>
-        {isSubmitting ? "Submitting..." : "Submit Order"}
+        {isSubmitting ? t.submitting : t.submitOrder}
       </Button>
       {submitError && <p className="text-sm text-red-500">{submitError}</p>}
     </form>
