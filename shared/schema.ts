@@ -420,7 +420,6 @@ export interface LaundryCartItem {
 export interface CartItem {
   id: string;
   name: string;
-  nameAr?: string;
   price: number;
   quantity: number;
   total: number;
