@@ -15,6 +15,7 @@ import { Search, Plus, Phone, DollarSign, CreditCard, User, Calendar, UserX } fr
 import { format } from "date-fns";
 import { useCurrency } from "@/lib/currency";
 import { useAuthContext } from "@/context/AuthContext";
+import { useTranslation } from "@/lib/i18n";
 import jsPDF from "jspdf";
 import * as XLSX from "xlsx";
 
@@ -28,52 +29,54 @@ interface CustomerFormFieldsProps {
 }
 
 function CustomerFormFields({ customer, onChange }: CustomerFormFieldsProps) {
+  const { t: translations } = useTranslation();
+  const t = (key: keyof typeof translations) => translations[key];
   return (
     <div className="space-y-4">
       <div>
-        <Label htmlFor="phone">Phone Number *</Label>
+        <Label htmlFor="phone">{t("phoneNumber")} *</Label>
         <Input
           id="phone"
           value={customer.phoneNumber}
           onChange={(e) => onChange({ ...customer, phoneNumber: e.target.value })}
-          placeholder="Enter phone number"
+          placeholder={t("phoneNumber")}
         />
       </div>
       <div>
-        <Label htmlFor="name">Name *</Label>
+        <Label htmlFor="name">{t("name")} *</Label>
         <Input
           id="name"
           value={customer.name}
           onChange={(e) => onChange({ ...customer, name: e.target.value })}
-          placeholder="Enter customer name"
+          placeholder={t("name")}
         />
       </div>
       <div>
-        <Label htmlFor="nickname">Nickname</Label>
+        <Label htmlFor="nickname">{t("nickname")}</Label>
         <Input
           id="nickname"
           value={customer.nickname || ""}
           onChange={(e) => onChange({ ...customer, nickname: e.target.value })}
-          placeholder="Enter nickname"
+          placeholder={t("nickname")}
         />
       </div>
       <div>
-        <Label htmlFor="email">Email</Label>
+        <Label htmlFor="email">{t("emailAddress")}</Label>
         <Input
           id="email"
           type="email"
           value={customer.email || ""}
           onChange={(e) => onChange({ ...customer, email: e.target.value })}
-          placeholder="Enter email address"
+          placeholder={t("emailAddress")}
         />
       </div>
       <div>
-        <Label htmlFor="address">Address</Label>
+        <Label htmlFor="address">{t("address")}</Label>
         <Input
           id="address"
           value={customer.address || ""}
           onChange={(e) => onChange({ ...customer, address: e.target.value })}
-          placeholder="Enter address"
+          placeholder={t("address")}
         />
       </div>
     </div>
@@ -117,6 +120,8 @@ export function CustomerManagement({ onCustomerSelect }: CustomerManagementProps
   const queryClient = useQueryClient();
   const { formatCurrency } = useCurrency();
   const { user, branch } = useAuthContext();
+  const { t: translations } = useTranslation();
+  const t = (key: keyof typeof translations) => translations[key];
 
   const { data: customers = [], isLoading } = useQuery<Customer[]>({
     queryKey: ["/api/customers", searchTerm, branch?.id],
@@ -219,8 +224,8 @@ export function CustomerManagement({ onCustomerSelect }: CustomerManagementProps
     },
     onSuccess: () => {
       toast({
-        title: "Success",
-        description: "Customer added successfully",
+        title: t("success"),
+        description: t("customerAdded"),
       });
       queryClient.invalidateQueries({ queryKey: ["/api/customers"] });
       setIsAddDialogOpen(false);
@@ -228,8 +233,8 @@ export function CustomerManagement({ onCustomerSelect }: CustomerManagementProps
     },
     onError: () => {
       toast({
-        title: "Error",
-        description: "Failed to add customer",
+        title: t("error"),
+        description: t("failedToAddCustomer"),
         variant: "destructive",
       });
     },
@@ -247,8 +252,8 @@ export function CustomerManagement({ onCustomerSelect }: CustomerManagementProps
     },
     onSuccess: () => {
       toast({
-        title: "Success",
-        description: "Payment recorded successfully",
+        title: t("success"),
+        description: t("paymentRecorded"),
       });
       queryClient.invalidateQueries({ queryKey: ["/api/customers"] });
       queryClient.invalidateQueries({ queryKey: ["/api/customers", selectedCustomer?.id, "payments"] });
@@ -258,8 +263,8 @@ export function CustomerManagement({ onCustomerSelect }: CustomerManagementProps
     },
     onError: () => {
       toast({
-        title: "Error",
-        description: "Failed to record payment",
+        title: t("error"),
+        description: t("failedToRecordPayment"),
         variant: "destructive",
       });
     },
@@ -272,8 +277,8 @@ export function CustomerManagement({ onCustomerSelect }: CustomerManagementProps
     },
     onSuccess: () => {
       toast({
-        title: "Success",
-        description: "Customer updated successfully",
+        title: t("success"),
+        description: t("customerUpdated"),
       });
       queryClient.invalidateQueries({ queryKey: ["/api/customers"] });
       if (editingCustomer) {
@@ -285,8 +290,8 @@ export function CustomerManagement({ onCustomerSelect }: CustomerManagementProps
     },
     onError: () => {
       toast({
-        title: "Error",
-        description: "Failed to update customer",
+        title: t("error"),
+        description: t("failedToUpdateCustomer"),
         variant: "destructive",
       });
     },
@@ -299,15 +304,15 @@ export function CustomerManagement({ onCustomerSelect }: CustomerManagementProps
     },
     onSuccess: () => {
       toast({
-        title: "Success",
-        description: "Customer deactivated successfully",
+        title: t("success"),
+        description: t("customerDeactivated"),
       });
       queryClient.invalidateQueries({ queryKey: ["/api/customers"] });
     },
     onError: () => {
       toast({
-        title: "Error",
-        description: "Failed to deactivate customer",
+        title: t("error"),
+        description: t("failedToDeactivateCustomer"),
         variant: "destructive",
       });
     },
@@ -323,8 +328,8 @@ export function CustomerManagement({ onCustomerSelect }: CustomerManagementProps
   const handleAddCustomer = () => {
     if (!newCustomer.phoneNumber || !newCustomer.name) {
       toast({
-        title: "Error",
-        description: "Phone number and name are required",
+        title: t("error"),
+        description: t("phoneAndNameRequired"),
         variant: "destructive",
       });
       return;
@@ -336,8 +341,8 @@ export function CustomerManagement({ onCustomerSelect }: CustomerManagementProps
   const handleRecordPayment = () => {
     if (!selectedCustomer || !paymentAmount || parseFloat(paymentAmount) <= 0) {
       toast({
-        title: "Error",
-        description: "Please enter a valid payment amount",
+        title: t("error"),
+        description: t("invalidPaymentAmount"),
         variant: "destructive",
       });
       return;
@@ -359,8 +364,8 @@ export function CustomerManagement({ onCustomerSelect }: CustomerManagementProps
       editCustomerMutation.mutate({ id: editingCustomer.id, data });
     } catch (error) {
       toast({
-        title: "Error",
-        description: "Invalid customer data",
+        title: t("error"),
+        description: t("invalidCustomerData"),
         variant: "destructive",
       });
     }
@@ -539,23 +544,23 @@ export function CustomerManagement({ onCustomerSelect }: CustomerManagementProps
   };
 
   if (isLoading) {
-    return <div className="p-4">Loading customers...</div>;
+    return <div className="p-4">{t("loading")}</div>;
   }
 
   return (
     <div className="p-6 space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">Customer Management</h2>
+        <h2 className="text-2xl font-bold">{t("customerManagement")}</h2>
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
           <DialogTrigger asChild>
             <Button>
               <Plus className="w-4 h-4 mr-2" />
-              Add Customer
+              {t("addCustomer")}
             </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Add New Customer</DialogTitle>
+              <DialogTitle>{t("addNewCustomer")}</DialogTitle>
               <DialogDescription>
                 Enter customer details to create a new account
               </DialogDescription>
@@ -563,10 +568,10 @@ export function CustomerManagement({ onCustomerSelect }: CustomerManagementProps
             <CustomerFormFields customer={newCustomer} onChange={setNewCustomer} />
             <DialogFooter>
               <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
-                Cancel
+                {t("cancel")}
               </Button>
               <Button onClick={handleAddCustomer} disabled={addCustomerMutation.isPending}>
-                Add Customer
+                {t("addCustomer")}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -611,7 +616,7 @@ export function CustomerManagement({ onCustomerSelect }: CustomerManagementProps
                       setIsReportDialogOpen(true);
                     }}
                   >
-                    Due: {formatCurrency(Number(customer.balanceDue ?? 0))}
+                    {t("balanceDue")}: {formatCurrency(Number(customer.balanceDue ?? 0))}
                   </Badge>
                 )}
               </div>
@@ -621,11 +626,11 @@ export function CustomerManagement({ onCustomerSelect }: CustomerManagementProps
                 <p className="text-sm text-gray-600">{customer.email}</p>
               )}
               <div className="flex justify-between text-sm">
-                <span>Total Spent:</span>
+                <span>{t("totalSpent")}:</span>
                 <span className="font-medium">{formatCurrency(Number(customer.totalSpent ?? 0))}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span>Loyalty Points:</span>
+                <span>{t("loyaltyPoints")}:</span>
                 <span className="font-medium">{customer.loyaltyPoints}</span>
               </div>
             </CardContent>
@@ -638,7 +643,7 @@ export function CustomerManagement({ onCustomerSelect }: CustomerManagementProps
                   onClick={() => onCustomerSelect?.(customer)}
                 >
                   <User className="w-3 h-3 mr-1" />
-                  Select
+                  {t("select")}
                 </Button>
                 {parseFloat(customer.balanceDue) > 0 && (
                   <Button
@@ -650,7 +655,7 @@ export function CustomerManagement({ onCustomerSelect }: CustomerManagementProps
                     }}
                   >
                     <DollarSign className="w-3 h-3 mr-1" />
-                    Pay
+                    {t("pay")}
                   </Button>
                 )}
                 <Button
@@ -669,7 +674,7 @@ export function CustomerManagement({ onCustomerSelect }: CustomerManagementProps
                     setIsEditDialogOpen(true);
                   }}
                 >
-                  Edit
+                  {t("edit")}
                 </Button>
                 <Button
                   variant="outline"
@@ -683,7 +688,7 @@ export function CustomerManagement({ onCustomerSelect }: CustomerManagementProps
                     setIsHistoryDialogOpen(true);
                   }}
                 >
-                  History
+                  {t("history")}
                 </Button>
                 <Button
                   variant="destructive"
@@ -693,7 +698,7 @@ export function CustomerManagement({ onCustomerSelect }: CustomerManagementProps
                   disabled={deactivateCustomerMutation.isPending}
                 >
                   <UserX className="w-3 h-3 mr-1" />
-                  Deactivate
+                  {t("deactivate")}
                 </Button>
               </div>
             </CardFooter>
@@ -705,7 +710,7 @@ export function CustomerManagement({ onCustomerSelect }: CustomerManagementProps
       <Dialog open={isReportDialogOpen} onOpenChange={setIsReportDialogOpen}>
         <DialogContent className="max-w-3xl">
           <DialogHeader>
-            <DialogTitle>Customer Due Amount Report</DialogTitle>
+            <DialogTitle>{t("customerDueAmountReport")}</DialogTitle>
             <DialogDescription>
               {reportCustomer ? `Outstanding orders for ${reportCustomer.name}` : ""}
             </DialogDescription>
@@ -739,8 +744,8 @@ export function CustomerManagement({ onCustomerSelect }: CustomerManagementProps
                 </table>
               </div>
               <DialogFooter className="justify-end gap-2">
-                <Button variant="outline" onClick={handleExportPDF}>Export PDF</Button>
-                <Button variant="outline" onClick={handleExportExcel}>Export Excel</Button>
+                <Button variant="outline" onClick={handleExportPDF}>{t("exportPDF")}</Button>
+                <Button variant="outline" onClick={handleExportExcel}>{t("exportExcel")}</Button>
               </DialogFooter>
             </>
           )}
@@ -751,13 +756,13 @@ export function CustomerManagement({ onCustomerSelect }: CustomerManagementProps
       <Dialog open={isHistoryDialogOpen} onOpenChange={setIsHistoryDialogOpen}>
         <DialogContent className="max-w-4xl">
           <DialogHeader>
-            <DialogTitle>History - {historyCustomer?.name}</DialogTitle>
+            <DialogTitle>{t("history")} - {historyCustomer?.name}</DialogTitle>
           </DialogHeader>
           <Tabs defaultValue="payments">
             <TabsList>
-              <TabsTrigger value="payments">Payments</TabsTrigger>
-              <TabsTrigger value="orders">Orders</TabsTrigger>
-              <TabsTrigger value="loyalty">Loyalty</TabsTrigger>
+              <TabsTrigger value="payments">{t("payments")}</TabsTrigger>
+              <TabsTrigger value="orders">{t("orders")}</TabsTrigger>
+              <TabsTrigger value="loyalty">{t("loyalty")}</TabsTrigger>
             </TabsList>
             <TabsContent value="payments">
               {paymentHistory.data.length === 0 ? (
@@ -793,7 +798,7 @@ export function CustomerManagement({ onCustomerSelect }: CustomerManagementProps
                       disabled={paymentPage === 1}
                       onClick={() => setPaymentPage((p) => p - 1)}
                     >
-                      Previous
+                      {t("previous")}
                     </Button>
                     <span className="text-sm">
                       Page {paymentPage} of {Math.max(1, Math.ceil(paymentHistory.total / pageSize))}
@@ -804,15 +809,15 @@ export function CustomerManagement({ onCustomerSelect }: CustomerManagementProps
                       disabled={paymentPage * pageSize >= paymentHistory.total}
                       onClick={() => setPaymentPage((p) => p + 1)}
                     >
-                      Next
+                      {t("next")}
                     </Button>
                   </div>
                   <div className="flex justify-end gap-2 mt-2">
                     <Button variant="outline" size="sm" onClick={handlePaymentsExportPDF}>
-                      Export PDF
+                      {t("exportPDF")}
                     </Button>
                     <Button variant="outline" size="sm" onClick={handlePaymentsExportCSV}>
-                      Export CSV
+                      {t("exportCSV")}
                     </Button>
                   </div>
                 </>
@@ -854,7 +859,7 @@ export function CustomerManagement({ onCustomerSelect }: CustomerManagementProps
                       disabled={orderPage === 1}
                       onClick={() => setOrderPage((p) => p - 1)}
                     >
-                      Previous
+                      {t("previous")}
                     </Button>
                     <span className="text-sm">
                       Page {orderPage} of {Math.max(1, Math.ceil(orderHistory.total / pageSize))}
@@ -865,15 +870,15 @@ export function CustomerManagement({ onCustomerSelect }: CustomerManagementProps
                       disabled={orderPage * pageSize >= orderHistory.total}
                       onClick={() => setOrderPage((p) => p + 1)}
                     >
-                      Next
+                      {t("next")}
                     </Button>
                   </div>
                   <div className="flex justify-end gap-2 mt-2">
                     <Button variant="outline" size="sm" onClick={handleOrdersExportPDF}>
-                      Export PDF
+                      {t("exportPDF")}
                     </Button>
                     <Button variant="outline" size="sm" onClick={handleOrdersExportCSV}>
-                      Export CSV
+                      {t("exportCSV")}
                     </Button>
                   </div>
                 </>
@@ -911,7 +916,7 @@ export function CustomerManagement({ onCustomerSelect }: CustomerManagementProps
                       disabled={loyaltyPage === 1}
                       onClick={() => setLoyaltyPage((p) => p - 1)}
                     >
-                      Previous
+                      {t("previous")}
                     </Button>
                     <span className="text-sm">
                       Page {loyaltyPage} of {Math.max(1, Math.ceil(loyaltyHistory.total / pageSize))}
@@ -922,15 +927,15 @@ export function CustomerManagement({ onCustomerSelect }: CustomerManagementProps
                       disabled={loyaltyPage * pageSize >= loyaltyHistory.total}
                       onClick={() => setLoyaltyPage((p) => p + 1)}
                     >
-                      Next
+                      {t("next")}
                     </Button>
                   </div>
                   <div className="flex justify-end gap-2 mt-2">
                     <Button variant="outline" size="sm" onClick={handleLoyaltyExportPDF}>
-                      Export PDF
+                      {t("exportPDF")}
                     </Button>
                     <Button variant="outline" size="sm" onClick={handleLoyaltyExportCSV}>
-                      Export CSV
+                      {t("exportCSV")}
                     </Button>
                   </div>
                 </>
@@ -944,16 +949,16 @@ export function CustomerManagement({ onCustomerSelect }: CustomerManagementProps
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Edit Customer</DialogTitle>
+            <DialogTitle>{t("editCustomer")}</DialogTitle>
             <DialogDescription>Update customer details</DialogDescription>
           </DialogHeader>
           <CustomerFormFields customer={editCustomerData} onChange={setEditCustomerData} />
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
-              Cancel
+              {t("cancel")}
             </Button>
             <Button onClick={handleEditCustomer} disabled={editCustomerMutation.isPending}>
-              Save Changes
+              {t("saveChanges")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -963,7 +968,7 @@ export function CustomerManagement({ onCustomerSelect }: CustomerManagementProps
       <Dialog open={isPaymentDialogOpen} onOpenChange={setIsPaymentDialogOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Record Payment - {selectedCustomer?.name}</DialogTitle>
+            <DialogTitle>{t("recordPayment")} - {selectedCustomer?.name}</DialogTitle>
             <DialogDescription>
               Current balance due: {formatCurrency(Number(selectedCustomer?.balanceDue ?? 0))}
             </DialogDescription>
@@ -972,7 +977,7 @@ export function CustomerManagement({ onCustomerSelect }: CustomerManagementProps
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="amount">Payment Amount *</Label>
+                <Label htmlFor="amount">{t("paymentAmount")} *</Label>
                 <Input
                   id="amount"
                   type="number"
@@ -983,22 +988,22 @@ export function CustomerManagement({ onCustomerSelect }: CustomerManagementProps
                 />
               </div>
               <div>
-                <Label htmlFor="method">Payment Method</Label>
+                <Label htmlFor="method">{t("paymentMethod")}</Label>
                 <select
                   id="method"
                   value={paymentMethod}
                   onChange={(e) => setPaymentMethod(e.target.value)}
                   className="w-full p-2 border rounded-md"
                 >
-                  <option value="cash">Cash</option>
-                  <option value="card">Card</option>
-                  <option value="bank_transfer">Bank Transfer</option>
+                  <option value="cash">{t("cash")}</option>
+                  <option value="card">{t("card")}</option>
+                  <option value="bank_transfer">{t("bankTransfer")}</option>
                 </select>
               </div>
             </div>
-            
+
             <div>
-              <Label htmlFor="notes">Notes (optional)</Label>
+              <Label htmlFor="notes">{t("notesOptional")}</Label>
               <Input
                 id="notes"
                 value={paymentNotes}
@@ -1010,7 +1015,7 @@ export function CustomerManagement({ onCustomerSelect }: CustomerManagementProps
             {selectedCustomerPayments.length > 0 && (
               <div>
                 <Separator className="my-4" />
-                <h4 className="font-medium mb-2">Recent Payments</h4>
+                <h4 className="font-medium mb-2">{t("recentPayments")}</h4>
                 <div className="space-y-2 max-h-40 overflow-y-auto">
                   {selectedCustomerPayments.slice(0, 5).map((payment) => (
                     <div key={payment.id} className="flex justify-between items-center text-sm">
@@ -1018,7 +1023,9 @@ export function CustomerManagement({ onCustomerSelect }: CustomerManagementProps
                         <CreditCard className="w-3 h-3" />
                         <span>{formatCurrency(Number(payment.amount ?? 0))}</span>
                         <Badge variant="outline" className="text-xs">
-                          {payment.paymentMethod}
+                          {payment.paymentMethod === "bank_transfer"
+                            ? t("bankTransfer")
+                            : t(payment.paymentMethod as "cash" | "card")}
                         </Badge>
                       </div>
                       <div className="flex items-center gap-1 text-gray-500">
@@ -1034,10 +1041,10 @@ export function CustomerManagement({ onCustomerSelect }: CustomerManagementProps
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsPaymentDialogOpen(false)}>
-              Cancel
+              {t("cancel")}
             </Button>
             <Button onClick={handleRecordPayment} disabled={recordPaymentMutation.isPending}>
-              Record Payment
+              {t("recordPayment")}
             </Button>
           </DialogFooter>
         </DialogContent>
