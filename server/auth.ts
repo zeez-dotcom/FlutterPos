@@ -139,7 +139,7 @@ export const requireDispatcher: RequestHandler = (req, res, next) => {
   const user = req.user as User;
   if (
     req.isAuthenticated() &&
-    (user?.role === 'dispatcher' || user?.role === 'admin' || user?.role === 'super_admin')
+    (user?.role === 'dispatcher' || user?.role === 'admin' || user?.role === 'super_admin' || user?.role === 'delivery_admin')
   ) {
     return next();
   }
