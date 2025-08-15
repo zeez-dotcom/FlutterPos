@@ -125,8 +125,29 @@ export default function DispatcherDashboard() {
   return (
     <div className="space-y-4">
       <h2 className="text-xl font-bold">Dispatcher Dashboard</h2>
-      <div ref={mapContainerRef} className="h-64 w-full" />
-      <div>Selected Driver: {selectedDriver || "None"}</div>
+      <div className="flex gap-4">
+        <div ref={mapContainerRef} className="h-64 w-full flex-1" />
+        <div className="w-64 space-y-2 border p-2">
+          <h3 className="font-semibold">Drivers</h3>
+          <ul className="space-y-1">
+            {drivers.map((d) => (
+              <li key={d.driverId} className="flex items-center gap-2">
+                <input
+                  type="radio"
+                  name="driver"
+                  value={d.driverId}
+                  checked={selectedDriver === d.driverId}
+                  onChange={() => setSelectedDriver(d.driverId)}
+                />
+                <span className="font-medium">{d.driverId}</span>
+                <span className="text-xs text-gray-500">
+                  {new Date(d.timestamp).toLocaleTimeString()}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
       <Button
         disabled={!branch?.code}
         onClick={() => branch?.code && window.open(`/delivery/branch/${branch.code}`, "_blank")}
@@ -143,7 +164,7 @@ export default function DispatcherDashboard() {
               disabled={!selectedDriver}
               onClick={() => selectedDriver && assign(o.orderId, selectedDriver)}
             >
-              Assign Selected Driver
+              Assign
             </Button>
           </li>
         ))}
