@@ -1256,18 +1256,10 @@ export async function registerRoutes(
   });
 
   // Delivery management routes
-  app.get("/api/delivery/orders", requireAuth, async (req, res) => {
+  app.get("/api/delivery/orders", requireDispatcher, async (_req, res) => {
     try {
-      const user = req.user as UserWithBranch;
-      if (user.role === "dispatcher") {
-        const orders = await storage.getDeliveryOrders();
-        res.json(orders);
-      } else if (user.role === "driver") {
-        const orders = await storage.getDeliveryOrdersByDriver(user.id);
-        res.json(orders);
-      } else {
-        res.status(403).json({ message: "Access denied" });
-      }
+      const orders = await storage.getDeliveryOrders();
+      res.json(orders);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch delivery orders" });
     }

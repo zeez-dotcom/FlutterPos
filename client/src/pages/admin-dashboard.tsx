@@ -9,12 +9,13 @@ import { UserManager } from "@/components/admin/UserManager";
 import { BranchManager } from "@/components/admin/BranchManager";
 import { BulkUploadManager } from "@/components/admin/BulkUploadManager";
 import { BranchDeliveryPage } from "@/components/admin/BranchDeliveryPage";
-import { LogOut, Users, Tags, MapPin, ArrowLeft, Upload, QrCode } from "lucide-react";
+import DispatcherDashboard from "@/components/delivery/DispatcherDashboard";
+import { LogOut, Users, Tags, MapPin, ArrowLeft, Upload, QrCode, Truck } from "lucide-react";
 import { Link } from "wouter";
 import logoUrl from "@/assets/logo.png";
 
 export default function AdminDashboard() {
-  const { user, isSuperAdmin, isDeliveryAdmin } = useAuthContext();
+  const { user, isSuperAdmin, isDeliveryAdmin, isAdmin } = useAuthContext();
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -90,10 +91,12 @@ export default function AdminDashboard() {
           <TabsList
             className={`grid w-full ${
               isSuperAdmin
-                ? "grid-cols-5"
+                ? "grid-cols-6"
                 : isDeliveryAdmin
-                  ? "grid-cols-2"
-                  : "grid-cols-1"
+                  ? "grid-cols-3"
+                  : isAdmin
+                    ? "grid-cols-2"
+                    : "grid-cols-1"
             }`}
           >
             <TabsTrigger value="categories" className="flex items-center gap-2">
@@ -104,6 +107,12 @@ export default function AdminDashboard() {
               <TabsTrigger value="delivery-qr" className="flex items-center gap-2">
                 <QrCode className="w-4 h-4" />
                 Delivery QR
+              </TabsTrigger>
+            )}
+            {isAdmin && (
+              <TabsTrigger value="delivery-dispatch" className="flex items-center gap-2">
+                <Truck className="w-4 h-4" />
+                Delivery Dispatch
               </TabsTrigger>
             )}
             {isSuperAdmin && (
@@ -131,6 +140,12 @@ export default function AdminDashboard() {
           {(isSuperAdmin || isDeliveryAdmin) && (
             <TabsContent value="delivery-qr" className="space-y-6">
               <BranchDeliveryPage />
+            </TabsContent>
+          )}
+
+          {isAdmin && (
+            <TabsContent value="delivery-dispatch" className="space-y-6">
+              <DispatcherDashboard />
             </TabsContent>
           )}
 
