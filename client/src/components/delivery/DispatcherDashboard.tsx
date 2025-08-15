@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { Button } from "../ui/button";
+import { useAuthContext } from "../../context/AuthContext";
 
 interface DeliveryOrder {
   orderId: string;
@@ -18,6 +19,7 @@ interface DriverLocation {
 }
 
 export default function DispatcherDashboard() {
+  const { branch } = useAuthContext();
   const [orders, setOrders] = useState<DeliveryOrder[]>([]);
   const [drivers, setDrivers] = useState<DriverLocation[]>([]);
   const [selectedDriver, setSelectedDriver] = useState<string | null>(null);
@@ -125,6 +127,12 @@ export default function DispatcherDashboard() {
       <h2 className="text-xl font-bold">Dispatcher Dashboard</h2>
       <div ref={mapContainerRef} className="h-64 w-full" />
       <div>Selected Driver: {selectedDriver || "None"}</div>
+      <Button
+        disabled={!branch?.code}
+        onClick={() => branch?.code && window.open(`/delivery/branch/${branch.code}`, "_blank")}
+      >
+        Open Customer Form
+      </Button>
       <ul className="space-y-2">
         {orders.map((o) => (
           <li key={o.orderId} className="flex items-center gap-2">
