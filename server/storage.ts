@@ -395,7 +395,6 @@ export class MemStorage {
     const newProduct: Product = {
       id,
       name: product.name,
-      nameAr: product.nameAr || null,
       description: product.description || null,
       categoryId: product.categoryId || null,
       price: product.price,
@@ -418,7 +417,6 @@ export class MemStorage {
     const updated: Product = {
       ...existing,
       name: product.name ?? existing.name,
-      nameAr: product.nameAr ?? existing.nameAr,
       description: product.description ?? existing.description,
       categoryId: product.categoryId ?? existing.categoryId,
       price: product.price ?? existing.price,
@@ -451,7 +449,6 @@ export class MemStorage {
     const newItem: ClothingItem = {
       id,
       name: item.name,
-      nameAr: null,
       description: item.description || null,
       categoryId: item.categoryId,
       imageUrl: item.imageUrl || null,
@@ -515,7 +512,6 @@ export class MemStorage {
     const newService: LaundryService = {
       id,
       name: service.name,
-      nameAr: null,
       description: service.description || null,
       price: service.price,
       categoryId: service.categoryId,
@@ -904,10 +900,10 @@ export class DatabaseStorage implements IStorage {
     categoryData: Omit<InsertCategory, "userId">,
     userId: string,
   ): Promise<Category> {
-    const { name, nameAr, type, description, isActive } = categoryData;
+    const { name, type, description, isActive } = categoryData;
     const [category] = await db
       .insert(categories)
-      .values({ name, nameAr, type, description, isActive, userId })
+      .values({ name, type, description, isActive, userId })
       .returning();
     return category;
   }
@@ -917,10 +913,10 @@ export class DatabaseStorage implements IStorage {
     categoryData: Partial<Omit<InsertCategory, "userId">>,
     userId: string,
   ): Promise<Category | undefined> {
-    const { name, nameAr, type, description, isActive } = categoryData;
+    const { name, type, description, isActive } = categoryData;
     const [updated] = await db
       .update(categories)
-      .set({ name, nameAr, type, description, isActive, updatedAt: new Date() })
+      .set({ name, type, description, isActive, updatedAt: new Date() })
       .where(and(eq(categories.id, id), eq(categories.userId, userId)))
       .returning();
     return updated || undefined;
@@ -1143,7 +1139,6 @@ export class DatabaseStorage implements IStorage {
       .select({
         id: laundryServices.id,
         name: laundryServices.name,
-        nameAr: laundryServices.nameAr,
         description: laundryServices.description,
         categoryId: laundryServices.categoryId,
         price: laundryServices.price,
@@ -1292,14 +1287,13 @@ export class DatabaseStorage implements IStorage {
           clothingItemId = existingItem.id;
           await tx
             .update(clothingItems)
-            .set({ nameAr: row.itemAr, imageUrl: row.imageUrl })
+            .set({ imageUrl: row.imageUrl })
             .where(eq(clothingItems.id, existingItem.id));
         } else {
           const [insertedItem] = await tx
             .insert(clothingItems)
             .values({
               name: row.itemEn,
-              nameAr: row.itemAr,
               imageUrl: row.imageUrl,
               categoryId: clothingCategoryId,
               userId,

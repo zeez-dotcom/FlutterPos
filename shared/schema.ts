@@ -6,7 +6,6 @@ import { z } from "zod";
 export const clothingItems = pgTable("clothing_items", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   name: text("name").notNull(),
-  nameAr: text("name_ar"),
   description: text("description"),
   categoryId: varchar("category_id").references(() => categories.id).notNull(),
   imageUrl: text("image_url"),
@@ -16,7 +15,6 @@ export const clothingItems = pgTable("clothing_items", {
 export const laundryServices = pgTable("laundry_services", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   name: text("name").notNull(),
-  nameAr: text("name_ar"),
   description: text("description"),
   price: decimal("price", { precision: 10, scale: 2 }).notNull(),
   categoryId: varchar("category_id").references(() => categories.id).notNull(),
@@ -42,7 +40,6 @@ export const itemServicePrices = pgTable(
 export const products = pgTable("products", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   name: text("name").notNull(),
-  nameAr: text("name_ar"),
   description: text("description"),
   categoryId: varchar("category_id").references(() => categories.id),
   price: decimal("price", { precision: 10, scale: 2 }).notNull(),
@@ -83,7 +80,6 @@ export const users = pgTable("users", {
 export const categories = pgTable("categories", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   name: text("name").notNull(),
-  nameAr: text("name_ar"),
   type: text("type").notNull(), // 'clothing' or 'service'
   description: text("description"),
   isActive: boolean("is_active").default(true).notNull(),
@@ -259,14 +255,12 @@ export const loyaltyHistory = pgTable("loyalty_history", {
 export const insertClothingItemSchema = createInsertSchema(clothingItems).omit({
   id: true,
   userId: true,
-  nameAr: true,
 });
 
 export const insertLaundryServiceSchema = createInsertSchema(laundryServices)
   .omit({
     id: true,
     userId: true,
-    nameAr: true,
   })
   .extend({
     price: z
@@ -413,8 +407,8 @@ export type BulkUploadResult = z.infer<typeof bulkUploadResultSchema>;
 
 export interface LaundryCartItem {
   id: string;
-  clothingItem: Omit<ClothingItem, "nameAr">;
-  service: Omit<LaundryService, "nameAr">;
+  clothingItem: ClothingItem;
+  service: LaundryService;
   quantity: number;
   total: number;
 }
