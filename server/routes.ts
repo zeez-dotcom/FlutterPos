@@ -37,7 +37,7 @@ import {
 import logger from "./logger";
 import { NotificationService } from "./services/notification";
 import { geocodeAddress, routeDistance } from "./utils/geolocation";
-import { WebSocketServer } from "ws";
+import { WebSocketServer, type WebSocket } from "ws";
 
 const upload = multer();
 
@@ -48,6 +48,8 @@ export async function registerRoutes(
   // Setup authentication
   await setupAuth(app);
   await seedSuperAdmin();
+
+  const deliveryOrderClients = new Set<WebSocket>();
 
   // Authentication routes
   app.post("/api/login", (req, res, next) => {
@@ -1238,6 +1240,14 @@ export async function registerRoutes(
         durationSeconds: duration ?? null,
       } as any);
 
+      deliveryOrderClients.forEach((client) => {
+        try {
+          client.send(JSON.stringify({ type: "new-order", orderId: order.id }));
+        } catch (err) {
+          logger.error("delivery order ws send error", err as any);
+        }
+      });
+
       res.status(201).json({ orderId: order.id });
     } catch (error) {
       console.error("Error creating delivery order:", error);
@@ -1518,6 +1528,13 @@ export async function registerRoutes(
   });
 
   const httpServer = createServer(app);
+
+  // WebSocket endpoint for delivery order updates
+  const orderWss = new WebSocketServer({ server: httpServer, path: "/ws/delivery-orders" });
+  orderWss.on("connection", (ws) => {
+    deliveryOrderClients.add(ws);
+    ws.on("close", () => deliveryOrderClients.delete(ws));
+  });
 
   // WebSocket endpoint for driver GPS streaming
   const wss = new WebSocketServer({ server: httpServer, path: "/ws/driver-location" });
