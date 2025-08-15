@@ -294,14 +294,14 @@ export async function registerRoutes(
         const errors: string[] = [];
         const rows: ParsedRow[] = data
           .map((r: any, index: number) => {
-            const getFieldValue = (fields: string[]) => {
+            const getFieldValue = (fields: readonly string[]) => {
               for (const f of fields) {
                 if (r[f] !== undefined) return r[f];
               }
               return undefined;
             };
 
-            const parseField = (fields: string[]) => {
+            const parseField = (fields: readonly string[]) => {
               const raw = getFieldValue(fields);
               const parsed = parsePrice(raw);
               if (
@@ -1194,7 +1194,7 @@ export async function registerRoutes(
         total: subtotal.toFixed(2),
         paymentMethod: "cash",
         status: data.scheduled ? "scheduled" : "received",
-        estimatedPickup: data.pickupTime ? new Date(data.pickupTime) : null,
+        estimatedPickup: data.pickupTime ? new Date(data.pickupTime) : undefined,
         notes: data.address,
         sellerName: "online",
         branchId: branch.id,
@@ -1236,7 +1236,7 @@ export async function registerRoutes(
         dropoffLng: dropoffCoords?.lng,
         distanceMeters: distance ?? null,
         durationSeconds: duration ?? null,
-      });
+      } as any);
 
       res.status(201).json({ orderId: order.id });
     } catch (error) {
@@ -1478,7 +1478,7 @@ export async function registerRoutes(
       await notificationService.sendEmail(email, "Your Receipt", html);
       res.json({ message: "Receipt emailed successfully" });
     } catch (error) {
-      logger.error("Error sending receipt email:", error);
+      logger.error("Error sending receipt email:", error as any);
       res.status(500).json({ message: "Failed to send receipt email" });
     }
   });
@@ -1537,7 +1537,7 @@ export async function registerRoutes(
           });
         }
       } catch (err) {
-        logger.error("driver location ws error", err);
+          logger.error("driver location ws error", err as any);
       }
     });
   });

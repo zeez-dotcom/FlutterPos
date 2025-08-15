@@ -1,12 +1,12 @@
 import { useState, useCallback } from "react";
-import { LaundryCartItem, LaundryCartSummary, ClothingItem, LaundryService } from "@shared/schema";
+import type { LaundryCartItem, LaundryCartSummary, ClothingItem, LaundryService } from "@shared/schema";
 import { getTaxRate } from "@/lib/tax";
 
 export function useLaundryCart() {
   const [cartItems, setCartItems] = useState<LaundryCartItem[]>([]);
   const [paymentMethod, setPaymentMethod] = useState<"cash" | "card" | "pay_later">("cash");
 
-  const addToCart = useCallback((clothingItem: ClothingItem, service: LaundryService & { itemPrice?: string }, quantity: number = 1) => {
+  const addToCart = useCallback((clothingItem: Omit<ClothingItem, "nameAr">, service: Omit<LaundryService, "nameAr"> & { itemPrice?: string }, quantity: number = 1) => {
     setCartItems(prev => {
       // Create unique ID combining clothing item and service
       const uniqueId = `${clothingItem.id}-${service.id}`;

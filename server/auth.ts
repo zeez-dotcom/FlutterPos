@@ -23,7 +23,7 @@ const hardcodedAdmin: User = {
   updatedAt: new Date(),
 };
 
-const sessionSecret = process.env.SESSION_SECRET;
+const sessionSecret = process.env.SESSION_SECRET!;
 if (!sessionSecret) {
   throw new Error("SESSION_SECRET environment variable is required");
 }

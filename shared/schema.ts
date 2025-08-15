@@ -72,7 +72,7 @@ export const users = pgTable("users", {
   firstName: varchar("first_name", { length: 100 }),
   lastName: varchar("last_name", { length: 100 }),
   branchId: varchar("branch_id").references(() => branches.id),
-  deliveryAccountId: varchar("delivery_account_id").references(() => users.id),
+  deliveryAccountId: varchar("delivery_account_id").references((): any => users.id),
   role: text("role").notNull().default('user'), // 'super_admin', 'admin', 'user', 'delivery_admin', 'dispatcher', 'driver'
   isActive: boolean("is_active").default(true).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -259,12 +259,14 @@ export const loyaltyHistory = pgTable("loyalty_history", {
 export const insertClothingItemSchema = createInsertSchema(clothingItems).omit({
   id: true,
   userId: true,
+  nameAr: true,
 });
 
 export const insertLaundryServiceSchema = createInsertSchema(laundryServices)
   .omit({
     id: true,
     userId: true,
+    nameAr: true,
   })
   .extend({
     price: z
@@ -411,8 +413,8 @@ export type BulkUploadResult = z.infer<typeof bulkUploadResultSchema>;
 
 export interface LaundryCartItem {
   id: string;
-  clothingItem: ClothingItem;
-  service: LaundryService;
+  clothingItem: Omit<ClothingItem, "nameAr">;
+  service: Omit<LaundryService, "nameAr">;
   quantity: number;
   total: number;
 }

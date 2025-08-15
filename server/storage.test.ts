@@ -235,7 +235,7 @@ test('createClothingItem seeds default prices for existing services', async () =
     });
   };
 
-  await storage.createClothingItem({ name: 'Shirt', categoryId: 'cItem', userId: 'u1', nameAr: undefined, description: undefined, imageUrl: undefined });
+  await storage.createClothingItem({ name: 'Shirt', categoryId: 'cItem', userId: 'u1', description: undefined, imageUrl: undefined });
 
   (db as any).transaction = originalTransaction;
 

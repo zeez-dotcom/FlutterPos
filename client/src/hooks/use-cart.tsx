@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { CartItem, CartSummary } from "@shared/schema";
+import type { CartItem, CartSummary } from "@shared/schema";
 import { getTaxRate } from "@/lib/tax";
 
 export function useCart() {
