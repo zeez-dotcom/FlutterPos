@@ -11,6 +11,8 @@ export interface Translations {
   edit: string;
   add: string;
   search: string;
+  confirmDeleteClothing: string;
+  confirmDeleteService: string;
   
   // Navigation
   sales: string;
@@ -180,6 +182,8 @@ export const translations: Record<Language, Translations> = {
     edit: "Edit",
     add: "Add",
     search: "Search",
+    confirmDeleteClothing: "Are you sure you want to delete this clothing item?",
+    confirmDeleteService: "Are you sure you want to delete this service?",
     
     // Navigation
     sales: "Sales",
@@ -346,6 +350,8 @@ export const translations: Record<Language, Translations> = {
     edit: "تعديل",
     add: "إضافة",
     search: "بحث",
+    confirmDeleteClothing: "هل أنت متأكد أنك تريد حذف عنصر الملابس هذا؟",
+    confirmDeleteService: "هل أنت متأكد أنك تريد حذف هذه الخدمة؟",
     
     // Navigation
     sales: "المبيعات",
@@ -512,6 +518,8 @@ export const translations: Record<Language, Translations> = {
     edit: "تبدیل کریں",
     add: "شامل کریں",
     search: "تلاش",
+    confirmDeleteClothing: "کیا آپ واقعی اس کپڑے کی چیز کو حذف کرنا چاہتے ہیں؟",
+    confirmDeleteService: "کیا آپ واقعی اس خدمت کو حذف کرنا چاہتے ہیں؟",
     
     // Navigation
     sales: "فروخت",
