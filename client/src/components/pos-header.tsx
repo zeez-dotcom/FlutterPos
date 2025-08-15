@@ -7,6 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { LanguageSelector } from "@/components/language-selector";
 import { Link } from "wouter";
+import { useTranslation } from "@/lib/i18n";
 
 interface POSHeaderProps {
   cartItemCount?: number;
@@ -17,6 +18,7 @@ export function POSHeader({ cartItemCount = 0, onToggleCart }: POSHeaderProps) {
   const { user, branch } = useAuthContext();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { t } = useTranslation();
 
   const logoutMutation = useMutation({
     mutationFn: async () => {
@@ -24,12 +26,12 @@ export function POSHeader({ cartItemCount = 0, onToggleCart }: POSHeaderProps) {
       return await response.json();
     },
     onSuccess: () => {
-      toast({ title: "Logged out successfully" });
+      toast({ title: t.logoutSuccess });
       queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
     },
     onError: (error) => {
       toast({
-        title: "Logout failed",
+        title: t.logoutFailed,
         description: error.message,
         variant: "destructive",
       });
@@ -47,15 +49,15 @@ export function POSHeader({ cartItemCount = 0, onToggleCart }: POSHeaderProps) {
           <div className="flex items-center space-x-4">
             <img
               src={branch?.logoUrl || defaultLogo}
-              alt="Laundry Logo"
+              alt={t.laundryManagementSystem}
               className="w-8 h-8 object-cover rounded"
             />
-            <h1 className="text-xl font-medium">Laundry Management System</h1>
+            <h1 className="text-xl font-medium">{t.laundryManagementSystem}</h1>
           </div>
           <div className="flex items-center space-x-6">
             <div className="hidden md:flex items-center space-x-2 text-sm">
               <Store className="h-4 w-4" />
-              <span>{branch?.name || "Main Store"}</span>
+              <span>{branch?.name || t.mainStore}</span>
             </div>
             
             {/* Cart Button */}
@@ -66,7 +68,7 @@ export function POSHeader({ cartItemCount = 0, onToggleCart }: POSHeaderProps) {
               onClick={onToggleCart}
             >
               <ShoppingCart className="h-4 w-4" />
-              <span className="hidden sm:inline">Cart</span>
+              <span className="hidden sm:inline">{t.cart}</span>
               {cartItemCount > 0 && (
                 <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium">
                   {cartItemCount > 99 ? '99+' : cartItemCount}
@@ -89,7 +91,7 @@ export function POSHeader({ cartItemCount = 0, onToggleCart }: POSHeaderProps) {
                   className="p-2 hover:bg-blue-700 text-white hover:text-white flex items-center space-x-2"
                 >
                   <Settings className="h-4 w-4" />
-                  <span className="hidden sm:inline">Admin</span>
+                  <span className="hidden sm:inline">{t.admin}</span>
                 </Button>
               </Link>
             )}

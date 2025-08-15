@@ -140,7 +140,7 @@ export function InventoryManagement() {
       queryClient.invalidateQueries({ queryKey: ["/api/clothing-items"] });
       setIsClothingModalOpen(false);
       clothingForm.reset();
-      toast({ title: "Clothing item created successfully" });
+      toast({ title: t.clothingItemCreated });
     }
   });
 
@@ -154,7 +154,7 @@ export function InventoryManagement() {
       setIsClothingModalOpen(false);
       setEditingClothing(null);
       clothingForm.reset();
-      toast({ title: "Clothing item updated successfully" });
+      toast({ title: t.clothingItemUpdated });
     }
   });
 
@@ -165,7 +165,7 @@ export function InventoryManagement() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/clothing-items"] });
-      toast({ title: "Clothing item deleted successfully" });
+      toast({ title: t.clothingItemDeleted });
     }
   });
 
@@ -179,7 +179,7 @@ export function InventoryManagement() {
       queryClient.invalidateQueries({ queryKey: ["/api/laundry-services"] });
       setIsServiceModalOpen(false);
       serviceForm.reset();
-      toast({ title: "Service created successfully" });
+      toast({ title: t.serviceCreated });
     }
   });
 
@@ -193,7 +193,7 @@ export function InventoryManagement() {
       setIsServiceModalOpen(false);
       setEditingService(null);
       serviceForm.reset();
-      toast({ title: "Service updated successfully" });
+      toast({ title: t.serviceUpdated });
     }
   });
 
@@ -204,7 +204,7 @@ export function InventoryManagement() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/laundry-services"] });
-      toast({ title: "Service deleted successfully" });
+      toast({ title: t.serviceDeleted });
     }
   });
 
@@ -290,13 +290,13 @@ export function InventoryManagement() {
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center space-x-3">
             <Package className="h-8 w-8 text-pos-primary" />
-            <h1 className="text-3xl font-bold text-gray-900">Inventory Management</h1>
+            <h1 className="text-3xl font-bold text-gray-900">{t.inventoryManagement}</h1>
           </div>
           
           <div className="relative w-80">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
             <Input
-              placeholder="Search items and services..."
+              placeholder={t.searchItemsServices}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10"

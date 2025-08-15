@@ -170,6 +170,58 @@ export interface Translations {
   welcome: string;
   loginFailed: string;
   missingCredentials: string;
+  logoutSuccess: string;
+  logoutFailed: string;
+  mainStore: string;
+  laundryManagementSystem: string;
+  allItems: string;
+  loadingCategories: string;
+  failedToLoadCategories: string;
+  loadingProducts: string;
+  loadingClothingItems: string;
+  searchProducts: string;
+  searchItemsServices: string;
+  noProductsFound: string;
+  stock: string;
+  searchClothingItems: string;
+  noClothingItemsFound: string;
+  servicePriceInfo: string;
+  categoryManagement: string;
+  inventoryManagement: string;
+  categoryCreated: string;
+  categoryUpdated: string;
+  categoryDeleted: string;
+  errorCreatingCategory: string;
+  errorUpdatingCategory: string;
+  errorDeletingCategory: string;
+  type: string;
+  description: string;
+  optionalDescription: string;
+  create: string;
+  update: string;
+  clothing: string;
+  service: string;
+  category: string;
+  clothingCategories: string;
+  serviceCategories: string;
+  categoriesForClothingItems: string;
+  categoriesForLaundryServices: string;
+  active: string;
+  inactive: string;
+  noClothingCategoriesFound: string;
+  noServiceCategoriesFound: string;
+  pants: string;
+  shirts: string;
+  traditional: string;
+  dresses: string;
+  formal: string;
+  linens: string;
+  clothingItemCreated: string;
+  clothingItemUpdated: string;
+  clothingItemDeleted: string;
+  serviceCreated: string;
+  serviceUpdated: string;
+  serviceDeleted: string;
 }
 
 export const translations: Record<Language, Translations> = {
@@ -340,6 +392,58 @@ export const translations: Record<Language, Translations> = {
     welcome: "Welcome to the Laundry Management System",
     loginFailed: "Login Failed",
     missingCredentials: "Please enter both username and password",
+    logoutSuccess: "Logged out successfully",
+    logoutFailed: "Logout failed",
+    mainStore: "Main Store",
+    laundryManagementSystem: "Laundry Management System",
+    allItems: "All Items",
+    loadingCategories: "Loading categories...",
+    failedToLoadCategories: "Failed to load categories",
+    loadingProducts: "Loading products...",
+    loadingClothingItems: "Loading clothing items...",
+    searchProducts: "Search products...",
+    searchItemsServices: "Search items and services...",
+    noProductsFound: "No products found",
+    stock: "Stock",
+    searchClothingItems: "Search clothing items...",
+    noClothingItemsFound: "No clothing items found",
+    servicePriceInfo: "Service prices will be shown in the next step",
+    categoryManagement: "Category Management",
+    inventoryManagement: "Inventory Management",
+    categoryCreated: "Category created successfully",
+    categoryUpdated: "Category updated successfully",
+    categoryDeleted: "Category deleted successfully",
+    errorCreatingCategory: "Error creating category",
+    errorUpdatingCategory: "Error updating category",
+    errorDeletingCategory: "Error deleting category",
+    type: "Type",
+    description: "Description",
+    optionalDescription: "Optional description",
+    create: "Create",
+    update: "Update",
+    clothing: "Clothing",
+    service: "Service",
+    category: "Category",
+    clothingCategories: "Clothing Categories",
+    serviceCategories: "Service Categories",
+    categoriesForClothingItems: "Categories for clothing items",
+    categoriesForLaundryServices: "Categories for laundry services",
+    active: "Active",
+    inactive: "Inactive",
+    noClothingCategoriesFound: "No clothing categories found",
+    noServiceCategoriesFound: "No service categories found",
+    pants: "Pants",
+    shirts: "Shirts",
+    traditional: "Traditional",
+    dresses: "Dresses",
+    formal: "Formal",
+    linens: "Linens",
+    clothingItemCreated: "Clothing item created successfully",
+    clothingItemUpdated: "Clothing item updated successfully",
+    clothingItemDeleted: "Clothing item deleted successfully",
+    serviceCreated: "Service created successfully",
+    serviceUpdated: "Service updated successfully",
+    serviceDeleted: "Service deleted successfully",
   },
   ar: {
     // Common
@@ -508,6 +612,58 @@ export const translations: Record<Language, Translations> = {
     welcome: "مرحباً بك في نظام إدارة الغسيل",
     loginFailed: "فشل تسجيل الدخول",
     missingCredentials: "يرجى إدخال اسم المستخدم وكلمة المرور",
+    logoutSuccess: "تم تسجيل الخروج بنجاح",
+    logoutFailed: "فشل تسجيل الخروج",
+    mainStore: "المتجر الرئيسي",
+    laundryManagementSystem: "نظام إدارة المغسلة",
+    allItems: "جميع العناصر",
+    loadingCategories: "جاري تحميل الفئات...",
+    failedToLoadCategories: "فشل تحميل الفئات",
+    loadingProducts: "جاري تحميل المنتجات...",
+    loadingClothingItems: "جاري تحميل عناصر الملابس...",
+    searchProducts: "بحث عن المنتجات...",
+    searchItemsServices: "البحث عن العناصر والخدمات...",
+    noProductsFound: "لم يتم العثور على منتجات",
+    stock: "المخزون",
+    searchClothingItems: "البحث عن عناصر الملابس...",
+    noClothingItemsFound: "لم يتم العثور على عناصر الملابس",
+    servicePriceInfo: "ستظهر أسعار الخدمات في الخطوة التالية",
+    categoryManagement: "إدارة الفئات",
+    inventoryManagement: "إدارة المخزون",
+    categoryCreated: "تم إنشاء الفئة بنجاح",
+    categoryUpdated: "تم تحديث الفئة بنجاح",
+    categoryDeleted: "تم حذف الفئة بنجاح",
+    errorCreatingCategory: "خطأ في إنشاء الفئة",
+    errorUpdatingCategory: "خطأ في تحديث الفئة",
+    errorDeletingCategory: "خطأ في حذف الفئة",
+    type: "النوع",
+    description: "الوصف",
+    optionalDescription: "وصف اختياري",
+    create: "إنشاء",
+    update: "تحديث",
+    clothing: "ملابس",
+    service: "خدمة",
+    category: "فئة",
+    clothingCategories: "فئات الملابس",
+    serviceCategories: "فئات الخدمات",
+    categoriesForClothingItems: "فئات لعناصر الملابس",
+    categoriesForLaundryServices: "فئات لخدمات الغسيل",
+    active: "نشط",
+    inactive: "غير نشط",
+    noClothingCategoriesFound: "لم يتم العثور على فئات ملابس",
+    noServiceCategoriesFound: "لم يتم العثور على فئات خدمات",
+    pants: "بنطال",
+    shirts: "قمصان",
+    traditional: "تقليدي",
+    dresses: "فساتين",
+    formal: "رسمي",
+    linens: "أقمشة",
+    clothingItemCreated: "تم إنشاء عنصر الملابس بنجاح",
+    clothingItemUpdated: "تم تحديث عنصر الملابس بنجاح",
+    clothingItemDeleted: "تم حذف عنصر الملابس بنجاح",
+    serviceCreated: "تم إنشاء الخدمة بنجاح",
+    serviceUpdated: "تم تحديث الخدمة بنجاح",
+    serviceDeleted: "تم حذف الخدمة بنجاح",
   },
   ur: {
     // Common
@@ -676,6 +832,58 @@ export const translations: Record<Language, Translations> = {
     welcome: "لانڈری مینجمنٹ سسٹم میں خوش آمدید",
     loginFailed: "لاگ اِن ناکام",
     missingCredentials: "براہ کرم صارف نام اور پاس ورڈ درج کریں",
+    logoutSuccess: "لاگ آؤٹ کامیاب رہا",
+    logoutFailed: "لاگ آؤٹ ناکام ہوا",
+    mainStore: "مین اسٹور",
+    laundryManagementSystem: "لانڈری مینجمنٹ سسٹم",
+    allItems: "تمام اشیاء",
+    loadingCategories: "زمرے لوڈ ہو رہے ہیں...",
+    failedToLoadCategories: "زمرے لوڈ کرنے میں ناکام",
+    loadingProducts: "مصنوعات لوڈ ہو رہی ہیں...",
+    loadingClothingItems: "کپڑوں کی اشیاء لوڈ ہو رہی ہیں...",
+    searchProducts: "مصنوعات تلاش کریں...",
+    searchItemsServices: "اشیاء اور خدمات تلاش کریں...",
+    noProductsFound: "کوئی مصنوعات نہیں ملی",
+    stock: "اسٹاک",
+    searchClothingItems: "کپڑوں کی اشیاء تلاش کریں...",
+    noClothingItemsFound: "کوئی کپڑوں کی اشیاء نہیں ملیں",
+    servicePriceInfo: "خدمات کی قیمتیں اگلے مرحلے میں دکھائی جائیں گی",
+    categoryManagement: "زمرہ جات کا انتظام",
+    inventoryManagement: "انوینٹری کا انتظام",
+    categoryCreated: "زمرہ کامیابی سے بن گیا",
+    categoryUpdated: "زمرہ کامیابی سے اپ ڈیٹ ہو گیا",
+    categoryDeleted: "زمرہ کامیابی سے حذف ہو گیا",
+    errorCreatingCategory: "زمرہ بنانے میں خرابی",
+    errorUpdatingCategory: "زمرہ اپ ڈیٹ کرنے میں خرابی",
+    errorDeletingCategory: "زمرہ حذف کرنے میں خرابی",
+    type: "قسم",
+    description: "تفصیل",
+    optionalDescription: "اختیاری تفصیل",
+    create: "بنائیں",
+    update: "اپ ڈیٹ",
+    clothing: "کپڑے",
+    service: "سروس",
+    category: "زمرہ",
+    clothingCategories: "کپڑوں کے زمرے",
+    serviceCategories: "سروس کے زمرے",
+    categoriesForClothingItems: "کپڑوں کی اشیاء کے لئے زمرے",
+    categoriesForLaundryServices: "لانڈری خدمات کے لئے زمرے",
+    active: "فعال",
+    inactive: "غیرفعال",
+    noClothingCategoriesFound: "کوئی کپڑوں کے زمرے نہیں ملے",
+    noServiceCategoriesFound: "کوئی سروس کے زمرے نہیں ملے",
+    pants: "پتلون",
+    shirts: "قمیضیں",
+    traditional: "روایتی",
+    dresses: "ڈریس",
+    formal: "فارمل",
+    linens: "لینن",
+    clothingItemCreated: "کپڑے کی چیز کامیابی سے بن گئی",
+    clothingItemUpdated: "کپڑے کی چیز کامیابی سے اپ ڈیٹ ہو گئی",
+    clothingItemDeleted: "کپڑے کی چیز کامیابی سے حذف ہو گئی",
+    serviceCreated: "سروس کامیابی سے بن گئی",
+    serviceUpdated: "سروس کامیابی سے اپ ڈیٹ ہو گئی",
+    serviceDeleted: "سروس کامیابی سے حذف ہو گئی",
   }
 };
 
