@@ -224,8 +224,8 @@ test('createClothingItem seeds default prices for existing services', async () =
           where: () => {
             if (table === laundryServices) {
               return [
-                { id: 's1', price: '5.00', userId: 'u1', name: 'Wash', nameAr: null, description: null, categoryId: 'c1' },
-                { id: 's2', price: '3.00', userId: 'u1', name: 'Iron', nameAr: null, description: null, categoryId: 'c2' },
+                { id: 's1', price: '5.00', userId: 'u1', name: 'Wash', description: null, categoryId: 'c1' },
+                { id: 's2', price: '3.00', userId: 'u1', name: 'Iron', description: null, categoryId: 'c2' },
               ];
             }
             return [];

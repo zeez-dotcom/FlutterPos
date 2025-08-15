@@ -16,7 +16,7 @@ import type { Category, InsertCategory } from "@shared/schema";
 export function CategoryManager() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
-  const [formData, setFormData] = useState<Omit<InsertCategory, "nameAr">>({
+  const [formData, setFormData] = useState<InsertCategory>({
     name: "",
     type: "clothing",
     description: "",
@@ -31,7 +31,7 @@ export function CategoryManager() {
   });
 
   const createMutation = useMutation({
-    mutationFn: async (data: Omit<InsertCategory, "nameAr">) => {
+    mutationFn: async (data: InsertCategory) => {
       const response = await apiRequest("POST", "/api/categories", data);
       return await response.json();
     },
@@ -50,7 +50,7 @@ export function CategoryManager() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: Omit<InsertCategory, "nameAr"> }) => {
+    mutationFn: async ({ id, data }: { id: string; data: InsertCategory }) => {
       const response = await apiRequest("PUT", `/api/categories/${id}`, data);
       return await response.json();
     },

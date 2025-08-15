@@ -446,10 +446,10 @@ export async function registerRoutes(
         : await storage.getProducts(user.branchId || undefined);
 
       if (search) {
+        const term = search.toLowerCase();
         items = items.filter(product =>
-          product.name.toLowerCase().includes(search.toLowerCase()) ||
-          product.nameAr?.toLowerCase().includes(search.toLowerCase()) ||
-          product.description?.toLowerCase().includes(search.toLowerCase())
+          product.name.toLowerCase().includes(term) ||
+          product.description?.toLowerCase().includes(term)
         );
       }
 
@@ -514,10 +514,10 @@ export async function registerRoutes(
         : await storage.getClothingItems(userId);
 
       if (search) {
+        const term = search.toLowerCase();
         items = items.filter((item) =>
-          item.name.toLowerCase().includes(search.toLowerCase()) ||
-          item.nameAr?.toLowerCase().includes(search.toLowerCase()) ||
-          item.description?.toLowerCase().includes(search.toLowerCase()),
+          item.name.toLowerCase().includes(term) ||
+          item.description?.toLowerCase().includes(term),
         );
       }
 
@@ -621,10 +621,10 @@ export async function registerRoutes(
         : await storage.getLaundryServices(userId);
 
       if (search) {
+        const term = search.toLowerCase();
         services = services.filter((service) =>
-          service.name.toLowerCase().includes(search.toLowerCase()) ||
-          service.nameAr?.toLowerCase().includes(search.toLowerCase()) ||
-          service.description?.toLowerCase().includes(search.toLowerCase()),
+          service.name.toLowerCase().includes(term) ||
+          service.description?.toLowerCase().includes(term),
         );
       }
 

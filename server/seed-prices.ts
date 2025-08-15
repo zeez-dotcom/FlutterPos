@@ -1,13 +1,11 @@
 export interface ItemPricing {
   name: string;
-  nameAr: string;
   prices: Record<string, number>;
 }
 
 export const PRICE_MATRIX: ItemPricing[] = [
   {
     name: "Thobe",
-    nameAr: "ثوب",
     prices: {
       "Normal Iron": 4,
       "Normal Wash": 5,
@@ -19,7 +17,6 @@ export const PRICE_MATRIX: ItemPricing[] = [
   },
   {
     name: "Shirt",
-    nameAr: "قميص",
     prices: {
       "Normal Iron": 2,
       "Normal Wash": 3,
@@ -31,7 +28,6 @@ export const PRICE_MATRIX: ItemPricing[] = [
   },
   {
     name: "T-Shirt",
-    nameAr: "تيشيرت",
     prices: {
       "Normal Iron": 1.5,
       "Normal Wash": 2.5,
@@ -43,7 +39,6 @@ export const PRICE_MATRIX: ItemPricing[] = [
   },
   {
     name: "Trouser",
-    nameAr: "بنطال",
     prices: {
       "Normal Iron": 2.5,
       "Normal Wash": 3.5,

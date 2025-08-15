@@ -31,7 +31,6 @@ function createApp(storage: any) {
         items = items.filter(
           (p: any) =>
             p.name.toLowerCase().includes(term) ||
-            p.nameAr?.toLowerCase().includes(term) ||
             p.description?.toLowerCase().includes(term),
         );
       }
@@ -60,8 +59,8 @@ function createApp(storage: any) {
 
 test('GET /api/products filters by search and category', async () => {
   const products = [
-    { id: 'p1', name: 'Soap', nameAr: 'صابونة', description: 'Hand soap', categoryId: 'c1' },
-    { id: 'p2', name: 'Shampoo', nameAr: 'شامبو', description: 'Hair cleaner', categoryId: 'c2' },
+    { id: 'p1', name: 'Soap', description: 'Hand soap', categoryId: 'c1' },
+    { id: 'p2', name: 'Shampoo', description: 'Hair cleaner', categoryId: 'c2' },
   ];
   const storage = {
     getProducts: async (_branchId: string) => products,

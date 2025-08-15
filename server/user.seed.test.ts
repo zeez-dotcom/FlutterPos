@@ -73,7 +73,7 @@ test('new users are seeded with default data', async () => {
 
     assert.ok(
       insertedCategories.some(
-        (c) => c.name === 'Normal Iron' && c.nameAr === 'كي عادي'
+        (c) => c.name === 'Normal Iron'
       )
     );
     assert.ok(insertedClothing.some((i) => i.name === 'Thobe'));
