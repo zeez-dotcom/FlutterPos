@@ -437,7 +437,31 @@ export async function registerRoutes(
   });
 
   // Products route
-  app.get("/api/products", requireAuth, async (req, res) => {
+  app.get("/api/products", async (req, res, next) => {
+    const branchCode = req.query.branchCode as string | undefined;
+    if (!branchCode) return next();
+    try {
+      const branch = await storage.getBranchByCode(branchCode);
+      if (!branch) {
+        return res.status(404).json({ message: "Branch not found" });
+      }
+      const categoryId = req.query.categoryId as string;
+      const search = req.query.search as string;
+      let items = categoryId
+        ? await storage.getProductsByCategory(categoryId, branch.id)
+        : await storage.getProducts(branch.id);
+      if (search) {
+        const term = search.toLowerCase();
+        items = items.filter(product =>
+          product.name.toLowerCase().includes(term) ||
+          product.description?.toLowerCase().includes(term)
+        );
+      }
+      res.json(items);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch products" });
+    }
+  }, requireAuth, async (req, res) => {
     try {
       const categoryId = req.query.categoryId as string;
       const search = req.query.search as string;
