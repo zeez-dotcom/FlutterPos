@@ -65,6 +65,40 @@ export interface Translations {
   balanceDue: string;
   totalSpent: string;
   loyaltyPoints: string;
+  customerManagement: string;
+  addCustomer: string;
+  addNewCustomer: string;
+  nickname: string;
+  select: string;
+  pay: string;
+  history: string;
+  deactivate: string;
+  customerDueAmountReport: string;
+  recordPayment: string;
+  editCustomer: string;
+  paymentAmount: string;
+  notesOptional: string;
+  recentPayments: string;
+  exportPDF: string;
+  exportExcel: string;
+  exportCSV: string;
+  payments: string;
+  loyalty: string;
+  previous: string;
+  next: string;
+  bankTransfer: string;
+  success: string;
+  customerAdded: string;
+  failedToAddCustomer: string;
+  paymentRecorded: string;
+  failedToRecordPayment: string;
+  customerUpdated: string;
+  failedToUpdateCustomer: string;
+  customerDeactivated: string;
+  failedToDeactivateCustomer: string;
+  phoneAndNameRequired: string;
+  invalidPaymentAmount: string;
+  invalidCustomerData: string;
   
   // Order Status
   orderStatus: string;
@@ -311,6 +345,40 @@ export const translations: Record<Language, Translations> = {
     balanceDue: "Balance Due",
     totalSpent: "Total Spent",
     loyaltyPoints: "Loyalty Points",
+    customerManagement: "Customer Management",
+    addCustomer: "Add Customer",
+    addNewCustomer: "Add New Customer",
+    nickname: "Nickname",
+    select: "Select",
+    pay: "Pay",
+    history: "History",
+    deactivate: "Deactivate",
+    customerDueAmountReport: "Customer Due Amount Report",
+    recordPayment: "Record Payment",
+    editCustomer: "Edit Customer",
+    paymentAmount: "Payment Amount",
+    notesOptional: "Notes (optional)",
+    recentPayments: "Recent Payments",
+    exportPDF: "Export PDF",
+    exportExcel: "Export Excel",
+    exportCSV: "Export CSV",
+    payments: "Payments",
+    loyalty: "Loyalty",
+    previous: "Previous",
+    next: "Next",
+    bankTransfer: "Bank Transfer",
+    success: "Success",
+    customerAdded: "Customer added successfully",
+    failedToAddCustomer: "Failed to add customer",
+    paymentRecorded: "Payment recorded successfully",
+    failedToRecordPayment: "Failed to record payment",
+    customerUpdated: "Customer updated successfully",
+    failedToUpdateCustomer: "Failed to update customer",
+    customerDeactivated: "Customer deactivated successfully",
+    failedToDeactivateCustomer: "Failed to deactivate customer",
+    phoneAndNameRequired: "Phone number and name are required",
+    invalidPaymentAmount: "Please enter a valid payment amount",
+    invalidCustomerData: "Invalid customer data",
     
     // Order Status
     orderStatus: "Order Status",
@@ -555,6 +623,40 @@ export const translations: Record<Language, Translations> = {
     balanceDue: "الرصيد المستحق",
     totalSpent: "إجمالي المصروف",
     loyaltyPoints: "نقاط الولاء",
+    customerManagement: "إدارة العملاء",
+    addCustomer: "إضافة عميل",
+    addNewCustomer: "إضافة عميل جديد",
+    nickname: "اللقب",
+    select: "اختيار",
+    pay: "دفع",
+    history: "السجل",
+    deactivate: "تعطيل",
+    customerDueAmountReport: "تقرير مبالغ مستحقة للعميل",
+    recordPayment: "تسجيل الدفع",
+    editCustomer: "تعديل العميل",
+    paymentAmount: "مبلغ الدفع",
+    notesOptional: "ملاحظات (اختياري)",
+    recentPayments: "المدفوعات الأخيرة",
+    exportPDF: "تصدير PDF",
+    exportExcel: "تصدير Excel",
+    exportCSV: "تصدير CSV",
+    payments: "المدفوعات",
+    loyalty: "الولاء",
+    previous: "السابق",
+    next: "التالي",
+    bankTransfer: "تحويل بنكي",
+    success: "نجاح",
+    customerAdded: "تمت إضافة العميل بنجاح",
+    failedToAddCustomer: "فشل في إضافة العميل",
+    paymentRecorded: "تم تسجيل الدفع بنجاح",
+    failedToRecordPayment: "فشل في تسجيل الدفع",
+    customerUpdated: "تم تحديث العميل بنجاح",
+    failedToUpdateCustomer: "فشل في تحديث العميل",
+    customerDeactivated: "تم تعطيل العميل بنجاح",
+    failedToDeactivateCustomer: "فشل في تعطيل العميل",
+    phoneAndNameRequired: "رقم الهاتف والاسم مطلوبان",
+    invalidPaymentAmount: "يرجى إدخال مبلغ دفع صالح",
+    invalidCustomerData: "بيانات العميل غير صالحة",
     
     // Order Status
     orderStatus: "حالة الطلب",
@@ -799,6 +901,40 @@ export const translations: Record<Language, Translations> = {
     balanceDue: "باقی رقم",
     totalSpent: "کل خرچ",
     loyaltyPoints: "وفاداری کے پوائنٹس",
+    customerManagement: "Customer Management",
+    addCustomer: "Add Customer",
+    addNewCustomer: "Add New Customer",
+    nickname: "Nickname",
+    select: "Select",
+    pay: "Pay",
+    history: "History",
+    deactivate: "Deactivate",
+    customerDueAmountReport: "Customer Due Amount Report",
+    recordPayment: "Record Payment",
+    editCustomer: "Edit Customer",
+    paymentAmount: "Payment Amount",
+    notesOptional: "Notes (optional)",
+    recentPayments: "Recent Payments",
+    exportPDF: "Export PDF",
+    exportExcel: "Export Excel",
+    exportCSV: "Export CSV",
+    payments: "Payments",
+    loyalty: "Loyalty",
+    previous: "Previous",
+    next: "Next",
+    bankTransfer: "Bank Transfer",
+    success: "Success",
+    customerAdded: "Customer added successfully",
+    failedToAddCustomer: "Failed to add customer",
+    paymentRecorded: "Payment recorded successfully",
+    failedToRecordPayment: "Failed to record payment",
+    customerUpdated: "Customer updated successfully",
+    failedToUpdateCustomer: "Failed to update customer",
+    customerDeactivated: "Customer deactivated successfully",
+    failedToDeactivateCustomer: "Failed to deactivate customer",
+    phoneAndNameRequired: "Phone number and name are required",
+    invalidPaymentAmount: "Please enter a valid payment amount",
+    invalidCustomerData: "Invalid customer data",
     
     // Order Status
     orderStatus: "آرڈر کی حالت",
