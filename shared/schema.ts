@@ -365,6 +365,7 @@ export type UpsertUser = typeof users.$inferInsert;
 export type ClothingItem = typeof clothingItems.$inferSelect;
 export type InsertClothingItem = z.infer<typeof insertClothingItemSchema>;
 export type LaundryService = typeof laundryServices.$inferSelect;
+export type LaundryServiceWithItemPrice = LaundryService & { itemPrice?: string };
 export type InsertLaundryService = z.infer<typeof insertLaundryServiceSchema>;
 export type ItemServicePrice = typeof itemServicePrices.$inferSelect;
 export type InsertItemServicePrice = z.infer<typeof insertItemServicePriceSchema>;
@@ -408,7 +409,7 @@ export type BulkUploadResult = z.infer<typeof bulkUploadResultSchema>;
 export interface LaundryCartItem {
   id: string;
   clothingItem: ClothingItem;
-  service: LaundryService;
+  service: LaundryServiceWithItemPrice;
   quantity: number;
   total: number;
 }
