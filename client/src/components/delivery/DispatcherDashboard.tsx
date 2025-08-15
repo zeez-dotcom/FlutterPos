@@ -1,6 +1,9 @@
 import { useEffect, useRef, useState } from "react";
-import maplibregl from "maplibre-gl";
-import "maplibre-gl/dist/maplibre-gl.css";
+import mapboxgl from "mapbox-gl";
+import "mapbox-gl/dist/mapbox-gl.css";
+
+mapboxgl.accessToken =
+  "pk.eyJ1IjoiYXppejk5eCIsImEiOiJjbWVhaGI0aWMwcXE2MmxyMzJoZW9nNmtqIn0.3foR7U7xVLa5V03-nI3new";
 import { Button } from "../ui/button";
 import { useAuthContext } from "../../context/AuthContext";
 
@@ -23,9 +26,9 @@ export default function DispatcherDashboard() {
   const [orders, setOrders] = useState<DeliveryOrder[]>([]);
   const [drivers, setDrivers] = useState<DriverLocation[]>([]);
   const [selectedDriver, setSelectedDriver] = useState<string | null>(null);
-  const mapRef = useRef<maplibregl.Map | null>(null);
+  const mapRef = useRef<mapboxgl.Map | null>(null);
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
-  const markersRef = useRef<maplibregl.Marker[]>([]);
+  const markersRef = useRef<mapboxgl.Marker[]>([]);
   const orderWsRef = useRef<WebSocket | null>(null);
   const orderIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -89,9 +92,9 @@ export default function DispatcherDashboard() {
 
   useEffect(() => {
     if (mapRef.current || !mapContainerRef.current) return;
-    mapRef.current = new maplibregl.Map({
+    mapRef.current = new mapboxgl.Map({
       container: mapContainerRef.current,
-      style: "https://demotiles.maplibre.org/style.json",
+      style: "mapbox://styles/mapbox/streets-v11",
       center: [0, 0],
       zoom: 2,
     });
@@ -103,7 +106,7 @@ export default function DispatcherDashboard() {
     markersRef.current = [];
 
     drivers.forEach((d) => {
-      const marker = new maplibregl.Marker({
+      const marker = new mapboxgl.Marker({
         color: d.driverId === selectedDriver ? "#ef4444" : "#3b82f6",
       })
         .setLngLat([d.lng, d.lat])

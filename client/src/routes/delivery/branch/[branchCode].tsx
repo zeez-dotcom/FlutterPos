@@ -1,6 +1,9 @@
 import { useEffect, useRef, useState } from "react";
-import maplibregl from "maplibre-gl";
-import "maplibre-gl/dist/maplibre-gl.css";
+import mapboxgl from "mapbox-gl";
+import "mapbox-gl/dist/mapbox-gl.css";
+
+mapboxgl.accessToken =
+  "pk.eyJ1IjoiYXppejk5eCIsImEiOiJjbWVhaGI0aWMwcXE2MmxyMzJoZW9nNmtqIn0.3foR7U7xVLa5V03-nI3new";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,18 +21,18 @@ interface LocationPickerProps {
 
 function LocationPicker({ lat, lng, onChange }: LocationPickerProps) {
   const ref = useRef<HTMLDivElement>(null);
-  const markerRef = useRef<maplibregl.Marker | null>(null);
-  const mapRef = useRef<maplibregl.Map | null>(null);
+  const markerRef = useRef<mapboxgl.Marker | null>(null);
+  const mapRef = useRef<mapboxgl.Map | null>(null);
 
   useEffect(() => {
     if (!ref.current) return;
-    const map = new maplibregl.Map({
+    const map = new mapboxgl.Map({
       container: ref.current,
-      style: "https://demotiles.maplibre.org/style.json",
+      style: "mapbox://styles/mapbox/streets-v11",
       center: [lng, lat],
       zoom: 14,
     });
-    const marker = new maplibregl.Marker({ draggable: true })
+    const marker = new mapboxgl.Marker({ draggable: true })
       .setLngLat([lng, lat])
       .addTo(map);
 
