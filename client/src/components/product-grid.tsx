@@ -66,7 +66,8 @@ export function ProductGrid({ onAddToCart, cartItemCount, onToggleCart, branchCo
       if (selectedCategory !== "all") params.append("categoryId", selectedCategory);
       if (searchQuery) params.append("search", searchQuery);
 
-      const response = await fetch(`/api/products?${params}`, {
+      const query = params.toString();
+      const response = await fetch(`/api/products${query ? `?${query}` : ""}`, {
         credentials: "include",
       });
       if (!response.ok) throw new Error("Failed to fetch products");

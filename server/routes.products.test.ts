@@ -9,16 +9,42 @@ process.env.SESSION_SECRET = process.env.SESSION_SECRET || 'test-secret';
 
 const { requireAuth, requireAdminOrSuperAdmin } = await import('./auth');
 
-function createApp(storage: any) {
+function createApp(storage: any, opts: { authenticated?: boolean } = {}) {
   const app = express();
+  const { authenticated = true } = opts;
   app.use(express.json());
   app.use((req: any, _res, next) => {
-    req.isAuthenticated = () => true;
-    req.user = { id: 'u1', branchId: 'b1', role: 'admin' };
+    req.isAuthenticated = () => authenticated;
+    if (authenticated) {
+      req.user = { id: 'u1', branchId: 'b1', role: 'admin' };
+    }
     next();
   });
 
-  app.get('/api/products', requireAuth, async (req, res) => {
+  app.get('/api/products', async (req, res, next) => {
+    const branchCode = req.query.branchCode as string | undefined;
+    if (!branchCode) return next();
+    try {
+      const branch = await storage.getBranchByCode(branchCode);
+      if (!branch) return res.status(404).json({ message: 'Branch not found' });
+      const categoryId = req.query.categoryId as string;
+      const search = req.query.search as string;
+      let items = categoryId
+        ? await storage.getProductsByCategory(categoryId, branch.id)
+        : await storage.getProducts(branch.id);
+      if (search) {
+        const term = search.toLowerCase();
+        items = items.filter(
+          (p: any) =>
+            p.name.toLowerCase().includes(term) ||
+            p.description?.toLowerCase().includes(term),
+        );
+      }
+      res.json(items);
+    } catch {
+      res.status(500).json({ message: 'Failed to fetch products' });
+    }
+  }, requireAuth, async (req, res) => {
     try {
       const categoryId = req.query.categoryId as string;
       const search = req.query.search as string;
@@ -95,5 +121,19 @@ test('POST /api/products attaches user branchId', async () => {
   assert.equal(res.status, 200);
   assert.ok(created);
   assert.equal(created.branchId, 'b1');
+});
+
+test('GET /api/products allows anonymous access with branchCode', async () => {
+  const products = [{ id: 'p1', name: 'Soap', description: 'Hand soap', categoryId: 'c1' }];
+  const storage = {
+    getBranchByCode: async (code: string) => (code === 'BR1' ? { id: 'b1', code: 'BR1' } : undefined),
+    getProducts: async (branchId: string) => (branchId === 'b1' ? products : []),
+    getProductsByCategory: async (_categoryId: string, _branchId: string) => [],
+    createProduct: async (_data: any) => ({}),
+  };
+  const app = createApp(storage, { authenticated: false });
+  const res = await request(app).get('/api/products').query({ branchCode: 'BR1' });
+  assert.equal(res.status, 200);
+  assert.deepEqual(res.body, products);
 });
 
