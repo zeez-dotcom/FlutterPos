@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import ConfirmDialog from "@/components/ui/confirm-dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
@@ -13,6 +14,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ClothingItem, LaundryService, insertClothingItemSchema, insertLaundryServiceSchema, insertItemServicePriceSchema } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
+import { useTranslation } from "@/lib/i18n";
 import { useToast } from "@/hooks/use-toast";
 
 interface ClothingItemPayload {
@@ -42,7 +44,10 @@ export function InventoryManagement() {
   const [isPriceModalOpen, setIsPriceModalOpen] = useState(false);
   const [editingClothing, setEditingClothing] = useState<ClothingItem | null>(null);
   const [editingService, setEditingService] = useState<LaundryService | null>(null);
+  const [clothingToDelete, setClothingToDelete] = useState<string | null>(null);
+  const [serviceToDelete, setServiceToDelete] = useState<string | null>(null);
 
+  const { t } = useTranslation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -261,15 +266,11 @@ export function InventoryManagement() {
   };
 
   const handleDeleteClothing = (id: string) => {
-    if (confirm("Are you sure you want to delete this clothing item?")) {
-      deleteClothingMutation.mutate(id);
-    }
+    setClothingToDelete(id);
   };
 
   const handleDeleteService = (id: string) => {
-    if (confirm("Are you sure you want to delete this service?")) {
-      deleteServiceMutation.mutate(id);
-    }
+    setServiceToDelete(id);
   };
 
   // Filter items based on search
@@ -641,6 +642,34 @@ export function InventoryManagement() {
             </div>
           </TabsContent>
         </Tabs>
+        <ConfirmDialog
+          open={!!clothingToDelete}
+          onOpenChange={(open) => !open && setClothingToDelete(null)}
+          title={t.delete}
+          description={t.confirmDeleteClothing}
+          confirmText={t.delete}
+          cancelText={t.cancel}
+          onConfirm={() => {
+            if (clothingToDelete) {
+              deleteClothingMutation.mutate(clothingToDelete);
+            }
+            setClothingToDelete(null);
+          }}
+        />
+        <ConfirmDialog
+          open={!!serviceToDelete}
+          onOpenChange={(open) => !open && setServiceToDelete(null)}
+          title={t.delete}
+          description={t.confirmDeleteService}
+          confirmText={t.delete}
+          cancelText={t.cancel}
+          onConfirm={() => {
+            if (serviceToDelete) {
+              deleteServiceMutation.mutate(serviceToDelete);
+            }
+            setServiceToDelete(null);
+          }}
+        />
       </div>
     </div>
   );
