@@ -24,6 +24,8 @@ export default function DispatcherDashboard() {
   const mapRef = useRef<maplibregl.Map | null>(null);
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const markersRef = useRef<maplibregl.Marker[]>([]);
+  const orderWsRef = useRef<WebSocket | null>(null);
+  const orderIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const loadOrders = async () => {
     const res = await fetch("/api/delivery/orders");
@@ -39,14 +41,47 @@ export default function DispatcherDashboard() {
     }
   };
 
+  // Poll driver locations continuously
+  useEffect(() => {
+    loadDrivers();
+    const driverId = setInterval(loadDrivers, 5000);
+    return () => clearInterval(driverId);
+  }, []);
+
+  // Real-time orders via WebSocket with polling fallback
   useEffect(() => {
     loadOrders();
-    loadDrivers();
-    const orderId = setInterval(loadOrders, 5000);
-    const driverId = setInterval(loadDrivers, 5000);
+    orderIntervalRef.current = setInterval(loadOrders, 5000);
+
+    const connect = () => {
+      const proto = window.location.protocol === "https:" ? "wss" : "ws";
+      const ws = new WebSocket(`${proto}://${window.location.host}/ws/delivery-orders`);
+      orderWsRef.current = ws;
+
+      ws.onopen = () => {
+        if (orderIntervalRef.current) {
+          clearInterval(orderIntervalRef.current);
+          orderIntervalRef.current = null;
+        }
+      };
+
+      ws.onmessage = () => {
+        loadOrders();
+      };
+
+      ws.onclose = () => {
+        if (!orderIntervalRef.current) {
+          orderIntervalRef.current = setInterval(loadOrders, 5000);
+        }
+      };
+
+      ws.onerror = () => ws.close();
+    };
+
+    connect();
     return () => {
-      clearInterval(orderId);
-      clearInterval(driverId);
+      if (orderIntervalRef.current) clearInterval(orderIntervalRef.current);
+      orderWsRef.current?.close();
     };
   }, []);
 

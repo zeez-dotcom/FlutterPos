@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { useAuthContext } from "../../context/AuthContext";
@@ -15,6 +15,8 @@ export default function DriverDashboard() {
   const [orders, setOrders] = useState<DeliveryOrder[]>([]);
   const [position, setPosition] = useState<{ lat: number; lng: number } | null>(null);
   const [items, setItems] = useState<Record<string, { name: string; quantity: number; price: number }[]>>({});
+  const orderWsRef = useRef<WebSocket | null>(null);
+  const orderIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const load = async () => {
     const res = await fetch("/api/delivery/orders");
@@ -23,10 +25,38 @@ export default function DriverDashboard() {
     }
   };
 
+  // Real-time orders via WebSocket with polling fallback
   useEffect(() => {
     load();
-    const id = setInterval(load, 5000);
-    return () => clearInterval(id);
+    orderIntervalRef.current = setInterval(load, 5000);
+
+    const proto = window.location.protocol === "https:" ? "wss" : "ws";
+    const ws = new WebSocket(`${proto}://${window.location.host}/ws/delivery-orders`);
+    orderWsRef.current = ws;
+
+    ws.onopen = () => {
+      if (orderIntervalRef.current) {
+        clearInterval(orderIntervalRef.current);
+        orderIntervalRef.current = null;
+      }
+    };
+
+    ws.onmessage = () => {
+      load();
+    };
+
+    ws.onclose = () => {
+      if (!orderIntervalRef.current) {
+        orderIntervalRef.current = setInterval(load, 5000);
+      }
+    };
+
+    ws.onerror = () => ws.close();
+
+    return () => {
+      if (orderIntervalRef.current) clearInterval(orderIntervalRef.current);
+      orderWsRef.current?.close();
+    };
   }, []);
 
   // Stream GPS to server
