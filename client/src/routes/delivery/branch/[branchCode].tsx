@@ -64,6 +64,7 @@ function LocationPicker({ lat, lng, onChange }: LocationPickerProps) {
 
 export default function DeliveryOrderForm({ params }: { params: { branchCode: string } }) {
   const { branchCode } = params;
+  const [mode, setMode] = useState<"choose" | "cart" | "schedule">("choose");
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
   const [address, setAddress] = useState("");
@@ -97,6 +98,7 @@ export default function DeliveryOrderForm({ params }: { params: { branchCode: st
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (mode !== "cart") return;
     setIsSubmitting(true);
     setSubmitError(null);
     try {
@@ -139,6 +141,7 @@ export default function DeliveryOrderForm({ params }: { params: { branchCode: st
 
   const handleSchedule = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (mode !== "schedule") return;
     setIsScheduling(true);
     setScheduleError(null);
     try {
@@ -182,6 +185,53 @@ export default function DeliveryOrderForm({ params }: { params: { branchCode: st
 
   const cartSummary = getCartSummary();
 
+  if (mode === "choose") {
+    return (
+      <div className="max-w-xl mx-auto p-4 space-y-4">
+        <h1 className="text-2xl font-bold text-center">Delivery Order</h1>
+        <Button className="w-full" onClick={() => setMode("cart")}>Fill the cart myself</Button>
+        <Button className="w-full" variant="outline" onClick={() => setMode("schedule")}>
+          Schedule a visit
+        </Button>
+      </div>
+    );
+  }
+
+  if (mode === "schedule") {
+    return (
+      <form onSubmit={handleSchedule} className="max-w-xl mx-auto p-4 space-y-4">
+        <h1 className="text-2xl font-bold text-center">Schedule Visit</h1>
+        <div className="space-y-2">
+          <Label htmlFor="name">Name</Label>
+          <Input id="name" value={customerName} onChange={(e) => setCustomerName(e.target.value)} required />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="phone">Phone</Label>
+          <Input id="phone" value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} required />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="address">Address</Label>
+          <Textarea id="address" value={address} onChange={(e) => setAddress(e.target.value)} required />
+        </div>
+        <div className="flex gap-4">
+          <div className="flex-1 space-y-2">
+            <Label htmlFor="pickup">Pickup Time</Label>
+            <Input id="pickup" type="datetime-local" value={pickupTime} onChange={(e) => setPickupTime(e.target.value)} />
+          </div>
+          <div className="flex-1 space-y-2">
+            <Label htmlFor="dropoff">Delivery Time</Label>
+            <Input id="dropoff" type="datetime-local" value={dropoffTime} onChange={(e) => setDropoffTime(e.target.value)} />
+          </div>
+        </div>
+        <Button type="submit" className="w-full" disabled={isScheduling}>
+          {isScheduling ? "Scheduling..." : "Schedule Visit"}
+        </Button>
+        {scheduleError && <p className="text-sm text-red-500">{scheduleError}</p>}
+      </form>
+    );
+  }
+
+  // cart mode
   return (
     <form onSubmit={handleSubmit} className="max-w-xl mx-auto p-4 space-y-4">
       <h1 className="text-2xl font-bold text-center">Delivery Order</h1>
@@ -227,9 +277,7 @@ export default function DeliveryOrderForm({ params }: { params: { branchCode: st
           branchCode={branchCode}
         />
         <div className="space-y-2">
-          {cartItems.length === 0 && (
-            <div className="text-sm text-gray-500">No items selected</div>
-          )}
+          {cartItems.length === 0 && <div className="text-sm text-gray-500">No items selected</div>}
           {cartItems.map((item) => (
             <div key={item.id} className="flex items-center justify-between">
               <span>{item.name}</span>
@@ -256,9 +304,7 @@ export default function DeliveryOrderForm({ params }: { params: { branchCode: st
             </div>
           ))}
           {cartItems.length > 0 && (
-            <div className="text-right font-bold">
-              Total: ${cartSummary.total.toFixed(2)}
-            </div>
+            <div className="text-right font-bold">Total: ${cartSummary.total.toFixed(2)}</div>
           )}
         </div>
       </div>
@@ -266,16 +312,6 @@ export default function DeliveryOrderForm({ params }: { params: { branchCode: st
         {isSubmitting ? "Submitting..." : "Submit Order"}
       </Button>
       {submitError && <p className="text-sm text-red-500">{submitError}</p>}
-      <Button
-        type="button"
-        variant="outline"
-        className="w-full"
-        onClick={handleSchedule}
-        disabled={isScheduling}
-      >
-        {isScheduling ? "Scheduling..." : "Schedule Pickup"}
-      </Button>
-      {scheduleError && <p className="text-sm text-red-500">{scheduleError}</p>}
     </form>
   );
 }
