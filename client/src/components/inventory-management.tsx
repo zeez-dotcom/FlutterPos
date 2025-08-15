@@ -270,14 +270,15 @@ export function InventoryManagement() {
   };
 
   // Filter items based on search
+  const search = searchQuery.toLowerCase();
   const filteredClothing = clothingItems.filter(item =>
-    item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    item.categoryId.toLowerCase().includes(searchQuery.toLowerCase())
+    item.name.toLowerCase().includes(search) ||
+    item.categoryId.toLowerCase().includes(search)
   );
 
   const filteredServices = services.filter(service =>
-    service.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    service.categoryId.toLowerCase().includes(searchQuery.toLowerCase())
+    service.name.toLowerCase().includes(search) ||
+    service.categoryId.toLowerCase().includes(search)
   );
 
   return (
