@@ -104,12 +104,21 @@ export default function DeliveryOrderForm({ params }: { params: { branchCode: st
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [isScheduling, setIsScheduling] = useState(false);
   const [scheduleError, setScheduleError] = useState<string | null>(null);
+  const [orderNumber, setOrderNumber] = useState<string | null>(null);
+  const [branch, setBranch] = useState<{ name: string; logoUrl?: string | null } | null>(null);
 
   const { toast } = useToast();
   const { t, language } = useTranslation();
   const isMobile = useIsMobile();
 
-  const { cartItems, addToCart, updateQuantity, getCartSummary } = useCart();
+  const { cartItems, addToCart, updateQuantity, getCartSummary, clearCart } = useCart();
+
+  useEffect(() => {
+    fetch(`/api/branches/${branchCode}`)
+      .then(res => (res.ok ? res.json() : null))
+      .then(data => setBranch(data))
+      .catch(() => {});
+  }, [branchCode]);
 
   const handleUseCurrentLocation = () => {
     if (!("geolocation" in navigator)) {
@@ -164,6 +173,8 @@ export default function DeliveryOrderForm({ params }: { params: { branchCode: st
         const message = await response.text();
         throw new Error(message || t.failedToSubmitOrder);
       }
+      const data = await response.json();
+      setOrderNumber(data.orderNumber);
       setSubmitted(true);
     } catch (error: any) {
       const message = error?.message || t.failedToSubmitOrder;
@@ -204,6 +215,8 @@ export default function DeliveryOrderForm({ params }: { params: { branchCode: st
         const message = await response.text();
         throw new Error(message || t.failedToSchedulePickup);
       }
+      const data = await response.json();
+      setOrderNumber(data.orderNumber);
       setSubmitted(true);
     } catch (error: any) {
       const message = error?.message || t.failedToSchedulePickup;
@@ -218,10 +231,43 @@ export default function DeliveryOrderForm({ params }: { params: { branchCode: st
     }
   };
 
+  const handleCreateAnother = () => {
+    setSubmitted(false);
+    setOrderNumber(null);
+    setMode("choose");
+    setCustomerName("");
+    setCustomerPhone("");
+    setAddress("");
+    setPickupTime("");
+    setDropoffTime("");
+    setLat(0);
+    setLng(0);
+    clearCart();
+  };
+
   if (submitted) {
     return (
-      <div className="p-4 text-center" dir={language === "ar" ? "rtl" : "ltr"}>
-        {t.orderSubmitted}
+      <div className="p-4" dir={language === "ar" ? "rtl" : "ltr"}>
+        <Card className="max-w-md mx-auto">
+          <CardHeader>
+            <CardTitle className="text-center">{t.orderSubmitted}</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2 text-center">
+            {orderNumber && (
+              <p>
+                {t.orderNumber} {orderNumber}
+              </p>
+            )}
+            <p>{t.paymentDueUponPickup}</p>
+            <p>{t.bringReceiptPickup}</p>
+          </CardContent>
+          <CardFooter className="flex flex-col space-y-2">
+            <Button onClick={handleCreateAnother}>{t.createAnotherOrder}</Button>
+            <Button variant="outline" onClick={() => window.history.back()}>
+              {t.returnToBranchInfo}
+            </Button>
+          </CardFooter>
+        </Card>
       </div>
     );
   }
@@ -235,6 +281,18 @@ export default function DeliveryOrderForm({ params }: { params: { branchCode: st
           language === "ar" ? "left-4" : "right-4"
         }`}
       />
+      {branch && (
+        <div className="flex flex-col items-center py-4 space-y-2">
+          {branch.logoUrl && (
+            <img
+              src={branch.logoUrl}
+              alt={`${branch.name} logo`}
+              className="h-16"
+            />
+          )}
+          <h1 className="text-2xl font-bold">{branch.name}</h1>
+        </div>
+      )}
       <Tabs
         value={mode}
         onValueChange={(val) => setMode(val as typeof mode)}

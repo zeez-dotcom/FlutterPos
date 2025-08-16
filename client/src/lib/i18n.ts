@@ -273,13 +273,15 @@ export interface Translations {
   scheduleVisit: string;
   pickupTime: string;
   deliveryTime: string;
-  location: string;
+  locationLabel: string;
   useCurrentLocation: string;
   products: string;
   noItemsSelected: string;
   submitOrder: string;
   submitting: string;
   scheduling: string;
+  createAnotherOrder: string;
+  returnToBranchInfo: string;
 }
 
 export const translations: Record<Language, Translations> = {
@@ -561,6 +563,8 @@ export const translations: Record<Language, Translations> = {
     submitOrder: "Submit Order",
     submitting: "Submitting...",
     scheduling: "Scheduling...",
+    createAnotherOrder: "Create Another Order",
+    returnToBranchInfo: "Return to Branch Info",
   },
   ar: {
     // Common
@@ -840,6 +844,8 @@ export const translations: Record<Language, Translations> = {
     submitOrder: "إرسال الطلب",
     submitting: "جاري الإرسال...",
     scheduling: "جاري الجدولة...",
+    createAnotherOrder: "إنشاء طلب آخر",
+    returnToBranchInfo: "العودة إلى معلومات الفرع",
   },
   ur: {
     // Common
@@ -1119,6 +1125,8 @@ export const translations: Record<Language, Translations> = {
     submitOrder: "Submit Order",
     submitting: "Submitting...",
     scheduling: "Scheduling...",
+    createAnotherOrder: "Create Another Order",
+    returnToBranchInfo: "Return to Branch Info",
   }
 };
 

@@ -19,7 +19,7 @@ test('delivery order stores dropoff coordinates', async () => {
   let inserted: any = null;
 
   storage.getBranchByCode = async () => ({ id: 'b1', code: 'ABC', address: null } as any);
-  storage.createOrder = async () => ({ id: 'o1' } as any);
+  storage.createOrder = async () => ({ id: 'o1', orderNumber: 'ABC-0001' } as any);
   (db as any).insert = () => ({
     values: async (vals: any) => {
       inserted = vals;
@@ -76,7 +76,7 @@ test('delivery order stores dropoff coordinates', async () => {
         distanceMeters: null,
         durationSeconds: null,
       });
-      res.status(201).json({ orderId: order.id });
+      res.status(201).json({ orderId: order.id, orderNumber: order.orderNumber });
     } catch (err) {
       res.status(400).json({ message: 'Invalid order data' });
     }
@@ -95,6 +95,7 @@ test('delivery order stores dropoff coordinates', async () => {
   assert.equal(res.status, 201);
   assert.equal(inserted.dropoffLat, 1.23);
   assert.equal(inserted.dropoffLng, 4.56);
+  assert.equal(res.body.orderNumber, 'ABC-0001');
 
   storage.getBranchByCode = origGetBranch;
   storage.createOrder = origCreateOrder;
