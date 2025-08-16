@@ -22,6 +22,7 @@ import {
   TabsTrigger,
 } from "@/components/ui/tabs";
 import { ProductGrid } from "@/components/product-grid";
+import { LanguageSelector } from "@/components/language-selector";
 import { useCart } from "@/hooks/use-cart";
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -228,12 +229,17 @@ export default function DeliveryOrderForm({ params }: { params: { branchCode: st
   const cartSummary = getCartSummary();
 
   return (
-    <Tabs
-      value={mode}
-      onValueChange={(val) => setMode(val as typeof mode)}
-      className="max-w-xl mx-auto p-4"
-      dir={language === "ar" ? "rtl" : "ltr"}
-    >
+    <div className="relative" dir={language === "ar" ? "rtl" : "ltr"}>
+      <LanguageSelector
+        className={`absolute top-4 ${
+          language === "ar" ? "left-4" : "right-4"
+        }`}
+      />
+      <Tabs
+        value={mode}
+        onValueChange={(val) => setMode(val as typeof mode)}
+        className="max-w-xl mx-auto p-4"
+      >
       <TabsList className="grid w-full grid-cols-3">
         <TabsTrigger value="choose" className="flex items-center gap-2">
           <List className="h-4 w-4" />
@@ -478,6 +484,7 @@ export default function DeliveryOrderForm({ params }: { params: { branchCode: st
           </Card>
         </form>
       </TabsContent>
-    </Tabs>
+      </Tabs>
+    </div>
   );
 }
