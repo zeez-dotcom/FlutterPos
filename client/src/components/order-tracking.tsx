@@ -21,8 +21,9 @@ export interface OrderItem {
 }
 
 const statusColors = {
+  delivery_pending: "bg-gray-100 text-gray-800",
   received: "bg-blue-100 text-blue-800",
-  processing: "bg-yellow-100 text-yellow-800", 
+  processing: "bg-yellow-100 text-yellow-800",
   washing: "bg-purple-100 text-purple-800",
   drying: "bg-orange-100 text-orange-800",
   ready: "bg-green-100 text-green-800",
@@ -30,6 +31,7 @@ const statusColors = {
 };
 
 const statusIcons = {
+  delivery_pending: Clock,
   received: Package,
   processing: AlertCircle,
   washing: Clock,
@@ -67,7 +69,18 @@ export function OrderTracking() {
   const { formatCurrency } = useCurrency();
 
   const { data: orders = [], isLoading } = useQuery<Order[]>({
-    queryKey: ["/api/orders"],
+    queryKey: ["/api/orders", statusFilter],
+    queryFn: async () => {
+      const url =
+        statusFilter === "delivery_pending"
+          ? "/api/orders?status=delivery_pending"
+          : "/api/orders";
+      const res = await fetch(url, { credentials: "include" });
+      if (!res.ok) {
+        throw new Error("Failed to fetch orders");
+      }
+      return res.json();
+    },
   });
 
   const updateStatusMutation = useMutation({
@@ -92,13 +105,17 @@ export function OrderTracking() {
   });
 
   const filteredOrders = orders.filter(order => {
-    const matchesSearch = 
+    const matchesSearch =
       order.orderNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
       order.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       order.customerPhone.includes(searchTerm);
-    
+
     const matchesStatus = statusFilter === "all" || order.status === statusFilter;
-    
+
+    if (order.status === "delivery_pending" && statusFilter !== "delivery_pending") {
+      return false;
+    }
+
     return matchesSearch && matchesStatus;
   });
 
@@ -162,6 +179,7 @@ export function OrderTracking() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Orders</SelectItem>
+            <SelectItem value="delivery_pending">Delivery Pending</SelectItem>
             <SelectItem value="received">Received</SelectItem>
             <SelectItem value="processing">Processing</SelectItem>
             <SelectItem value="washing">Washing</SelectItem>

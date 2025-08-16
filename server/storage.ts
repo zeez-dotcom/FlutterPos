@@ -21,7 +21,7 @@ import {
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { db } from "./db";
-import { eq, sql, and, inArray, desc, or, ilike } from "drizzle-orm";
+import { eq, sql, and, inArray, desc, or, ilike, ne } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import {
   CATEGORY_SEEDS,
@@ -147,7 +147,7 @@ export interface IStorage {
   updateCustomerBalance(id: string, balanceChange: number, branchId?: string): Promise<Customer | undefined>;
   
   // Orders
-  getOrders(branchId?: string): Promise<Order[]>;
+  getOrders(branchId?: string, includeDeliveryPending?: boolean): Promise<Order[]>;
   getOrder(id: string, branchId?: string): Promise<Order | undefined>;
   getOrdersByCustomer(
     customerId: string,
@@ -1494,9 +1494,15 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Order methods
-  async getOrders(branchId?: string): Promise<Order[]> {
-    if (branchId) {
-      return await db.select().from(orders).where(eq(orders.branchId, branchId));
+  async getOrders(
+    branchId?: string,
+    includeDeliveryPending = false,
+  ): Promise<Order[]> {
+    const conditions = [] as any[];
+    if (branchId) conditions.push(eq(orders.branchId, branchId));
+    if (!includeDeliveryPending) conditions.push(ne(orders.status, 'delivery_pending'));
+    if (conditions.length) {
+      return await db.select().from(orders).where(and(...conditions));
     }
     return await db.select().from(orders);
   }
