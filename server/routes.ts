@@ -988,13 +988,17 @@ export async function registerRoutes(
   // Order Management Routes
   app.get("/api/orders", requireAuth, async (req, res) => {
     try {
-      const { status } = req.query;
+      const { status, includeDeliveryPending } = req.query;
       const user = req.user as UserWithBranch;
       let orders;
       if (status && typeof status === 'string') {
         orders = await storage.getOrdersByStatus(status, user.branchId || undefined);
       } else {
-        orders = await storage.getOrders(user.branchId || undefined);
+        const includePending = includeDeliveryPending === 'true';
+        orders = await storage.getOrders(
+          user.branchId || undefined,
+          includePending,
+        );
       }
       res.json(orders);
     } catch (error) {
@@ -1219,7 +1223,8 @@ export async function registerRoutes(
         tax: "0",
         total: subtotal.toFixed(2),
         paymentMethod: "cash",
-        status: data.scheduled ? "scheduled" : "received",
+        // Delivery orders start in a temporary state until finalized
+        status: data.scheduled ? "scheduled" : "delivery_pending",
         estimatedPickup: data.pickupTime ? new Date(data.pickupTime) : undefined,
         notes: data.address,
         sellerName: "online",
@@ -1358,6 +1363,7 @@ export async function registerRoutes(
         subtotal: subtotal.toFixed(2),
         tax: "0",
         total: subtotal.toFixed(2),
+        // Mark order as officially received after delivery completes
         status: "received",
       });
 

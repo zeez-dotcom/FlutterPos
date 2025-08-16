@@ -57,7 +57,7 @@ test('delivery order stores dropoff coordinates', async () => {
         tax: '0',
         total: '0',
         paymentMethod: 'cash',
-        status: 'received',
+        status: 'delivery_pending',
         estimatedPickup: data.pickupTime ? new Date(data.pickupTime) : null,
         notes: data.address,
         sellerName: 'online',
