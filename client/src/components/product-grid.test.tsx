@@ -1,5 +1,5 @@
 import React from "react";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, cleanup } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { describe, it, vi, expect, afterEach } from "vitest";
 import { ProductGrid } from "./product-grid";
@@ -34,6 +34,7 @@ describe("ProductGrid", () => {
   afterEach(() => {
     global.fetch = originalFetch;
     matchMediaMock.mockClear();
+    cleanup();
   });
 
   it("renders fetched categories", async () => {
@@ -70,7 +71,7 @@ describe("ProductGrid", () => {
     });
   });
 
-  it("shows error state when categories fail to load", async () => {
+  it("shows fallback when categories fail to load", async () => {
     global.fetch = vi.fn((url: RequestInfo) => {
       if (typeof url === "string" && url.startsWith("/api/product-categories")) {
         return Promise.resolve(new Response(null, { status: 500 }));
@@ -89,7 +90,13 @@ describe("ProductGrid", () => {
     renderWithClient();
 
     await waitFor(() => {
-      expect(screen.getByText("Failed to load categories")).toBeTruthy();
+      expect(screen.getByText("Categories unavailable")).toBeTruthy();
     });
+
+    await waitFor(() => {
+      expect(screen.getAllByText("No products found").length).toBeGreaterThan(0);
+    });
+
+    expect(screen.queryByText("All Items")).toBeNull();
   });
 });

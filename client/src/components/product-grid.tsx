@@ -36,24 +36,29 @@ export function ProductGrid({ onAddToCart, cartItemCount, onToggleCart, branchCo
   const { t } = useTranslation();
 
   const {
-    data: fetchedCategories = [],
+    data: fetchedCategories,
     isLoading: categoriesLoading,
     isError: categoriesError,
   } = useQuery<Category[]>({
-    queryKey: ["/api/product-categories"],
+    queryKey: ["/api/product-categories", branchCode],
     queryFn: async () => {
-      const response = await fetch("/api/product-categories", {
-        credentials: "include",
-      });
+      const params = new URLSearchParams();
+      if (branchCode) params.append("branchCode", branchCode);
+      const query = params.toString();
+      const response = await fetch(
+        `/api/product-categories${query ? `?${query}` : ""}`,
+        {
+          credentials: "include",
+        },
+      );
       if (!response.ok) throw new Error("Failed to fetch categories");
       return response.json();
     },
   });
 
-  const categories: Category[] = [
-    { id: "all", name: t.allItems },
-    ...fetchedCategories,
-  ];
+  const categories: Category[] = categoriesError
+    ? []
+    : [{ id: "all", name: t.allItems }, ...(fetchedCategories ?? [])];
 
   const {
     data: products = [],
@@ -78,10 +83,6 @@ export function ProductGrid({ onAddToCart, cartItemCount, onToggleCart, branchCo
 
   if (categoriesLoading) {
     return <div className="flex-1 flex items-center justify-center">{t.loadingCategories}</div>;
-  }
-
-  if (categoriesError) {
-    return <div className="flex-1 flex items-center justify-center">{t.failedToLoadCategories}</div>;
   }
 
   if (productsLoading) {
@@ -115,23 +116,30 @@ export function ProductGrid({ onAddToCart, cartItemCount, onToggleCart, branchCo
         </div>
         
         {/* Category Tabs */}
-        <div className="flex space-x-1 mt-4 overflow-x-auto">
-          {categories.map((category) => (
-            <Button
-              key={category.id}
-              variant={selectedCategory === category.id ? "default" : "secondary"}
-              size="sm"
-              className={`whitespace-nowrap ${
-                selectedCategory === category.id
-                  ? "bg-pos-primary hover:bg-blue-700 text-white"
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-              }`}
-              onClick={() => setSelectedCategory(category.id)}
-            >
-              {category.name}
-            </Button>
-          ))}
-        </div>
+        {!categoriesError && (
+          <div className="flex space-x-1 mt-4 overflow-x-auto">
+            {categories.map((category) => (
+              <Button
+                key={category.id}
+                variant={selectedCategory === category.id ? "default" : "secondary"}
+                size="sm"
+                className={`whitespace-nowrap ${
+                  selectedCategory === category.id
+                    ? "bg-pos-primary hover:bg-blue-700 text-white"
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                }`}
+                onClick={() => setSelectedCategory(category.id)}
+              >
+                {category.name}
+              </Button>
+            ))}
+          </div>
+        )}
+        {categoriesError && (
+          <div className="text-center text-sm text-red-500 mt-4">
+            {t.categoriesUnavailable}
+          </div>
+        )}
       </div>
 
       {/* Products Grid */}

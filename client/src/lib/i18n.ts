@@ -211,6 +211,7 @@ export interface Translations {
   allItems: string;
   loadingCategories: string;
   failedToLoadCategories: string;
+  categoriesUnavailable: string;
   loadingProducts: string;
   loadingClothingItems: string;
   searchProducts: string;
@@ -490,6 +491,7 @@ export const translations: Record<Language, Translations> = {
     allItems: "All Items",
     loadingCategories: "Loading categories...",
     failedToLoadCategories: "Failed to load categories",
+    categoriesUnavailable: "Categories unavailable",
     loadingProducts: "Loading products...",
     loadingClothingItems: "Loading clothing items...",
     searchProducts: "Search products...",
@@ -768,6 +770,7 @@ export const translations: Record<Language, Translations> = {
     allItems: "جميع العناصر",
     loadingCategories: "جاري تحميل الفئات...",
     failedToLoadCategories: "فشل تحميل الفئات",
+    categoriesUnavailable: "الفئات غير متاحة",
     loadingProducts: "جاري تحميل المنتجات...",
     loadingClothingItems: "جاري تحميل عناصر الملابس...",
     searchProducts: "بحث عن المنتجات...",
@@ -1046,6 +1049,7 @@ export const translations: Record<Language, Translations> = {
     allItems: "تمام اشیاء",
     loadingCategories: "زمرے لوڈ ہو رہے ہیں...",
     failedToLoadCategories: "زمرے لوڈ کرنے میں ناکام",
+    categoriesUnavailable: "زمرے دستیاب نہیں ہیں",
     loadingProducts: "مصنوعات لوڈ ہو رہی ہیں...",
     loadingClothingItems: "کپڑوں کی اشیاء لوڈ ہو رہی ہیں...",
     searchProducts: "مصنوعات تلاش کریں...",
