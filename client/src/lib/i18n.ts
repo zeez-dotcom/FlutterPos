@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useContext } from "react";
+import { TranslationContext } from "@/context/TranslationContext";
 
 export type Language = 'en' | 'ar' | 'ur';
 
@@ -112,6 +113,7 @@ export interface Translations {
   // Company Info
   companyName: string;
   companyTagline: string;
+  location: string;
   locationLabel: string;
   phone: string;
 
@@ -273,7 +275,6 @@ export interface Translations {
   scheduleVisit: string;
   pickupTime: string;
   deliveryTime: string;
-  locationLabel: string;
   useCurrentLocation: string;
   products: string;
   noItemsSelected: string;
@@ -1131,19 +1132,11 @@ export const translations: Record<Language, Translations> = {
 };
 
 export const useTranslation = () => {
-  const [language, setLanguage] = useState<Language>(() => {
-    return (localStorage.getItem('language') as Language) || 'en';
-  });
-
-  useEffect(() => {
-    localStorage.setItem('language', language);
-    document.dir = language === 'ar' || language === 'ur' ? 'rtl' : 'ltr';
-    document.documentElement.lang = language;
-  }, [language]);
-
-  const t = translations[language];
-
-  return { t, language, setLanguage };
+  const context = useContext(TranslationContext);
+  if (!context) {
+    throw new Error("useTranslation must be used within a TranslationProvider");
+  }
+  return context;
 };
 
 // Remove this function as we now use the currency system

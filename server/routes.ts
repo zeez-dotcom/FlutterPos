@@ -510,9 +510,9 @@ export async function registerRoutes(
           return res.status(404).json({ message: "Branch not found" });
         }
         const productsList = await storage.getProducts(branch.id);
-        const categoryIds = [
-          ...new Set(productsList.map(p => p.categoryId).filter((id): id is string => Boolean(id))),
-        ];
+        const categoryIds = Array.from(
+          new Set(productsList.map(p => p.categoryId).filter((id): id is string => Boolean(id)))
+        );
         if (categoryIds.length === 0) {
           return res.json([]);
         }
