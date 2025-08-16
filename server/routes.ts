@@ -20,6 +20,7 @@ import {
   insertSecuritySettingsSchema,
   insertItemServicePriceSchema,
   type InsertPayment,
+  categories as categoriesTable,
 } from "@shared/schema";
 import { setupAuth, requireAuth, requireSuperAdmin, requireAdminOrSuperAdmin, requireDispatcher, requireDriver } from "./auth";
 import { seedSuperAdmin } from "./seed-superadmin";
@@ -28,7 +29,7 @@ import type { UserWithBranch } from "@shared/schema";
 import multer from "multer";
 import * as XLSX from "xlsx";
 import { z } from "zod";
-import { eq, sql } from "drizzle-orm";
+import { eq, sql, and, inArray } from "drizzle-orm";
 import {
   generateCatalogTemplate,
   parsePrice,
@@ -485,15 +486,43 @@ export async function registerRoutes(
     }
   });
 
-  app.get("/api/product-categories", requireAuth, async (req, res) => {
-    try {
-      const userId = (req.user as UserWithBranch).id;
-      const categories = await storage.getCategoriesByType("product", userId);
-      res.json(categories);
-    } catch (error) {
-      res.status(500).json({ message: "Failed to fetch product categories" });
-    }
-  });
+  app.get(
+    "/api/product-categories",
+    async (req, res, next) => {
+      const branchCode = req.query.branchCode as string | undefined;
+      if (!branchCode) return next();
+      try {
+        const branch = await storage.getBranchByCode(branchCode);
+        if (!branch) {
+          return res.status(404).json({ message: "Branch not found" });
+        }
+        const productsList = await storage.getProducts(branch.id);
+        const categoryIds = [
+          ...new Set(productsList.map(p => p.categoryId).filter((id): id is string => Boolean(id))),
+        ];
+        if (categoryIds.length === 0) {
+          return res.json([]);
+        }
+        const cats = await db
+          .select()
+          .from(categoriesTable)
+          .where(and(inArray(categoriesTable.id, categoryIds), eq(categoriesTable.type, "product")));
+        res.json(cats);
+      } catch (error) {
+        res.status(500).json({ message: "Failed to fetch product categories" });
+      }
+    },
+    requireAuth,
+    async (req, res) => {
+      try {
+        const userId = (req.user as UserWithBranch).id;
+        const categories = await storage.getCategoriesByType("product", userId);
+        res.json(categories);
+      } catch (error) {
+        res.status(500).json({ message: "Failed to fetch product categories" });
+      }
+    },
+  );
 
   app.post("/api/products", requireAdminOrSuperAdmin, async (req, res) => {
     try {
