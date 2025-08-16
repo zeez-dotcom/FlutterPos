@@ -3,6 +3,7 @@ import { render, screen, waitFor, cleanup } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { describe, it, vi, expect, afterEach } from "vitest";
 import { ProductGrid } from "./product-grid";
+import { TranslationProvider } from "@/context/TranslationContext";
 
 const matchMediaMock = vi.fn().mockReturnValue({
   matches: false,
@@ -23,7 +24,9 @@ function renderWithClient() {
   });
   return render(
     <QueryClientProvider client={queryClient}>
-      <ProductGrid onAddToCart={() => {}} cartItemCount={0} onToggleCart={() => {}} />
+      <TranslationProvider>
+        <ProductGrid onAddToCart={() => {}} cartItemCount={0} onToggleCart={() => {}} />
+      </TranslationProvider>
     </QueryClientProvider>,
   );
 }
