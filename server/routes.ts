@@ -354,6 +354,19 @@ export async function registerRoutes(
     },
   );
 
+  // Public branch info
+  app.get("/api/branches/:code", async (req, res) => {
+    try {
+      const branch = await storage.getBranchByCode(req.params.code);
+      if (!branch) {
+        return res.status(404).json({ message: "Branch not found" });
+      }
+      res.json(branch);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch branch" });
+    }
+  });
+
   // Branch management routes (Super Admin only)
   app.get("/api/branches", requireSuperAdmin, async (_req, res) => {
     try {
@@ -1306,7 +1319,7 @@ export async function registerRoutes(
         }
       });
 
-      res.status(201).json({ orderId: order.id });
+      res.status(201).json({ orderId: order.id, orderNumber: order.orderNumber });
     } catch (error) {
       console.error("Error creating delivery order:", error);
       res.status(400).json({ message: "Invalid order data" });
